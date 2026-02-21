@@ -1,0 +1,206 @@
+package io.github.littlesurvival
+
+import io.github.littlesurvival.core.FetchResult
+import io.github.littlesurvival.core.ParseResult
+import io.github.littlesurvival.core.YamiboResult
+import io.github.littlesurvival.dto.page.FavoritePage
+import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.page.ForumPage
+import io.github.littlesurvival.dto.page.HomePage
+import io.github.littlesurvival.dto.page.ProfilePage
+import io.github.littlesurvival.dto.page.SearchPage
+import io.github.littlesurvival.dto.page.ThreadPage
+import io.github.littlesurvival.dto.value.FormHash
+import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.ThreadId
+import io.github.littlesurvival.dto.value.UserId
+import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.post.FavoriteFactory
+import io.github.littlesurvival.fetch.post.RateFactory
+import io.github.littlesurvival.fetch.post.ReplyPostFactory
+import io.github.littlesurvival.fetch.post.SearchFactory
+import io.github.littlesurvival.parse.FavoritePageParser
+import io.github.littlesurvival.parse.ForumPageParser
+import io.github.littlesurvival.parse.HomePageParser
+import io.github.littlesurvival.parse.ProfilePageParser
+import io.github.littlesurvival.parse.SearchPageParser
+import io.github.littlesurvival.parse.ThreadPageParser
+import io.github.littlesurvival.parse.util.ParseUtils
+
+class YamiboClient(
+    val device: FetchFactory.Companion.Device = FetchFactory.Companion.Device.MOBILE,
+    val timeoutMillis: Long = 30_000L,
+) {
+    /** Fetcher */
+    private val fetcher: Fetcher<String> = FetchFactory(device, timeoutMillis)
+    private val searchFactory: SearchFactory = SearchFactory(fetcher as FetchFactory)
+    private val favoriteFactory: FavoriteFactory = FavoriteFactory(fetcher as FetchFactory)
+    private val rateFactory: RateFactory = RateFactory(fetcher as FetchFactory)
+    private val replyPostFactory: ReplyPostFactory = ReplyPostFactory(fetcher as FetchFactory)
+
+    /** Initialize Values */
+    suspend fun setCookie(cookie: String) {
+        (fetcher as FetchFactory).setCookies(YamiboRoute.Domain.build(), cookie)
+    }
+
+    /** Parser */
+    private val homePageParser = HomePageParser()
+    private val profilePageParser = ProfilePageParser()
+    private val forumPageParser = ForumPageParser()
+    private val threadPageParser = ThreadPageParser()
+    private val searchPageParser = SearchPageParser()
+    private val favoritePageParser = FavoritePageParser()
+
+    /** Fetch Pages */
+    suspend fun fetchHomePage(): YamiboResult<HomePage> =
+        fetchAndParse(YamiboRoute.Home.build(), homePageParser)
+
+    suspend fun fetchProfileInfo(): YamiboResult<ProfilePage> =
+        fetchAndParse(YamiboRoute.ProfileInfo.build(), profilePageParser)
+
+    suspend fun fetchForumById(fId: ForumId, page: Int): YamiboResult<ForumPage> =
+        fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
+
+    suspend fun fetchThreadById(tId: ThreadId, page: Int): YamiboResult<ThreadPage> =
+        fetchAndParse(YamiboRoute.Thread(tId, page).build(), threadPageParser)
+
+    suspend fun fetchConstantForum(forum: YamiboConstant.Forum): YamiboResult<ForumPage> =
+        fetchAndParse(forum.build(), forumPageParser)
+
+    suspend fun fetchConstantThread(thread: YamiboConstant.Thread): YamiboResult<ThreadPage> =
+        fetchAndParse(thread.build(), threadPageParser)
+
+    suspend fun fetchFavorite(userId: UserId, type: FavoriteType, page: Int): YamiboResult<FavoritePage> =
+        fetchAndParse(YamiboRoute.Favorite.GetFolder(userId, type, page).build(), favoritePageParser)
+
+    suspend fun fetchSearch(query: String, formHash: FormHash): YamiboResult<SearchPage> {
+        return when (val linkResult = searchFactory.getCacheLink(formHash, query)) {
+            is FetchResult.Success -> fetchAndParse(linkResult.value, searchPageParser)
+            is FetchResult.Failure -> mapFetchFailure(linkResult, linkResult.url)
+        }
+    }
+
+    suspend fun fetchAddFavorite(tId: ThreadId, formHash: FormHash): YamiboResult<String> {
+        return when (val result = favoriteFactory.addThread(formHash, tId)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    suspend fun fetchRatePost(tId: ThreadId, pId: PostId, score: Int, reason: String, formHash: FormHash): YamiboResult<String> {
+        return when (val result = rateFactory.addRate(formHash, tId, pId, score, reason)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    suspend fun fetchReplyPost(tId: ThreadId, pId: PostId, message: String, formHash: FormHash): YamiboResult<String> {
+        return when (val result = replyPostFactory.replyPost(formHash, tId, pId, message)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    /** Core fetch-and-parse pipeline. */
+    private suspend fun <T> fetchAndParse(url: String, parser: Parser<T>): YamiboResult<T> {
+        return when (val fetched = fetcher.getResult(url)) {
+            is FetchResult.Success -> {
+                when (val parsed = parser.parse(fetched.value)) {
+                    is ParseResult.Success -> YamiboResult.Success(parsed.value)
+                    is ParseResult.NotLoggedIn -> YamiboResult.NotLoggedIn
+                    is ParseResult.Maintenance -> YamiboResult.Maintenance
+                    is ParseResult.Failure -> {
+                        val errorLine = parsed.exception?.let { "\n  error : $it" } ?: ""
+                        YamiboResult.Failure(
+                            """
+                            |[Parse] 解析失敗
+                            |  url   : $url
+                            |  reason: ${parsed.reason}$errorLine
+                            |  body  : ${bodyPreview(fetched.value)}
+                            """.trimMargin(),
+                            parsed.exception
+                        )
+                    }
+                }
+            }
+
+            is FetchResult.Failure -> mapFetchFailure(fetched, url)
+        }
+    }
+
+    /**
+     * Convert a [FetchResult.Failure] into a [YamiboResult.Failure].
+     *
+     * @param failure The fetch failure to convert.
+     * @param url URL or operation name.
+     */
+    private fun mapFetchFailure(failure: FetchResult.Failure, url: String): YamiboResult<Nothing> {
+        return when (failure) {
+            is FetchResult.Failure.HttpError -> {
+                /**
+                 *  HTTP 503 means the server is under maintenance.
+                 */
+                if (failure.statusCode == 503 && ParseUtils.isMaintenance(failure.bodyPreview)) {
+                    return YamiboResult.Maintenance
+                }
+                YamiboResult.Failure(
+                    """
+                    |[HTTP ${failure.statusCode}] 請求失敗
+                    |  url    : $url
+                    |  body   : ${bodyPreview(failure.bodyPreview)}
+                    """.trimMargin()
+                )
+            }
+            is FetchResult.Failure.NetworkError ->
+                YamiboResult.Failure(
+                    """
+                |[Network] 網路錯誤
+                |  url    : $url
+                |  error  : ${failure.exception.message ?: failure.exception}
+                """.trimMargin(),
+                    failure.exception
+                )
+
+            is FetchResult.Failure.Timeout ->
+                YamiboResult.Failure(
+                    """
+                |[Timeout] 請求逾時 (${timeoutMillis}ms)
+                |  url    : $url
+                |  error  : ${failure.exception.message ?: failure.exception}
+                """.trimMargin(),
+                    failure.exception
+                )
+
+            is FetchResult.Failure.Unknown ->
+                YamiboResult.Failure(
+                    """
+                |[Unknown] 未知錯誤
+                |  url    : $url
+                |  error  : ${failure.exception.message ?: failure.exception}
+                """.trimMargin(),
+                    failure.exception
+                )
+        }
+    }
+
+    // visual helper code.
+
+    companion object {
+        private const val BODY_PREVIEW_LIMIT = 300
+
+        /**
+         * Truncate a body string for error logging. If the body is <= [BODY_PREVIEW_LIMIT] chars,
+         * return it inline. Otherwise, return the first [BODY_PREVIEW_LIMIT] chars + "...(<N>
+         * lines)" so it reads like a decent IDE error log.
+         */
+        internal fun bodyPreview(body: String?): String {
+            if (body.isNullOrBlank()) return "(empty)"
+            if (body.length <= BODY_PREVIEW_LIMIT) return body
+
+            val totalLines = body.lines().size
+            //val truncated = body.take(BODY_PREVIEW_LIMIT).replace("\n", "\\n")
+            return "${body.take(BODY_PREVIEW_LIMIT)} ...($totalLines lines)"
+        }
+    }
+}

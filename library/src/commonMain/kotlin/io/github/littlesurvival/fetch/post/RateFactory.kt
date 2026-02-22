@@ -12,6 +12,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.charsets.Charsets
 
 class RateFactory(private val fetcher: FetchFactory) {
 
@@ -41,24 +42,19 @@ class RateFactory(private val fetcher: FetchFactory) {
         reason: String = ""
     ): FetchResult<String> {
         val url = YamiboRoute.Rate.build()
-        val referer = YamiboRoute.Thread(threadId).build()
         return try {
             val response =
                 fetcher.perform(HttpMethod.Post, url) {
-                    header("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
-                    setBody(
-                        FormDataContent(
-                            Parameters.build {
-                                append("formhash", formHash.value)
-                                append("tid", threadId.value.toString())
-                                append("pid", postId.value.toString())
-                                append("referer", referer)
-                                append("handlekey", "rate")
-                                append("score1", score.toString())
-                                append("reason", reason)
-                            }
-                        )
-                    )
+                    contentType(ContentType.Application.FormUrlEncoded.withCharset(Charsets.UTF_8))
+                    setBody(FormDataContent(Parameters.build {
+                        append("formhash", formHash.value)
+                        append("tid", threadId.value.toString())
+                        append("pid", postId.value.toString())
+                        append("referer", "")
+                        append("handlekey", "rate")
+                        append("score1", score.toString())
+                        append("reason", reason)
+                    }))
                 }
 
             val body = response.bodyAsText()

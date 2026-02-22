@@ -3,12 +3,14 @@ package io.github.littlesurvival.fetch.post
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.dto.value.FormHash
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.*
+import io.ktor.utils.io.charsets.Charsets
 
 class SearchFactory(
     private val fetcher: FetchFactory,
@@ -24,17 +26,17 @@ class SearchFactory(
      * @return [FetchResult.Success] containing a [kotlin.String] with the redirect location, or a
      * [FetchResult.Failure] if the request fails.
      */
-    suspend fun getCacheLink(formHash: FormHash, query: String): FetchResult<String> {
-        val url = YamiboRoute.Search.SearchPhp.build()
+    suspend fun getCacheLink(formHash: FormHash, query: String, fId: ForumId?): FetchResult<String> {
+        val url = YamiboRoute.Search.SearchPhp(fId).build()
         return try {
             val response =
-                fetcher.performNoRedirect(HttpMethod.Post, url) {
-                    header("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+                fetcher.perform(method = HttpMethod.Post, url = url, noRedirect = true) {
+                    contentType(ContentType.Application.FormUrlEncoded.withCharset(Charsets.UTF_8))
                     setBody(
                         FormDataContent(
                             Parameters.build {
                                 append("formhash", formHash.value)
-                                append("srhfid", "")
+                                append("srhfid", fId?.value?.toString() ?: "")
                                 append("srchtxt", query)
                                 append("searchsubmit", "yes")
                             }

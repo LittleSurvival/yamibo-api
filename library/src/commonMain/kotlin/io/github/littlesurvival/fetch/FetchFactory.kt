@@ -4,14 +4,13 @@ import io.github.littlesurvival.Fetcher
 import io.github.littlesurvival.core.FetchResult
 import io.ktor.client.*
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-internal expect fun createPlatformHttpClient(cookieStorage: CookiesStorage): HttpClient
+internal expect fun createPlatformHttpClient(): HttpClient
 
-internal expect fun createPlatformHttpClientNoRedirect(cookieStorage: CookiesStorage): HttpClient
+internal expect fun createPlatformHttpClientNoRedirect(): HttpClient
 
 class FetchFactory(
         var device: Device,
@@ -27,66 +26,43 @@ class FetchFactory(
         }
     }
 
-    private val cookieStorage = AcceptAllCookiesStorage()
-    private val formHash = ""
+    /** Raw cookie string to send with every request. e.g. "key=value; key2=value2" */
+    private var cookieString: String? = null
 
-    private val client = createPlatformHttpClient(cookieStorage)
-    private val noRedirectClient = createPlatformHttpClientNoRedirect(cookieStorage)
+    private val client = createPlatformHttpClient()
+    private val noRedirectClient = createPlatformHttpClientNoRedirect()
 
     /**
-     * Parsers a cookie string (e.g. from document.cookie) and adds them to the storage.
-     * @param url The URL context for these cookies (required to determine domain/path).
-     * @param cookieString The string in format "key=value; key2=value2"
+     * Set cookie string for all requests.
+     * @param cookie The raw cookie string in format "key=value; key2=value2"
      */
-    suspend fun setCookies(url: String, cookieString: String) {
-        val effectiveUrl = if (url.startsWith("http")) url else "https://$url"
-        val targetUrl = Url(effectiveUrl)
-        cookieString.split(";").forEach { pair ->
-            val parts = pair.split("=", limit = 2)
-            if (parts.size == 2) {
-                val name = parts[0].trim()
-                val value = parts[1].trim()
-                if (name.isNotEmpty()) {
-                    cookieStorage.addCookie(
-                            targetUrl,
-                            Cookie(name = name, value = value, domain = targetUrl.host, path = "/")
-                    )
-                }
-            }
-        }
+    fun setCookies(cookie: String) {
+        cookieString = cookie.replace("\n", "").trim()
     }
 
-    suspend fun perform(
-            method: HttpMethod,
-            url: String,
-            block: HttpRequestBuilder.() -> Unit = {}
-    ): HttpResponse {
-        return client.request(url) {
-            this.method = method
-            headers[HttpHeaders.UserAgent] = device.userAgent
-            timeout {
-                requestTimeoutMillis = timeoutMillis
-                connectTimeoutMillis = timeoutMillis
-                socketTimeoutMillis = timeoutMillis
-            }
-            block()
-        }
+    /** Clear cookies. */
+    fun clearCookies() {
+        cookieString = null
     }
+
 
     /**
-     * Perform a request without following redirects.
+     * @param noRedirect perform a request without following redirects.
      *
      * Useful for POST requests where the server responds with 302 and we need to capture the
      * Location header.
      */
-    suspend fun performNoRedirect(
-            method: HttpMethod,
-            url: String,
-            block: HttpRequestBuilder.() -> Unit = {}
+    suspend fun perform(
+        method: HttpMethod,
+        url: String,
+        noRedirect: Boolean = false,
+        block: HttpRequestBuilder.() -> Unit = {},
     ): HttpResponse {
-        return noRedirectClient.request(url) {
+        val useClient = if (noRedirect) noRedirectClient else client
+        return useClient.request(url) {
             this.method = method
             headers[HttpHeaders.UserAgent] = device.userAgent
+            cookieString?.let { headers[HttpHeaders.Cookie] = it }
             timeout {
                 requestTimeoutMillis = timeoutMillis
                 connectTimeoutMillis = timeoutMillis
@@ -95,17 +71,6 @@ class FetchFactory(
             block()
         }
     }
-
-    suspend fun get(url: String, block: HttpRequestBuilder.() -> Unit = {}) =
-            perform(HttpMethod.Get, url, block)
-    suspend fun post(url: String, block: HttpRequestBuilder.() -> Unit = {}) =
-            perform(HttpMethod.Post, url, block)
-    suspend fun put(url: String, block: HttpRequestBuilder.() -> Unit = {}) =
-            perform(HttpMethod.Put, url, block)
-    suspend fun delete(url: String, block: HttpRequestBuilder.() -> Unit = {}) =
-            perform(HttpMethod.Delete, url, block)
-    suspend fun head(url: String, block: HttpRequestBuilder.() -> Unit = {}) =
-            perform(HttpMethod.Head, url, block)
 
     /**
      * Fetcher return the HTML content of the page as FetchResult.
@@ -118,16 +83,16 @@ class FetchFactory(
      */
     override suspend fun getResult(url: String): FetchResult<String> {
         return try {
-            val response = get(url)
+            val response = perform(HttpMethod.Get, url)
             val text = response.bodyAsText()
 
             if (response.status.isSuccess()) {
                 FetchResult.Success(value = text, statusCode = response.status.value, url = url)
             } else {
                 FetchResult.Failure.HttpError(
-                    statusCode = response.status.value,
-                    url = url,
-                    bodyPreview = text
+                        statusCode = response.status.value,
+                        url = url,
+                        bodyPreview = text
                 )
             }
         } catch (e: HttpRequestTimeoutException) {

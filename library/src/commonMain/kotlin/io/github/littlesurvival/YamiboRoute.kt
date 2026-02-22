@@ -7,7 +7,6 @@ import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.ktor.http.*
-import kotlin.toString
 
 sealed class YamiboRoute {
     internal val domain = "https://bbs.yamibo.com/"
@@ -70,17 +69,22 @@ sealed class YamiboRoute {
     }
 
     sealed class Search : YamiboRoute() {
-        data object SearchPhp : YamiboRoute() {
+        data class SearchPhp(val forumId: ForumId?) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
                         .apply {
                             encodedPath = "search.php"
-                            parameters.append("mod", "forum")
+                            if (forumId == null) {
+                                parameters.append("mod", "forum")
+                            } else {
+                                parameters.append("mod", "curforum")
+                                parameters.append("srhfid", forumId.value.toString())
+                            }
                         }
                         .buildString()
             }
         }
-        data class ById(val query: String, val searchId: SearchId) : YamiboRoute() {
+        data class BySearchId(val query: String, val searchId: SearchId) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
                         .apply {

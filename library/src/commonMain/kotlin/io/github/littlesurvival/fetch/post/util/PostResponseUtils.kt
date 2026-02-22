@@ -58,4 +58,19 @@ object PostResponseUtils {
     fun isSuccess(body: String): Boolean {
         return body.contains("succeedhandle")
     }
+
+    /**
+     * Check whether the response is illegal body response.
+     * Which contains
+     * ```html
+     * <h1>Discuz! System Error</h1>
+     * <p>Time: yyyy-mm-dd hh:mm:ss +0000 IP: ... BackTraceID: ...</p>
+     * <div class="info">
+     *   <li>您当前的访问请求当中含有非法字符，已经被系统拒绝</li>
+     * </div>
+     * ```
+     */
+    fun isIllegal(body: String?): Boolean {
+        return body?.contains("您当前的访问请求当中含有非法字符，已经被系统拒绝") ?: false
+    }
 }

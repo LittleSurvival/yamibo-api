@@ -12,6 +12,7 @@ import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.utils.io.charsets.Charsets
 
 class ReplyPostFactory(
     private val fetcher: FetchFactory
@@ -44,7 +45,7 @@ class ReplyPostFactory(
         return try {
             val response =
                 fetcher.perform(HttpMethod.Post, url) {
-                    header("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+                    contentType(ContentType.Application.FormUrlEncoded.withCharset(Charsets.UTF_8))
                     setBody(
                         FormDataContent(
                             Parameters.build {

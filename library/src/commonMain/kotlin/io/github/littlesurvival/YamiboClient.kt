@@ -20,6 +20,7 @@ import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.RateFactory
 import io.github.littlesurvival.fetch.post.ReplyPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
+import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
 import io.github.littlesurvival.parse.HomePageParser
@@ -29,8 +30,8 @@ import io.github.littlesurvival.parse.ThreadPageParser
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
-    val device: FetchFactory.Companion.Device = FetchFactory.Companion.Device.MOBILE,
-    val timeoutMillis: Long = 30_000L,
+        val device: FetchFactory.Companion.Device = FetchFactory.Companion.Device.MOBILE,
+        val timeoutMillis: Long = 30_000L,
 ) {
     /** Fetcher */
     private val fetcher: Fetcher<String> = FetchFactory(device, timeoutMillis)
@@ -40,8 +41,8 @@ class YamiboClient(
     private val replyPostFactory: ReplyPostFactory = ReplyPostFactory(fetcher as FetchFactory)
 
     /** Initialize Values */
-    suspend fun setCookie(cookie: String) {
-        (fetcher as FetchFactory).setCookies(YamiboRoute.Domain.build(), cookie)
+    fun setCookie(cookie: String) {
+        (fetcher as FetchFactory).setCookies(cookie)
     }
 
     /** Parser */
@@ -54,28 +55,32 @@ class YamiboClient(
 
     /** Fetch Pages */
     suspend fun fetchHomePage(): YamiboResult<HomePage> =
-        fetchAndParse(YamiboRoute.Home.build(), homePageParser)
+            fetchAndParse(YamiboRoute.Home.build(), homePageParser)
 
     suspend fun fetchProfileInfo(): YamiboResult<ProfilePage> =
-        fetchAndParse(YamiboRoute.ProfileInfo.build(), profilePageParser)
+            fetchAndParse(YamiboRoute.ProfileInfo.build(), profilePageParser)
 
     suspend fun fetchForumById(fId: ForumId, page: Int): YamiboResult<ForumPage> =
-        fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
+            fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
 
     suspend fun fetchThreadById(tId: ThreadId, page: Int): YamiboResult<ThreadPage> =
-        fetchAndParse(YamiboRoute.Thread(tId, page).build(), threadPageParser)
+            fetchAndParse(YamiboRoute.Thread(tId, page).build(), threadPageParser)
 
-    suspend fun fetchConstantForum(forum: YamiboConstant.Forum): YamiboResult<ForumPage> =
-        fetchAndParse(forum.build(), forumPageParser)
+    suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
+            fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
 
-    suspend fun fetchConstantThread(thread: YamiboConstant.Thread): YamiboResult<ThreadPage> =
-        fetchAndParse(thread.build(), threadPageParser)
+    suspend fun fetchFavorite(
+            userId: UserId,
+            type: FavoriteType,
+            page: Int
+    ): YamiboResult<FavoritePage> =
+            fetchAndParse(
+                    YamiboRoute.Favorite.GetFolder(userId, type, page).build(),
+                    favoritePageParser
+            )
 
-    suspend fun fetchFavorite(userId: UserId, type: FavoriteType, page: Int): YamiboResult<FavoritePage> =
-        fetchAndParse(YamiboRoute.Favorite.GetFolder(userId, type, page).build(), favoritePageParser)
-
-    suspend fun fetchSearch(query: String, formHash: FormHash): YamiboResult<SearchPage> {
-        return when (val linkResult = searchFactory.getCacheLink(formHash, query)) {
+    suspend fun fetchSearch(query: String, forumId: ForumId? = null,formHash: FormHash): YamiboResult<SearchPage> {
+        return when (val linkResult = searchFactory.getCacheLink(formHash, query, forumId)) {
             is FetchResult.Success -> fetchAndParse(linkResult.value, searchPageParser)
             is FetchResult.Failure -> mapFetchFailure(linkResult, linkResult.url)
         }
@@ -88,14 +93,25 @@ class YamiboClient(
         }
     }
 
-    suspend fun fetchRatePost(tId: ThreadId, pId: PostId, score: Int, reason: String, formHash: FormHash): YamiboResult<String> {
+    suspend fun fetchRatePost(
+            tId: ThreadId,
+            pId: PostId,
+            score: Int,
+            reason: String,
+            formHash: FormHash
+    ): YamiboResult<String> {
         return when (val result = rateFactory.addRate(formHash, tId, pId, score, reason)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }
     }
 
-    suspend fun fetchReplyPost(tId: ThreadId, pId: PostId, message: String, formHash: FormHash): YamiboResult<String> {
+    suspend fun fetchReplyPost(
+            tId: ThreadId,
+            pId: PostId,
+            message: String,
+            formHash: FormHash
+    ): YamiboResult<String> {
         return when (val result = replyPostFactory.replyPost(formHash, tId, pId, message)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
@@ -113,18 +129,17 @@ class YamiboClient(
                     is ParseResult.Failure -> {
                         val errorLine = parsed.exception?.let { "\n  error : $it" } ?: ""
                         YamiboResult.Failure(
-                            """
+                                """
                             |[Parse] 解析失敗
                             |  url   : $url
                             |  reason: ${parsed.reason}$errorLine
                             |  body  : ${bodyPreview(fetched.value)}
                             """.trimMargin(),
-                            parsed.exception
+                                parsed.exception
                         )
                     }
                 }
             }
-
             is FetchResult.Failure -> mapFetchFailure(fetched, url)
         }
     }
@@ -138,49 +153,56 @@ class YamiboClient(
     private fun mapFetchFailure(failure: FetchResult.Failure, url: String): YamiboResult<Nothing> {
         return when (failure) {
             is FetchResult.Failure.HttpError -> {
-                /**
-                 *  HTTP 503 means the server is under maintenance.
-                 */
-                if (failure.statusCode == 503 && ParseUtils.isMaintenance(failure.bodyPreview)) {
-                    return YamiboResult.Maintenance
+                /** HTTP 503 means the server is under maintenance. */
+                if (failure.statusCode == 503) {
+                    if (ParseUtils.isMaintenance(failure.bodyPreview))
+                            return YamiboResult.Maintenance
+                    if (PostResponseUtils.isIllegal(failure.bodyPreview))
+                            return YamiboResult.Failure(
+                                    """
+                            |[HTTP ${failure.statusCode}] 請求失敗
+                            |  url    : $url
+                            |  body   : 
+                            |  系統信息(您当前的访问请求当中含有非法字符，已经被系统拒绝，這很可能是登入過期/未登入導致的，請嘗試重新登入。)
+                            |  若確認登入成功後仍無法解決，請嘗試在Github上聯繫開發者
+                            """.trimMargin()
+                            )
                 }
                 YamiboResult.Failure(
-                    """
+                        """
                     |[HTTP ${failure.statusCode}] 請求失敗
                     |  url    : $url
-                    |  body   : ${bodyPreview(failure.bodyPreview)}
+                    |  body   : ${(failure.bodyPreview)}
                     """.trimMargin()
                 )
             }
             is FetchResult.Failure.NetworkError ->
-                YamiboResult.Failure(
-                    """
+                    YamiboResult.Failure(
+                            """
                 |[Network] 網路錯誤
                 |  url    : $url
                 |  error  : ${failure.exception.message ?: failure.exception}
                 """.trimMargin(),
-                    failure.exception
-                )
-
+                            failure.exception
+                    )
             is FetchResult.Failure.Timeout ->
-                YamiboResult.Failure(
-                    """
+                    YamiboResult.Failure(
+                            """
                 |[Timeout] 請求逾時 (${timeoutMillis}ms)
                 |  url    : $url
                 |  error  : ${failure.exception.message ?: failure.exception}
                 """.trimMargin(),
-                    failure.exception
-                )
-
+                            failure.exception
+                    )
             is FetchResult.Failure.Unknown ->
-                YamiboResult.Failure(
-                    """
+                    YamiboResult.Failure(
+                            """
                 |[Unknown] 未知錯誤
                 |  url    : $url
                 |  error  : ${failure.exception.message ?: failure.exception}
                 """.trimMargin(),
-                    failure.exception
-                )
+                            failure.exception
+                    )
         }
     }
 
@@ -199,7 +221,7 @@ class YamiboClient(
             if (body.length <= BODY_PREVIEW_LIMIT) return body
 
             val totalLines = body.lines().size
-            //val truncated = body.take(BODY_PREVIEW_LIMIT).replace("\n", "\\n")
+            // val truncated = body.take(BODY_PREVIEW_LIMIT).replace("\n", "\\n")
             return "${body.take(BODY_PREVIEW_LIMIT)} ...($totalLines lines)"
         }
     }

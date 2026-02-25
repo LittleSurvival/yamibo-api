@@ -115,13 +115,13 @@ sealed class YamiboRoute {
     }
 
     sealed class Favorite : YamiboRoute() {
-        data class GetFolder(val userId: UserId, val type: FavoriteType, val page: Int = 1) : YamiboRoute() {
+        data class GetFolder(val userId: UserId?, val type: FavoriteType, val page: Int = 1) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
                     .apply {
                         encodedPath = "home.php"
                         parameters.append("mod", "space")
-                        parameters.append("uid", userId.value.toString())
+                        parameters.append("uid", userId?.value?.toString() ?: "")
                         parameters.append("do", "favorite")
                         parameters.append("view", "me")
                         parameters.append("type", type.typeId)

@@ -70,9 +70,9 @@ class YamiboClient(
             fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
 
     suspend fun fetchFavorite(
-            userId: UserId,
+            userId: UserId? = null,
             type: FavoriteType,
-            page: Int
+            page: Int = 1
     ): YamiboResult<FavoritePage> =
             fetchAndParse(
                     YamiboRoute.Favorite.GetFolder(userId, type, page).build(),

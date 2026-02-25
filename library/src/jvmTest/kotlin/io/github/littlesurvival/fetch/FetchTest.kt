@@ -4,11 +4,12 @@ import debugLog
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
+import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
-import kotlin.test.Test
 import kotlinx.coroutines.runBlocking
+import kotlin.test.Test
 
 class FetchTest {
 
@@ -18,7 +19,7 @@ class FetchTest {
             .readText()
             .replace("\n", "")
             .trim()
-    private val client = YamiboClient().also {
+    private val client = YamiboClient(timeoutMillis = 60_000L).also {
         it.setCookie(loadAsset("secret/cookie"))
     }
     private val formHash = FormHash(loadAsset("secret/formhash"))
@@ -33,6 +34,12 @@ class FetchTest {
     fun testForum(): Unit = runBlocking {
         val forumResult = client.fetchForumById(YamiboForum.TRANSLATED_LIGHT_NOVEL.id)
         debugLog("fetchForumById", forumResult)
+    }
+
+    @Test
+    fun testFavorite(): Unit = runBlocking {
+        val favoriteResult = client.fetchFavorite(type = FavoriteType.Thread, page = 1)
+        debugLog("fetchFavorite", favoriteResult)
     }
 
     @Test

@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.android.kotlin.multiplatform.library)
     alias(libs.plugins.vanniktech.mavenPublish)
+    alias(libs.plugins.compose.multiplatform)
+    alias(libs.plugins.compose.compiler)
 }
 
 group = "io.github.littlesurvival"
@@ -34,12 +36,24 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-    linuxX64()
+    // linuxX64 removed — Compose Multiplatform does not support Linux native targets.
+    // Pure-Kotlin code (AST, parser, config) still compiles for all targets via commonMain.
 
     sourceSets {
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
             implementation(libs.ksoup)
+
+            // Compose Multiplatform
+            implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.material3)
+            implementation(compose.ui)
+            implementation(compose.components.uiToolingPreview)
+
+            // Async image loading
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
         }
 
         commonTest.dependencies {
@@ -48,6 +62,9 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
+            implementation(compose.uiTooling)
+            implementation(libs.androidx.customview.poolingcontainer)
+            implementation(libs.androidx.savedstate)
         }
 
         iosMain.dependencies {
@@ -56,10 +73,9 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
-        }
-
-        linuxX64Main.dependencies {
-            implementation(libs.ktor.client.cio)
+            implementation(compose.uiTooling)
+            implementation(libs.androidx.customview.poolingcontainer)
+            implementation(libs.androidx.savedstate)
         }
     }
 }

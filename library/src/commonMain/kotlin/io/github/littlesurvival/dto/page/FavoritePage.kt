@@ -1,6 +1,8 @@
 package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.value.ThreadId
+import io.github.littlesurvival.parse.util.ParseUtils
 
 data class FavoritePage(
     val type: FavoriteType,
@@ -12,7 +14,11 @@ data class FavoriteItem(
     val name: String,
     val url: String,
     val deleteUrl: String
-)
+) {
+    fun toThreadId(): ThreadId? {
+        return ParseUtils.extractTid(this@FavoriteItem.url)
+    }
+}
 enum class FavoriteType(val typeName: String, val typeId: String) {
     Thread("帖子", "thread"),
     Forum("版块", "forum"),

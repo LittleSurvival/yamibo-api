@@ -60,10 +60,10 @@ class YamiboClient(
     suspend fun fetchProfileInfo(): YamiboResult<ProfilePage> =
             fetchAndParse(YamiboRoute.ProfileInfo.build(), profilePageParser)
 
-    suspend fun fetchForumById(fId: ForumId, page: Int): YamiboResult<ForumPage> =
+    suspend fun fetchForumById(fId: ForumId, page: Int = 1): YamiboResult<ForumPage> =
             fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
 
-    suspend fun fetchThreadById(tId: ThreadId, page: Int): YamiboResult<ThreadPage> =
+    suspend fun fetchThreadById(tId: ThreadId, page: Int = 1): YamiboResult<ThreadPage> =
             fetchAndParse(YamiboRoute.Thread(tId, page).build(), threadPageParser)
 
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =

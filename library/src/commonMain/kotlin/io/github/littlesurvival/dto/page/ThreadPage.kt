@@ -121,6 +121,9 @@ data class Post(
     /** Images attached/embedded in the post. */
     val images: List<PostImage> = emptyList(),
 
+    /** File attachments in the post. */
+    val attachments: List<Attachment> = emptyList(),
+
     /** Comments (点评) attached to the post. */
     val comments: List<PostComment> = emptyList(),
 
@@ -162,9 +165,33 @@ data class PostRate(
     /** The user who rated. */
     val userName: String,
 
-    /** The score given (e.g. "+ 10"). */
-    val score: String,
+    /** The score given (e.g. 10). */
+    val score: Int,
 
     /** Optional reason text for the rating. */
     val reason: String? = null
+)
+
+/** A attachment on the post. */
+data class Attachment(
+    /**
+     * The name of attachment.
+     */
+    val name: String,
+    /**
+     * The download link of attachment.
+     */
+    val url: String,
+    /**
+     * The time it was uploaded (e.g. 2026-1-10 21:08)
+     */
+    val timeUpload: String,
+    /**
+     * The size of the attachment (e.g. 17.93 KB)
+     */
+    val fileSize: String,
+    /**
+     * The times it has been downloaded (e.g. 122)
+     */
+    val downloadTimes: Int,
 )

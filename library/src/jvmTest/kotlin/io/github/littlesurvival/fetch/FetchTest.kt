@@ -2,6 +2,7 @@ package io.github.littlesurvival.fetch
 
 import debugLog
 import io.github.littlesurvival.YamiboClient
+import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.PostId
@@ -17,13 +18,31 @@ class FetchTest {
             .readText()
             .replace("\n", "")
             .trim()
-    private val client by lazy { YamiboClient().also {
+    private val client = YamiboClient().also {
         it.setCookie(loadAsset("secret/cookie"))
-    }}
-    private val formHash by lazy { FormHash(loadAsset("secret/formhash")) }
+    }
+    private val formHash = FormHash(loadAsset("secret/formhash"))
 
     @Test
-    fun test(): Unit = runBlocking {
+    fun testProfile(): Unit = runBlocking {
+        val profileResult = client.fetchProfileInfo()
+        debugLog("fetchProfileInfo", profileResult)
+    }
+
+    @Test
+    fun testForum(): Unit = runBlocking {
+        val forumResult = client.fetchForumById(YamiboForum.TRANSLATED_LIGHT_NOVEL.id)
+        debugLog("fetchForumById", forumResult)
+    }
+
+    @Test
+    fun testThread(): Unit = runBlocking {
+        val threadResult = client.fetchThreadById(ThreadId(535612), 1)
+        debugLog("fetchThreadById", threadResult)
+    }
+
+    @Test
+    fun testRatePost(): Unit = runBlocking {
         val ratePostResult = client.fetchRatePost(ThreadId(565238), PostId(41426069), 5, "", formHash)
         debugLog("fetchRatePost", ratePostResult)
     }

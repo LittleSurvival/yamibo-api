@@ -3,11 +3,11 @@ package io.github.littlesurvival.parse
 import com.fleeksoft.ksoup.Ksoup
 import io.github.littlesurvival.Parser
 import io.github.littlesurvival.core.ParseResult
-import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.*
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class ForumPageParser : Parser<ForumPage> {
@@ -24,7 +24,35 @@ class ForumPageParser : Parser<ForumPage> {
             val newThreadLink = doc.select("#a_newthread").attr("href")
             val fid = ParseUtils.extractFid(newThreadLink) ?: ForumId(0)
 
-            val forum = ForumInfo(fid = fid, name = forumName)
+            val forumP = doc.select(".forumdisplay-top p").first()
+            var todayCount: Int? = null
+            var themeCount: Int? = null
+            var rank: Int? = null
+            if (forumP != null) {
+                val spans = forumP.select("span")
+                if (spans.size >= 3) {
+                    todayCount = spans[0].text().trim().toIntOrNull()
+                    themeCount = spans[1].text().trim().toIntOrNull()
+                    rank = spans[2].text().trim().toIntOrNull()
+                } else if (spans.size > 0) {
+                    // fallback if structure differs slightly
+                    todayCount = spans[0].text().trim().toIntOrNull()
+                }
+            }
+
+            val iconUrl = doc.select(".forumdisplay-top h2 img").attr("src").ifEmpty { null }
+
+            val forum =
+                    ForumSummary(
+                            fid = fid,
+                            name = forumName,
+                            url = newThreadLink, // this link might be action=newthread but
+                            // usually acceptable or can be extracted
+                            todayCount = todayCount,
+                            themeCount = themeCount,
+                            rank = rank,
+                            iconUrl = iconUrl
+                    )
 
             // --- Sub forums ---
             val subForums = mutableListOf<ForumSummary>()
@@ -110,17 +138,17 @@ class ForumPageParser : Parser<ForumPage> {
                 val lastUpdateText = el.select(".muser .mtime").text().trim().ifEmpty { null }
 
                 threads.add(
-                    ThreadSummary(
-                        tid = tid,
-                        title = title,
-                        url = url,
-                        author = author,
-                        description = description,
-                        replyCount = replyCount,
-                        viewCount = viewCount,
-                        tag = tag,
-                        lastUpdateText = lastUpdateText
-                    )
+                        ThreadSummary(
+                                tid = tid,
+                                title = title,
+                                url = url,
+                                author = author,
+                                description = description,
+                                replyCount = replyCount,
+                                viewCount = viewCount,
+                                tag = tag,
+                                lastUpdateText = lastUpdateText
+                        )
                 )
             }
 

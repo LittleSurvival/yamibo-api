@@ -16,38 +16,26 @@ class ProfilePageParser : Parser<ProfilePage> {
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
-            // --- Basic Info from Header ---
-            val avtNavMenu = doc.select("#avtnav_menu")
-            val userLink = avtNavMenu.select("a[href*=uid]").firstOrNull()
-            val uid = userLink?.attr("href")?.let { ParseUtils.extractUid(it) } ?: UserId(0)
-            val username = userLink?.text()?.trim() ?: ""
+            // --- Username from avatar section ---
+            val username = doc.select(".avatar_bg .name").text().trim()
 
-            val userGroup = avtNavMenu.select("a[href*=usergroup] font").text().trim()
-
-            // --- Avatar Transformation ---
+            // --- Avatar URL ---
             val avatarUrl =
-                    doc.select(".user_avatar")
-                            .attr("src")
-                            .substringBefore("?")
-                            .replace("_small.jpg", "_big.jpg")
-                            .replace("_middle.jpg", "_big.jpg")
-                            .ifEmpty { null }
+                doc.select(".avatar_m img")
+                    .attr("src")
+                    .substringBefore("?")
+                    .ifEmpty { null }
 
-            // --- Form Hash ---
-            val formHash =
-                    doc.select("input[name=formhash]").attr("value").ifEmpty { null }?.let {
-                        FormHash(it)
-                    }
-
-            // --- Credits / Points ---
-            val creditList = doc.select(".creditl li")
+            // --- Credits / Points from user_box ---
+            val creditItems = doc.select(".user_box li")
             var points = 0
             var partner = 0
             var totalPoints = 0
 
-            for (li in creditList) {
+            for (li in creditItems) {
                 val text = li.text()
-                val value = li.ownText().trim().removeSuffix("点").trim().toIntOrNull() ?: 0
+                val spanText = li.select("span").text().trim()
+                val value = spanText.replace("点", "").trim().toIntOrNull() ?: 0
 
                 when {
                     text.contains("总积分") || text.contains("總積分") -> totalPoints = value
@@ -56,17 +44,67 @@ class ProfilePageParser : Parser<ProfilePage> {
                 }
             }
 
+            // --- Personal info from myinfo_list ---
+            val infoItems = doc.select(".myinfo_list li")
+            var uid = UserId(0)
+            var userGroup = ""
+            var gender: String? = null
+            var birthday: String? = null
+            var onlineHours = 0
+            var registerTime: String? = null
+            var lastVisit: String? = null
+
+            for (li in infoItems) {
+                val label = li.ownText().trim()
+                val value = li.select("span").text().trim()
+
+                when {
+                    label == "UID" -> uid = UserId(value.toIntOrNull() ?: 0)
+                    label.contains("用户组") || label.contains("用戶組") ->
+                        userGroup = li.select("span font").text().trim().ifEmpty { value }
+
+                    label.contains("性别") || label.contains("性別") -> gender = value.ifEmpty { null }
+                    label.contains("生日") -> birthday = value.takeIf { it != "-" && it.isNotEmpty() }
+                    label.contains("在线时间") || label.contains("在線時間") ->
+                        onlineHours =
+                            value.replace("小时", "").replace("小時", "").trim().toIntOrNull()
+                                ?: 0
+
+                    label.contains("注册时间") || label.contains("註冊時間") ->
+                        registerTime = value.ifEmpty { null }
+
+                    label.contains("最后访问") || label.contains("最後訪問") ->
+                        lastVisit = value.ifEmpty { null }
+                }
+            }
+
+            // --- Form Hash from logout link ---
+            val formHash =
+                doc.select("input[name=formhash]")
+                    .attr("value")
+                    .ifEmpty {
+                        // Fallback: extract from logout link
+                        val logoutHref = doc.select(".btn_exit a").attr("href")
+                        Regex("formhash=([a-f0-9]+)").find(logoutHref)?.groupValues?.get(1)
+                    }
+                    ?.let { FormHash(it) }
+
             ParseResult.Success(
-                    ProfilePage(
-                            uid = uid,
-                            username = username,
-                            userGroup = userGroup,
-                            points = points,
-                            partner = partner,
-                            totalPoints = totalPoints,
-                            avatarUrl = avatarUrl,
-                            formHash = formHash
-                    )
+                ProfilePage(
+                    uid = uid,
+                    username = username,
+                    userGroup = userGroup,
+                    points = points,
+                    partner = partner,
+                    totalPoints = totalPoints,
+                    avatarUrl = avatarUrl,
+                    gender = gender,
+                    birthday = birthday,
+                    onlineHours = onlineHours,
+                    registerTime = registerTime,
+                    lastVisit = lastVisit,
+                    formHash = formHash
+                )
             )
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse profile page", e)

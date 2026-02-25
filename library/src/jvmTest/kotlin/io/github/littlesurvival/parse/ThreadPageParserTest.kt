@@ -152,4 +152,51 @@ class ThreadPageParserTest {
         assertTrue(thirdPost.comments.isEmpty(), "Third post should have no comments")
         assertTrue(thirdPost.rates.isEmpty(), "Third post should have no rates")
     }
+
+    @Test
+    fun parseThreadAttachments() = runBlocking {
+        val html = loadAsset("post_response5.html")
+        val result = ThreadPageParser().parse(html)
+
+        val success = assertIs<ParseResult.Success<ThreadPage>>(result)
+        val page = success.value
+
+        // In post_response5.html, pid 41444606 has an attachment. Let's find it.
+        val targetPost = page.posts.find { it.pid == PostId(41444606) }
+        assertNotNull(targetPost, "Post 41444606 not found")
+
+        assertTrue(targetPost.attachments.isNotEmpty(), "Target post should have attachments")
+        val attachment = targetPost.attachments[0]
+        assertEquals("chapter57 羽花（2）.txt", attachment.name)
+        assertTrue(
+                attachment.url.contains("mod=attachment&aid="),
+                "Attachment URL should contain mod=attachment"
+        )
+        assertEquals("2026-1-10 21:08", attachment.timeUpload)
+        assertEquals("17.93 KB", attachment.fileSize)
+        assertEquals(122, attachment.downloadTimes)
+
+        // Test the second html example for attachments
+        val html2 = loadAsset("threads/義妹後輩.html")
+        val result2 = ThreadPageParser().parse(html2)
+        val success2 = assertIs<ParseResult.Success<ThreadPage>>(result2)
+        val page2 = success2.value
+
+        val targetPost2 = page2.posts.find { it.pid == PostId(40723956) }
+        assertNotNull(targetPost2, "Post 40723956 not found")
+        assertTrue(targetPost2.attachments.isNotEmpty(), "Target post should have attachments")
+        assertEquals(2, targetPost2.attachments.size)
+
+        val attach1 = targetPost2.attachments[0]
+        assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.txt", attach1.name)
+        assertEquals("2025-6-11 00:17", attach1.timeUpload)
+        assertEquals("281.46 KB", attach1.fileSize)
+        assertEquals(4200, attach1.downloadTimes)
+
+        val attach2 = targetPost2.attachments[1]
+        assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.epub", attach2.name)
+        assertEquals("2025-6-11 00:17", attach2.timeUpload)
+        assertEquals("153.7 KB", attach2.fileSize)
+        assertEquals(389, attach2.downloadTimes)
+    }
 }

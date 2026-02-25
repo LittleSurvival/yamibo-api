@@ -23,13 +23,15 @@ sealed class YamiboRoute {
     data object ProfileInfo : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
-                    .apply {
-                        encodedPath = "home.php"
-                        parameters.append("mod", "spacecp")
-                        parameters.append("ac", "credit")
-                        parameters.append("showcredit", "1")
-                    }
-                    .buildString()
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "space")
+                    //For some unknown reason, the uid field can be empty.
+                    parameters.append("uid", "")
+                    parameters.append("mycenter", "1")
+                    parameters.append("mobile", "2")
+                }
+                .buildString()
         }
     }
 
@@ -42,29 +44,29 @@ sealed class YamiboRoute {
     data class Forum(val fid: ForumId, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
-                    .apply {
-                        encodedPath = "forum.php"
-                        parameters.append("mod", "forumdisplay")
-                        parameters.append("fid", fid.value.toString())
-                        parameters.append("page", page.toString())
-                        parameters.append("mobile", "2")
-                    }
-                    .buildString()
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "forumdisplay")
+                    parameters.append("fid", fid.value.toString())
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }
+                .buildString()
         }
     }
 
     data class Thread(val tid: ThreadId, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
-                    .apply {
-                        encodedPath = "forum.php"
-                        parameters.append("mod", "viewthread")
-                        parameters.append("tid", tid.value.toString())
-                        parameters.append("extra", "page=2")
-                        parameters.append("page", page.toString())
-                        parameters.append("mobile", "2")
-                    }
-                    .buildString()
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "viewthread")
+                    parameters.append("tid", tid.value.toString())
+                    parameters.append("extra", "page=2")
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }
+                .buildString()
         }
     }
 
@@ -72,32 +74,33 @@ sealed class YamiboRoute {
         data class SearchPhp(val forumId: ForumId?) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
-                        .apply {
-                            encodedPath = "search.php"
-                            if (forumId == null) {
-                                parameters.append("mod", "forum")
-                            } else {
-                                parameters.append("mod", "curforum")
-                                parameters.append("srhfid", forumId.value.toString())
-                            }
+                    .apply {
+                        encodedPath = "search.php"
+                        if (forumId == null) {
+                            parameters.append("mod", "forum")
+                        } else {
+                            parameters.append("mod", "curforum")
+                            parameters.append("srhfid", forumId.value.toString())
                         }
-                        .buildString()
+                    }
+                    .buildString()
             }
         }
+
         data class BySearchId(val query: String, val searchId: SearchId) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
-                        .apply {
-                            encodedPath = "search.php"
-                            parameters.append("mod", "forum")
-                            parameters.append("searchid", searchId.value.toString())
-                            parameters.append("orderby", "dateline")
-                            parameters.append("ascdesc", "desc")
-                            parameters.append("searchsubmit", "yes")
-                            parameters.append("kw", query)
-                            parameters.append("mobile", "2")
-                        }
-                        .buildString()
+                    .apply {
+                        encodedPath = "search.php"
+                        parameters.append("mod", "forum")
+                        parameters.append("searchid", searchId.value.toString())
+                        parameters.append("orderby", "dateline")
+                        parameters.append("ascdesc", "desc")
+                        parameters.append("searchsubmit", "yes")
+                        parameters.append("kw", query)
+                        parameters.append("mobile", "2")
+                    }
+                    .buildString()
             }
         }
 
@@ -112,7 +115,7 @@ sealed class YamiboRoute {
     }
 
     sealed class Favorite : YamiboRoute() {
-        data class GetFolder(val userId: UserId, val type: FavoriteType,val page: Int = 1) : YamiboRoute() {
+        data class GetFolder(val userId: UserId, val type: FavoriteType, val page: Int = 1) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
                     .apply {
@@ -194,6 +197,7 @@ sealed class YamiboRoute {
                 }.buildString()
         }
     }
+
     /**
      * 點評帖子.
      *

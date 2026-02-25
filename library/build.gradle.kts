@@ -65,6 +65,7 @@ kotlin {
             implementation(compose.uiTooling)
             implementation(libs.androidx.customview.poolingcontainer)
             implementation(libs.androidx.savedstate)
+            implementation(libs.androidx.activity.compose)
         }
 
         iosMain.dependencies {
@@ -74,8 +75,6 @@ kotlin {
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
             implementation(compose.uiTooling)
-            implementation(libs.androidx.customview.poolingcontainer)
-            implementation(libs.androidx.savedstate)
         }
     }
 }

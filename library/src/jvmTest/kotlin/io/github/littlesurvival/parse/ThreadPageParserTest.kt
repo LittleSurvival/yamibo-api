@@ -96,7 +96,7 @@ class ThreadPageParserTest {
             println("    Author: ${post.author}")
             println("    Time: ${post.timeText}")
             println("    Comments (${post.comments.size}): ${post.comments}")
-            println("    Rates (${post.rates.size}): ${post.rates}")
+            println("    Rates (${post.rateBlock.rates.size}): ${post.rateBlock.rates}")
         }
         println()
 
@@ -130,27 +130,31 @@ class ThreadPageParserTest {
         assertTrue(firstPost.comments[1].message.contains("譯者很高冷"))
 
         // Rates on first post
-        assertTrue(firstPost.rates.isNotEmpty(), "First post should have rates")
-        assertEquals("rluojiu", firstPost.rates[0].userName)
-        assertEquals("好萌好萌好萌", firstPost.rates[0].reason)
+        assertTrue(firstPost.rateBlock.rates.isNotEmpty(), "First post should have rates")
+        assertEquals("rluojiu", firstPost.rateBlock.rates[0].userName)
+        assertEquals("好萌好萌好萌", firstPost.rateBlock.rates[0].reason)
         // Check a rate without reason
-        val noReasonRate = firstPost.rates.find { it.userName == "3379510073" }
+        val noReasonRate = firstPost.rateBlock.rates.find { it.userName == "3379510073" }
         assertNotNull(noReasonRate)
         assertEquals("", noReasonRate.reason)
+        assertEquals(21, firstPost.rateBlock.rateParticipatePeople)
+        assertEquals(172, firstPost.rateBlock.rateTotalScore)
 
         // Second post (floor 2) - has rates but no comments
         val secondPost = page.posts[1]
         assertEquals(PostId(41240199), secondPost.pid)
         assertEquals(2, secondPost.floor)
         assertTrue(secondPost.comments.isEmpty(), "Second post should have no comments")
-        assertTrue(secondPost.rates.isNotEmpty(), "Second post should have rates")
+        assertTrue(secondPost.rateBlock.rates.isNotEmpty(), "Second post should have rates")
+        assertEquals(1, secondPost.rateBlock.rateParticipatePeople)
+        assertEquals(5, secondPost.rateBlock.rateTotalScore)
 
         // Third post (floor 3) - should have no comments and no rates
         val thirdPost = page.posts[2]
         assertEquals(PostId(41240351), thirdPost.pid)
         assertEquals(3, thirdPost.floor)
         assertTrue(thirdPost.comments.isEmpty(), "Third post should have no comments")
-        assertTrue(thirdPost.rates.isEmpty(), "Third post should have no rates")
+        assertTrue(thirdPost.rateBlock.rates.isEmpty(), "Third post should have no rates")
     }
 
     @Test

@@ -118,7 +118,10 @@ data class Post(
      */
     val contentHtml: String,
 
-    /** Images attached/embedded in the post. */
+    /**
+     * Images attached/embedded in the post.
+     * Especial for manga view mode.
+     * */
     val images: List<PostImage> = emptyList(),
 
     /** File attachments in the post. */
@@ -128,7 +131,7 @@ data class Post(
     val comments: List<PostComment> = emptyList(),
 
     /** Rates (评分) attached to the post. */
-    val rates: List<PostRate> = emptyList()
+    val rateBlock: RateBlock = RateBlock()
 )
 
 /** An image referenced in a post. */
@@ -161,6 +164,17 @@ data class PostComment(
 )
 
 /** A rate entry (评分) on a post. */
+data class RateBlock(
+    /** Total number of people who participated in rating this post. */
+    val rateParticipatePeople: Int = 0,
+
+    /** Total score given by all rate participants. */
+    val rateTotalScore: Int = 0,
+
+    /** The list of all rates */
+    val rates: List<PostRate> = emptyList(),
+)
+
 data class PostRate(
     /** The user who rated. */
     val userName: String,
@@ -174,24 +188,14 @@ data class PostRate(
 
 /** A attachment on the post. */
 data class Attachment(
-    /**
-     * The name of attachment.
-     */
+    /** The name of attachment. */
     val name: String,
-    /**
-     * The download link of attachment.
-     */
+    /** The download link of attachment. */
     val url: String,
-    /**
-     * The time it was uploaded (e.g. 2026-1-10 21:08)
-     */
+    /** The time it was uploaded (e.g. 2026-1-10 21:08) */
     val timeUpload: String,
-    /**
-     * The size of the attachment (e.g. 17.93 KB)
-     */
+    /** The size of the attachment (e.g. 17.93 KB) */
     val fileSize: String,
-    /**
-     * The times it has been downloaded (e.g. 122)
-     */
+    /** The times it has been downloaded (e.g. 122) */
     val downloadTimes: Int,
 )

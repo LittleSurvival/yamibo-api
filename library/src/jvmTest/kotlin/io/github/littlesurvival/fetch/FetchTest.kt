@@ -44,7 +44,8 @@ class FetchTest {
 
     @Test
     fun testThread(): Unit = runBlocking {
-        val threadResult = client.fetchThreadById(ThreadId(535612), 1)
+        // 568055, 535612
+        val threadResult = client.fetchThreadById(ThreadId(568055), 1)
         debugLog("fetchThreadById", threadResult)
     }
 

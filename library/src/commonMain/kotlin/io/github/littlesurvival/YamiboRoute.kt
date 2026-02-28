@@ -231,6 +231,18 @@ sealed class YamiboRoute {
         }
     }
 
+    data object Login : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "member.php"
+                    parameters.append("mod", "logging")
+                    parameters.append("action", "login")
+                    parameters.append("mobile", "2")
+                }.buildString()
+        }
+    }
+
 
     data object Sign : YamiboRoute() {
         override fun build(): String {

@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.0"
+version = "1.0.1"
 
 kotlin {
     jvm()
@@ -46,14 +46,6 @@ kotlin {
 
             // Compose Multiplatform
             implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.uiToolingPreview)
-
-            // Async image loading
-            implementation(libs.coil.compose)
-            implementation(libs.coil.network.ktor3)
         }
 
         commonTest.dependencies {
@@ -62,10 +54,6 @@ kotlin {
 
         androidMain.dependencies {
             implementation(libs.ktor.client.android)
-            implementation(compose.uiTooling)
-            implementation(libs.androidx.customview.poolingcontainer)
-            implementation(libs.androidx.savedstate)
-            implementation(libs.androidx.activity.compose)
         }
 
         iosMain.dependencies {
@@ -74,7 +62,6 @@ kotlin {
 
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)
-            implementation(compose.uiTooling)
         }
     }
 }

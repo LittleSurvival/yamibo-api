@@ -7,6 +7,7 @@ import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -57,9 +58,16 @@ class FetchTest {
 
     @Test
     fun testSearch() = runBlocking {
-        val query = "姊妹"
-        val result = client.fetchSearch(query, null,formHash)
+        val query = "百合"
+        val result = client.fetchSearch(query, null, formHash)
         debugLog("fetchSearch(\"$query\")", result)
+    }
+
+    @Test
+    fun testSearchById() = runBlocking {
+        val id = SearchId(44662)
+        val result = client.fetchSearchById("", id, 1)
+        debugLog("fetchSearchById(\"\", $id, 1)", result)
     }
 
     @Test

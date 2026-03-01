@@ -87,7 +87,7 @@ sealed class YamiboRoute {
             }
         }
 
-        data class BySearchId(val query: String, val searchId: SearchId) : YamiboRoute() {
+        data class BySearchId(val query: String, val searchId: SearchId, val page: Int = 1) : YamiboRoute() {
             override fun build(): String {
                 return URLBuilder(domain)
                     .apply {
@@ -99,6 +99,7 @@ sealed class YamiboRoute {
                         parameters.append("searchsubmit", "yes")
                         parameters.append("kw", query)
                         parameters.append("mobile", "2")
+                        parameters.append("page", page.toString())
                     }
                     .buildString()
             }
@@ -109,8 +110,8 @@ sealed class YamiboRoute {
          * search.php?mod=forum&searchid=38813&orderby=dateline&ascdesc=desc&searchsubmit=yes&kw=%E9%AA%A8%E7%A7%91&mobile=2)
          * this param is get from "search.php?mod=forum" POST request's Location header.
          */
-        data class ByLocation(val location: String) : YamiboRoute() {
-            override fun build(): String = domain + location
+        data class ByLocation(val location: String, val page: Int = 1) : YamiboRoute() {
+            override fun build(): String = "$domain$location&page=$page"
         }
     }
 

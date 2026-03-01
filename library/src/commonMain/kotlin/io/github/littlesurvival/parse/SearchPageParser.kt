@@ -6,6 +6,7 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.SearchPage
+import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class SearchPageParser : Parser<SearchPage> {
@@ -16,15 +17,33 @@ class SearchPageParser : Parser<SearchPage> {
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
-            // --- Total result count ---
-            // "找到 "彩純" 相关内容 71 个"
+            // Query
+            val query = doc.select(".threadlist_box h2 em .emfont").first()?.text() ?: ""
+
+            // Total result count
             val totalCount =
                 doc.select(".threadlist_box h2 em").first()?.text()?.let {
                     Regex("(\\d+)\\s*个").find(it)?.groupValues?.get(1)?.toIntOrNull()
                 }
                     ?: 0
 
-            // --- Thread list ---
+            // Search ID
+            val searchIdValue =
+                doc.select(".pg a").firstNotNullOfOrNull {
+                    Regex("searchid=(\\d+)")
+                        .find(it.attr("href"))
+                        ?.groupValues
+                        ?.get(1)
+                        ?.toIntOrNull()
+                }
+                    ?: Regex("searchid=(\\d+)")
+                        .find(html)
+                        ?.groupValues
+                        ?.get(1)
+                        ?.toIntOrNull()
+            val searchId = searchIdValue?.let { SearchId(it) }
+
+            // Thread list
             val threads = mutableListOf<ThreadSummary>()
             val items = doc.select(".threadlist li.list")
             for (item in items) {
@@ -58,7 +77,12 @@ class SearchPageParser : Parser<SearchPage> {
                     item.select(".threadlist_mes").first()?.text()?.trim()?.ifEmpty { null }
 
                 // Forum tag (e.g. "動漫區")
-                val forumTag = item.select(".threadlist_foot li.mr a").first()?.text()?.trim()?.removePrefix("#")
+                val forumTag =
+                    item.select(".threadlist_foot li.mr a")
+                        .first()
+                        ?.text()
+                        ?.trim()
+                        ?.removePrefix("#")
 
                 // View count
                 val viewCount =
@@ -97,11 +121,17 @@ class SearchPageParser : Parser<SearchPage> {
                 )
             }
 
-            // --- Pagination ---
+            // Pagination
             val pageNav = ParseUtils.parsePageNav(doc)
 
             ParseResult.Success(
-                SearchPage(threads = threads, totalCount = totalCount, pageNav = pageNav)
+                SearchPage(
+                    query = query,
+                    searchId = searchId,
+                    threads = threads,
+                    totalCount = totalCount,
+                    pageNav = pageNav
+                )
             )
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse search page", e)

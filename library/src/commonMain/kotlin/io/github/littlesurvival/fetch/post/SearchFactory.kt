@@ -2,6 +2,7 @@ package io.github.littlesurvival.fetch.post
 
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.FetchResult
+import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.fetch.FetchFactory

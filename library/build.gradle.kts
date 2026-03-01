@@ -86,9 +86,9 @@ mavenPublishing {
         }
         developers {
             developer {
-                id = "XXX"
-                name = "YYY"
-                url = "ZZZ"
+                id = "littlesurvival"
+                name = "littlesurvival"
+                url = "https://github.com/LittleSurvival"
             }
         }
         scm {

@@ -57,8 +57,8 @@ class SearchPageParser : Parser<SearchPage> {
                 val description =
                     item.select(".threadlist_mes").first()?.text()?.trim()?.ifEmpty { null }
 
-                // Forum tag (e.g. "#動漫區")
-                val forumTag = item.select(".threadlist_foot li.mr a").first()?.text()?.trim()
+                // Forum tag (e.g. "動漫區")
+                val forumTag = item.select(".threadlist_foot li.mr a").first()?.text()?.trim()?.removePrefix("#")
 
                 // View count
                 val viewCount =

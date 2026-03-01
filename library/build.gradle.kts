@@ -10,7 +10,8 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.2"
+
+version = "1.0.3"
 
 kotlin {
     jvm()
@@ -21,17 +22,9 @@ kotlin {
 
         withJava() // enable java compilation support
         withHostTestBuilder {}.configure {}
-        withDeviceTestBuilder {
-            sourceSetTreeName = "test"
-        }
+        withDeviceTestBuilder { sourceSetTreeName = "test" }
 
-        compilations.configureEach {
-            compilerOptions.configure {
-                jvmTarget.set(
-                    JvmTarget.JVM_11
-                )
-            }
-        }
+        compilations.configureEach { compilerOptions.configure { jvmTarget.set(JvmTarget.JVM_11) } }
     }
     iosX64()
     iosArm64()
@@ -48,27 +41,19 @@ kotlin {
             implementation(compose.runtime)
         }
 
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
+        commonTest.dependencies { implementation(libs.kotlin.test) }
 
-        androidMain.dependencies {
-            implementation(libs.ktor.client.android)
-        }
+        androidMain.dependencies { implementation(libs.ktor.client.android) }
 
-        iosMain.dependencies {
-            implementation(libs.ktor.client.darwin)
-        }
+        iosMain.dependencies { implementation(libs.ktor.client.darwin) }
 
-        jvmMain.dependencies {
-            implementation(libs.ktor.client.cio)
-        }
+        jvmMain.dependencies { implementation(libs.ktor.client.cio) }
     }
 }
 
 mavenPublishing {
-//    publishToMavenCentral()
-//    signAllPublications()
+    publishToMavenCentral()
+    signAllPublications()
 
     coordinates(group.toString(), "yamibo-api", version.toString())
 
@@ -79,9 +64,9 @@ mavenPublishing {
         url = "https://github.com/kotlin/multiplatform-library-template/"
         licenses {
             license {
-                name = "XXX"
-                url = "YYY"
-                distribution = "ZZZ"
+                name = "The Apache License, Version 2.0"
+                url = "https://www.apache.org/licenses/LICENSE-2.0.txt"
+                distribution = "repo"
             }
         }
         developers {
@@ -92,9 +77,9 @@ mavenPublishing {
             }
         }
         scm {
-            url = "XXX"
-            connection = "YYY"
-            developerConnection = "ZZZ"
+            url = "https://github.com/LittleSurvival/yamibo-api"
+            connection = "scm:git:https://github.com/LittleSurvival/yamibo-api.git"
+            developerConnection = "scm:git:ssh://git@github.com/LittleSurvival/yamibo-api.git"
         }
     }
 }

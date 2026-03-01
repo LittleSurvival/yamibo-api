@@ -7,7 +7,7 @@
 
 ---
 
-<h2 id="english-version">🇬🇧 English Version</h2>
+<h2 id="english-version">English Version</h2>
 
 A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client library for the Yamibo forum. `yamibo-api` handles network requests, session management, and HTML parsing, translating complex forum data into highly accessible, strongly-typed Kotlin Data Transfer Objects (DTOs) for Android, iOS, and JVM.
 
@@ -16,6 +16,13 @@ A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client libra
 * **Coroutines First:** All network and parsing operations are suspended, thread-safe, and asynchronous.
 * **Strongly Typed DTOs:** No need to parse HTML manually. Get structured `ProfilePage`, `ThreadPage`, and `ForumPage` data immediately.
 * **Safe Error Handling:** Provides a `YamiboResult` sealed class wrapping `Success`, `Failure`, `Maintenance`, and `NotLoggedIn` states.
+
+### 🧰 Compatibility
+| Dependency | Supported Version |
+|---|---|
+| **Kotlin** | 2.3.10+ |
+| **Gradle** | 8.14.3+ |
+| **Java JVM Target** | 11+ |
 
 ### 📦 Installation
 
@@ -155,6 +162,13 @@ suspend fun interact() {
 * **協程優先 (Coroutines First)：** 所有網路與網頁解析操作皆為掛起函數 (suspend)，支援完全非同步且線程安全。
 * **強型別模型 (Strongly Typed DTOs)：** 徹底告別手動解析 HTML 的痛苦。隨插即用 `ProfilePage`、`ThreadPage` 與 `ForumPage` 等豐富的結構化資料表。
 * **安全的回報機制：** 提供 `YamiboResult` 封裝，妥善且優雅地處理 `Success` (成功)、`Failure` (失敗)、`Maintenance` (維護中) 以及 `NotLoggedIn` (未登入) 等各種極端狀態。
+
+### 🧰 系統兼容性
+| 依賴項目 | 支援版本 |
+|---|---|
+| **Kotlin** | 2.3.10+ |
+| **Gradle** | 8.14.3+ |
+| **Java JVM 目標** | 11+ |
 
 ### 📦 安裝方式
 

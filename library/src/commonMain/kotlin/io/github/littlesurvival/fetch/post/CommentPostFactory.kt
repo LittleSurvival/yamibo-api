@@ -14,12 +14,12 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.charsets.Charsets
 
-class ReplyPostFactory(
+class CommentPostFactory(
     private val fetcher: FetchFactory
 ) {
 
     /**
-     * Reply (comment) on a post in a thread.
+     * Comment on a post in a thread.
      *
      * Performs a POST to `forum.php?mod=post&action=reply&comment=yes&...` with the given form
      * data. The server responds with an XML body containing a CDATA section with a success or error
@@ -35,7 +35,7 @@ class ReplyPostFactory(
      * @return [FetchResult.Success] containing the response message, or a [FetchResult.Failure] if
      * the request fails.
      */
-    suspend fun replyPost(
+    suspend fun commentPost(
         formHash: FormHash,
         threadId: ThreadId,
         postId: PostId,

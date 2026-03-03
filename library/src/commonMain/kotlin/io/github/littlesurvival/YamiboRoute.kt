@@ -55,7 +55,7 @@ sealed class YamiboRoute {
         }
     }
 
-    data class Thread(val tid: ThreadId, val page: Int = 1) : YamiboRoute() {
+    data class Thread(val tid: ThreadId, val authorId: UserId? = null, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
@@ -64,6 +64,7 @@ sealed class YamiboRoute {
                     parameters.append("tid", tid.value.toString())
                     parameters.append("extra", "page=2")
                     parameters.append("page", page.toString())
+                    parameters.append("authorid", authorId?.value?.toString() ?: "")
                     parameters.append("mobile", "2")
                 }
                 .buildString()
@@ -155,6 +156,20 @@ sealed class YamiboRoute {
                         parameters.append("inajax", "1")
                     }.buildString()
             }
+        }
+    }
+
+    data class RedirectToPost(val authorId: UserId,val threadId: ThreadId, val postId: PostId): YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "redirect")
+                    parameters.append("goto", "findpost")
+                    parameters.append("ptid", threadId.value.toString())
+                    parameters.append("pid", postId.value.toString())
+                    parameters.append("fromuid", authorId.value.toString())
+                }.buildString()
         }
     }
 

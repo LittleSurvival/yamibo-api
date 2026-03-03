@@ -19,7 +19,7 @@ import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.RateFactory
-import io.github.littlesurvival.fetch.post.ReplyPostFactory
+import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.github.littlesurvival.parse.FavoritePageParser
@@ -39,7 +39,7 @@ class YamiboClient(
     private val searchFactory: SearchFactory = SearchFactory(fetcher as FetchFactory)
     private val favoriteFactory: FavoriteFactory = FavoriteFactory(fetcher as FetchFactory)
     private val rateFactory: RateFactory = RateFactory(fetcher as FetchFactory)
-    private val replyPostFactory: ReplyPostFactory = ReplyPostFactory(fetcher as FetchFactory)
+    private val commentPostFactory: CommentPostFactory = CommentPostFactory(fetcher as FetchFactory)
 
     /** Initialize Values */
     fun setCookie(cookie: String) {
@@ -64,8 +64,8 @@ class YamiboClient(
     suspend fun fetchForumById(fId: ForumId, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
 
-    suspend fun fetchThreadById(tId: ThreadId, page: Int = 1): YamiboResult<ThreadPage> =
-        fetchAndParse(YamiboRoute.Thread(tId, page).build(), threadPageParser)
+    suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, page: Int = 1): YamiboResult<ThreadPage> =
+        fetchAndParse(YamiboRoute.Thread(tId, authorId,page).build(), threadPageParser)
 
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
@@ -110,13 +110,13 @@ class YamiboClient(
         }
     }
 
-    suspend fun fetchReplyPost(
+    suspend fun fetchCommentPost(
         tId: ThreadId,
         pId: PostId,
         message: String,
         formHash: FormHash
     ): YamiboResult<String> {
-        return when (val result = replyPostFactory.replyPost(formHash, tId, pId, message)) {
+        return when (val result = commentPostFactory.commentPost(formHash, tId, pId, message)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

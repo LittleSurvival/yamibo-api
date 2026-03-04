@@ -19,5 +19,9 @@ data class SearchPage(
 )
 ```
 
-
-
+# v1.0.5
+```kotlin notebook
+fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId)
+```
+Find the location of thread page where the post id locate.
+Return type is ThreadPage.

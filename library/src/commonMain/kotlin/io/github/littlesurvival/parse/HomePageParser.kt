@@ -40,14 +40,14 @@ class HomePageParser : Parser<HomePage> {
                     val iconUrl = li.select(".micon img").attr("src").ifEmpty { null }
 
                     forums.add(
-                            ForumSummary(
-                                    fid = fid,
-                                    name = name,
-                                    url = url,
-                                    description = description,
-                                    todayCount = todayCount,
-                                    iconUrl = iconUrl
-                            )
+                        ForumSummary(
+                            fid = fid,
+                            name = name,
+                            url = url,
+                            description = description,
+                            todayCount = todayCount,
+                            iconUrl = iconUrl
+                        )
                     )
                 }
                 if (title.isNotEmpty()) {
@@ -58,14 +58,14 @@ class HomePageParser : Parser<HomePage> {
             // --- Yearly Summary ---
             val summaryImg = doc.select("img[alt*=年度总结]").firstOrNull()
             val yearlySummary =
-                    summaryImg?.let { img ->
-                        val link = img.parent()?.attr("href") ?: ""
-                        YearlySummary(
-                                name = img.attr("alt"),
-                                imageLink = img.attr("src"),
-                                activityLink = link
-                        )
-                    }
+                summaryImg?.let { img ->
+                    val link = img.parent()?.attr("href") ?: ""
+                    YearlySummary(
+                        name = img.attr("alt"),
+                        imageLink = img.attr("src"),
+                        activityLink = link
+                    )
+                }
 
             ParseResult.Success(HomePage(categories = categories, yearlySummary = yearlySummary))
         } catch (e: Exception) {

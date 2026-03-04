@@ -1,5 +1,6 @@
 import com.android.build.api.dsl.androidLibrary
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -10,8 +11,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-
-version = "1.0.5"
+version = "1.0.6"
 
 kotlin {
     jvm()
@@ -61,7 +61,7 @@ mavenPublishing {
         name = "yamibo-api"
         description = "Yamibo API library."
         inceptionYear = "2026"
-        url = "https://github.com/kotlin/multiplatform-library-template/"
+        url = "https://github.com/LittleSurvival/yamibo-api"
         licenses {
             license {
                 name = "The Apache License, Version 2.0"

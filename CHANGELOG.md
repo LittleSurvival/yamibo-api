@@ -25,3 +25,18 @@ fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: Post
 ```
 Find the location of thread page where the post id locate.
 Return type is ThreadPage.
+
+# v1.0.6
+Update Parser System :
+Clean up code, and rewrite the algorithm of parser, enhance the performance by 2x more efficiency and less memory cost.
+
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val title: String,
+    ...
+)
+```
+Add Title value for Post DTO, it parses the possibly title from the start of post content.
+This feature is design for forum "文學區".

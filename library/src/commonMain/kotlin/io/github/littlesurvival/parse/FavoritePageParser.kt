@@ -17,23 +17,22 @@ class FavoritePageParser : Parser<FavoritePage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
             // --- Favorite type ---
-            // The active tab has class "mon"; its text maps to a FavoriteType.
-            val activeTab = doc.select("#dhnav_li a.mon").first()
+            val activeTab = doc.selectFirst("#dhnav_li a.mon")
             val activeTabText = activeTab?.text()?.trim() ?: ""
             val type =
-                    FavoriteType.entries.firstOrNull { it.typeName == activeTabText }
-                            ?: FavoriteType.Thread // default
+                FavoriteType.entries.firstOrNull { it.typeName == activeTabText }
+                    ?: FavoriteType.Thread
 
             // --- Favorite items ---
             val items = mutableListOf<FavoriteItem>()
             val itemEls = doc.select(".findbox ul li.sclist")
             for (li in itemEls) {
                 // Delete link
-                val deleteLink = li.select("a.mdel").first() ?: continue
+                val deleteLink = li.selectFirst("a.mdel") ?: continue
                 val deleteUrl = deleteLink.attr("href")
 
                 // Content link (the second <a>, not the delete one)
-                val contentLink = li.select("a:not(.mdel)").first() ?: continue
+                val contentLink = li.selectFirst("a:not(.mdel)") ?: continue
                 val url = contentLink.attr("href")
                 val name = contentLink.text().trim()
 

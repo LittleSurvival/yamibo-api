@@ -10,61 +10,66 @@ import io.github.littlesurvival.dto.value.UserId
 /** Shared parsing utilities used by multiple parsers. */
 object ParseUtils {
 
+    // Pre-compiled regex patterns for URL extraction
+    private val FID_RE = Regex("[?&]fid=(\\d+)")
+    private val TID_QUERY_RE = Regex("[?&]tid=(\\d+)")
+    private val TID_PATH_RE = Regex("thread-(\\d+)-")
+    private val UID_QUERY_RE = Regex("[?&]uid=(\\d+)")
+    private val UID_PATH_RE = Regex("uid-(\\d+)")
+    private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
+    private val PAGE_NUMBER_RE = Regex("(\\d+)")
+
     /** Extract forum id (fid) from a URL query parameter. */
     fun extractFid(url: String): ForumId? {
-        val regex = Regex("[?&]fid=(\\d+)")
-        return regex.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ForumId(it) }
+        return FID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ForumId(it) }
     }
 
     /** Extract thread id (tid) from a URL (query param or SEO path). */
     fun extractTid(url: String): ThreadId? {
-        val queryMatch = Regex("[?&]tid=(\\d+)").find(url)
+        val queryMatch = TID_QUERY_RE.find(url)
         if (queryMatch != null) return queryMatch.groupValues[1].toIntOrNull()?.let { ThreadId(it) }
-        val pathMatch = Regex("thread-(\\d+)-").find(url)
-        return pathMatch?.groupValues?.get(1)?.toIntOrNull()?.let { ThreadId(it) }
+        return TID_PATH_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ThreadId(it) }
     }
 
     /** Extract user id (uid) from a URL (query param or SEO path). */
     internal fun extractUid(url: String): UserId? {
-        val queryMatch = Regex("[?&]uid=(\\d+)").find(url)
+        val queryMatch = UID_QUERY_RE.find(url)
         if (queryMatch != null) return queryMatch.groupValues[1].toIntOrNull()?.let { UserId(it) }
-        val pathMatch = Regex("uid-(\\d+)").find(url)
-        return pathMatch?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
+        return UID_PATH_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
     }
 
     /** Extract user id (uid) from a script string (e.g., discuz_uid = '123'). */
     internal fun extractUidFromScript(script: String): UserId? {
-        val regex = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
-        return regex.find(script)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
+        return UID_SCRIPT_RE.find(script)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
     }
 
     /** Parse pagination from `.pg` widget. */
     internal fun parsePageNav(doc: Document): PageNav? {
-        val pgDiv = doc.select(".pg").first() ?: return null
+        val pgDiv = doc.selectFirst(".pg") ?: return null
 
-        val nextUrl = pgDiv.select("a.nxt").attr("href").ifEmpty { null }
-        val prevUrl = pgDiv.select("a.prev").attr("href").ifEmpty { null }
+        val nextUrl = pgDiv.selectFirst("a.nxt")?.attr("href")?.ifEmpty { null }
+        val prevUrl = pgDiv.selectFirst("a.prev")?.attr("href")?.ifEmpty { null }
 
         // Current page: <strong>1</strong> inside .pg
         val currentPage =
-                pgDiv.select("strong").first()?.text()?.trim()?.toIntOrNull()
-                        ?: pgDiv.select("input.px").first()?.attr("value")?.toIntOrNull()
+            pgDiv.selectFirst("strong")?.text()?.trim()?.toIntOrNull()
+                ?: pgDiv.selectFirst("input.px")?.attr("value")?.toIntOrNull()
 
         // Total pages: <span title="共 N 页"> / N 页</span> inside .pg label
         val totalPages =
-                pgDiv.select("label span").first()?.let { span ->
-                    val titleAttr = span.attr("title") // e.g. "共 62 页"
-                    val text = titleAttr.ifEmpty { span.text() } // fallback to text content
-                    Regex("(\\d+)").findAll(text).lastOrNull()?.value?.toIntOrNull()
-                }
+            pgDiv.selectFirst("label span")?.let { span ->
+                val titleAttr = span.attr("title") // e.g. "共 62 页"
+                val text = titleAttr.ifEmpty { span.text() }
+                PAGE_NUMBER_RE.findAll(text).lastOrNull()?.value?.toIntOrNull()
+            }
 
         return if (nextUrl != null || prevUrl != null || currentPage != null || totalPages != null
         ) {
             PageNav(
-                    nextUrl = nextUrl,
-                    prevUrl = prevUrl,
-                    currentPage = currentPage,
-                    totalPages = totalPages
+                nextUrl = nextUrl,
+                prevUrl = prevUrl,
+                currentPage = currentPage,
+                totalPages = totalPages
             )
         } else null
     }
@@ -73,26 +78,25 @@ object ParseUtils {
      * Detect whether the HTML is a "not logged in" / session-expired page.
      *
      * Works for both mobile and desktop variants:
-     * - Mobile: login form page with `pg_logging` body class, placeholder "请输入用户名/Email/UID"
+     * - Mobile: login form page with `pg_logging` body class
      * - Desktop: message page with text "您尚未登录" or "没有权限访问"
      * - Either: `discuz_uid = '0'` combined with login-related indicators
      */
     internal fun isNotLoggedIn(doc: Document): Boolean {
         // Mobile: body has class pg_logging (login page redirect)
-        val body = doc.select("body").first()
+        val body = doc.selectFirst("body")
         if (body != null && body.hasClass("pg_logging")) return true
 
         // Mobile: login form with username placeholder
-        val loginInput = doc.select("input[placeholder=请输入用户名/Email/UID]")
-        if (loginInput.isNotEmpty()) return true
+        if (doc.selectFirst("input[placeholder=请输入用户名/Email/UID]") != null) return true
 
         // Desktop: message text indicating not logged in
-        val messageText = doc.select("#messagetext").text()
+        val messageText = doc.selectFirst("#messagetext")?.text() ?: ""
         if (messageText.contains("尚未登录") || messageText.contains("没有权限访问")) return true
 
         // Desktop: login form present in #messagelogin area
-        val messageLogin = doc.select("#messagelogin")
-        if (messageLogin.isNotEmpty() && doc.select("#main_message").isNotEmpty()) return true
+        if (doc.selectFirst("#messagelogin") != null && doc.selectFirst("#main_message") != null)
+            return true
 
         return false
     }
@@ -105,9 +109,9 @@ object ParseUtils {
      * - A wrapper div with an image alt text "每日维护"
      */
     internal fun isMaintenance(doc: Document): Boolean =
-            doc.title().contains("每日维护") ||
-                    doc.select("img[alt*=每日维护]").isNotEmpty() ||
-                    doc.select("img[src*='backup01.jpg']").isNotEmpty()
+        doc.title().contains("每日维护") ||
+            doc.selectFirst("img[alt*=每日维护]") != null ||
+            doc.selectFirst("img[src*='backup01.jpg']") != null
 
     internal fun isMaintenance(html: String?): Boolean {
         return try {

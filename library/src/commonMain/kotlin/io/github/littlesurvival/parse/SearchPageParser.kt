@@ -18,29 +18,22 @@ class SearchPageParser : Parser<SearchPage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
             // Query
-            val query = doc.select(".threadlist_box h2 em .emfont").first()?.text() ?: ""
+            val query = doc.selectFirst(".threadlist_box h2 em .emfont")?.text() ?: ""
 
             // Total result count
             val totalCount =
-                doc.select(".threadlist_box h2 em").first()?.text()?.let {
-                    Regex("(\\d+)\\s*个").find(it)?.groupValues?.get(1)?.toIntOrNull()
+                doc.selectFirst(".threadlist_box h2 em")?.text()?.let {
+                    TOTAL_COUNT_RE.find(it)?.groupValues?.get(1)?.toIntOrNull()
                 }
                     ?: 0
 
-            // Search ID
+            // Search ID — try pagination links first,
+            // then fall back to raw HTML scan.
             val searchIdValue =
                 doc.select(".pg a").firstNotNullOfOrNull {
-                    Regex("searchid=(\\d+)")
-                        .find(it.attr("href"))
-                        ?.groupValues
-                        ?.get(1)
-                        ?.toIntOrNull()
+                    SEARCH_ID_RE.find(it.attr("href"))?.groupValues?.get(1)?.toIntOrNull()
                 }
-                    ?: Regex("searchid=(\\d+)")
-                        .find(html)
-                        ?.groupValues
-                        ?.get(1)
-                        ?.toIntOrNull()
+                    ?: SEARCH_ID_RE.find(html)?.groupValues?.get(1)?.toIntOrNull()
             val searchId = searchIdValue?.let { SearchId(it) }
 
             // Thread list
@@ -48,21 +41,21 @@ class SearchPageParser : Parser<SearchPage> {
             val items = doc.select(".threadlist li.list")
             for (item in items) {
                 // Thread URL and tid
-                val threadLink = item.select("a[href*=viewthread]").first() ?: continue
+                val threadLink = item.selectFirst("a[href*=viewthread]") ?: continue
                 val threadUrl = threadLink.attr("href")
                 val tid = ParseUtils.extractTid(threadUrl) ?: continue
 
-                // Title: <em> inside .threadlist_tit
-                val title = item.select(".threadlist_tit em").first()?.text()?.trim() ?: ""
+                // Title
+                val title = item.selectFirst(".threadlist_tit em")?.text()?.trim() ?: ""
 
                 // Special tag (e.g. "投票")
-                val tag = item.select(".threadlist_tit .micon").first()?.text()?.trim()
+                val tag = item.selectFirst(".threadlist_tit .micon")?.text()?.trim()
 
                 // Author info
-                val authorLink = item.select(".threadlist_top .muser h3 a.mmc").first()
+                val authorLink = item.selectFirst(".threadlist_top .muser h3 a.mmc")
                 val authorName = authorLink?.text()?.trim() ?: ""
                 val authorUid = authorLink?.attr("href")?.let { ParseUtils.extractUid(it) }
-                val avatarUrl = item.select(".threadlist_top .mimg img").first()?.attr("src")
+                val avatarUrl = item.selectFirst(".threadlist_top .mimg img")?.attr("src")
 
                 val author =
                     if (authorUid != null) {
@@ -70,41 +63,35 @@ class SearchPageParser : Parser<SearchPage> {
                     } else null
 
                 // Time
-                val timeText = item.select(".muser .mtime").first()?.text()?.trim()
+                val timeText = item.selectFirst(".muser .mtime")?.text()?.trim()
 
                 // Description / preview
                 val description =
-                    item.select(".threadlist_mes").first()?.text()?.trim()?.ifEmpty { null }
+                    item.selectFirst(".threadlist_mes")?.text()?.trim()?.ifEmpty { null }
+
+                // Footer stats — query once, not twice
+                val footItems = item.select(".threadlist_foot li")
 
                 // Forum tag (e.g. "動漫區")
                 val forumTag =
-                    item.select(".threadlist_foot li.mr a")
-                        .first()
+                    footItems
+                        .firstOrNull { it.hasClass("mr") }
+                        ?.selectFirst("a")
                         ?.text()
                         ?.trim()
                         ?.removePrefix("#")
 
                 // View count
-                val viewCount =
-                    item.select(".threadlist_foot li").let { lis ->
-                        lis
-                            .find { it.select("i.dm-eye-fill").isNotEmpty() }
-                            ?.text()
-                            ?.trim()
-                            ?.replace(Regex("[^0-9]"), "")
-                            ?.toIntOrNull()
+                var viewCount: Int? = null
+                var replyCount: Int? = null
+                for (li in footItems) {
+                    if (viewCount == null && li.selectFirst("i.dm-eye-fill") != null) {
+                        viewCount = li.text().trim().replace(NON_DIGIT_RE, "").toIntOrNull()
+                    } else if (replyCount == null && li.selectFirst("i.dm-chat-s-fill") != null) {
+                        replyCount = li.text().trim().replace(NON_DIGIT_RE, "").toIntOrNull()
                     }
-
-                // Reply count
-                val replyCount =
-                    item.select(".threadlist_foot li").let { lis ->
-                        lis
-                            .find { it.select("i.dm-chat-s-fill").isNotEmpty() }
-                            ?.text()
-                            ?.trim()
-                            ?.replace(Regex("[^0-9]"), "")
-                            ?.toIntOrNull()
-                    }
+                    if (viewCount != null && replyCount != null) break
+                }
 
                 threads.add(
                     ThreadSummary(
@@ -136,5 +123,11 @@ class SearchPageParser : Parser<SearchPage> {
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse search page", e)
         }
+    }
+
+    companion object {
+        private val TOTAL_COUNT_RE = Regex("(\\d+)\\s*个")
+        private val SEARCH_ID_RE = Regex("searchid=(\\d+)")
+        private val NON_DIGIT_RE = Regex("[^0-9]")
     }
 }

@@ -1,6 +1,8 @@
 package io.github.littlesurvival.parse
 
 import com.fleeksoft.ksoup.Ksoup
+import com.fleeksoft.ksoup.nodes.Element
+import com.fleeksoft.ksoup.nodes.TextNode
 import io.github.littlesurvival.Parser
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.*
@@ -20,8 +22,8 @@ class ThreadPageParser : Parser<ThreadPage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
             // Thread info
-            val viewTit = doc.select(".view_tit").first()
-            val categoryTag = viewTit?.select("em")?.text()?.trim()?.ifEmpty { null }
+            val viewTit = doc.selectFirst(".view_tit")
+            val categoryTag = viewTit?.selectFirst("em")?.text()?.trim()?.ifEmpty { null }
             val fullTitle = viewTit?.text()?.trim() ?: ""
             val title =
                 if (categoryTag != null) {
@@ -30,42 +32,35 @@ class ThreadPageParser : Parser<ThreadPage> {
                     fullTitle
                 }
 
-            val canonicalUrl = doc.select("link[rel=canonical]").attr("href")
+            val canonicalUrl = doc.selectFirst("link[rel=canonical]")?.attr("href") ?: ""
             val tid =
                 ParseUtils.extractTid(canonicalUrl)
-                    ?: doc.select(".plc")
-                        .first()
+                    ?: doc.selectFirst(".plc")
                         ?.attr("id")
                         ?.removePrefix("pid")
                         ?.toIntOrNull()
                         ?.let { ThreadId(it) }
                     ?: ThreadId(0)
 
-            val forumLink = doc.select(".header h2 a").first()
+            val forumLink = doc.selectFirst(".header h2 a")
             val forumName = forumLink?.text()?.trim() ?: ""
             val forumUrl = forumLink?.attr("href") ?: ""
             val forumFid = ParseUtils.extractFid(forumUrl) ?: ForumId(0)
 
             // Total views and replies (from first post's metadata)
-            val firstPostMtime = doc.select(".plc .mtime .y").first()
+            val firstPostMtime = doc.selectFirst(".plc .mtime .y")
             val viewReplyEms = firstPostMtime?.select("em")
             val totalViews = viewReplyEms?.getOrNull(0)?.text()?.trim()?.toIntOrNull()
             val totalReplies = viewReplyEms?.getOrNull(1)?.text()?.trim()?.toIntOrNull()
 
-            //Reply URL
-            val replyLinkEl = doc.select("a.viewt-reply").first()
-            val replyUrl = replyLinkEl?.attr("href")?.ifEmpty { null }
+            // Reply URL
+            val replyUrl = doc.selectFirst("a.viewt-reply")?.attr("href")?.ifEmpty { null }
 
             val threadInfo =
                 ThreadInfo(
                     tid = tid,
                     title = title,
-                    forum =
-                        ForumSummary(
-                            fid = forumFid,
-                            name = forumName,
-                            url = forumUrl
-                        ),
+                    forum = ForumSummary(fid = forumFid, name = forumName, url = forumUrl),
                     categoryTag = categoryTag,
                     totalReplies = totalReplies,
                     totalViews = totalViews,
@@ -79,52 +74,47 @@ class ThreadPageParser : Parser<ThreadPage> {
                 val pidStr = postEl.attr("id").removePrefix("pid")
                 val pid = PostId(pidStr.toIntOrNull() ?: continue)
 
-                val floorText = postEl.select(".authi .mtit .y").text().trim()
+                val floorText = postEl.selectFirst(".authi .mtit .y")?.text()?.trim() ?: ""
                 val floor =
-                    floorText
-                        .replace("#", "")
-                        .replace("\\s".toRegex(), "")
-                        .toIntOrNull()
+                    floorText.replace("#", "").replace(WHITESPACE_RE, "").toIntOrNull()
                         ?: continue
 
-                val authorEl = postEl.select(".authi .z a").first()
+                val authorEl = postEl.selectFirst(".authi .z a")
                 val authorUid =
-                    authorEl?.attr("href")?.let { ParseUtils.extractUid(it) }
-                        ?: UserId(0)
+                    authorEl?.attr("href")?.let { ParseUtils.extractUid(it) } ?: UserId(0)
                 val authorName = authorEl?.text()?.trim() ?: ""
-                val avatarUrl =
-                    postEl.select(".avatar img").attr("src").ifEmpty { null }
-                val author =
-                    User(
-                        uid = authorUid,
-                        name = authorName,
-                        avatarUrl = avatarUrl
-                    )
+                val avatarUrl = postEl.selectFirst(".avatar img")?.attr("src")?.ifEmpty { null }
+                val author = User(uid = authorUid, name = authorName, avatarUrl = avatarUrl)
 
-                val timeEl = postEl.select(".authi .mtime").first()
-                val timeText =
-                    timeEl?.ownText()?.trim() ?: timeEl?.text()?.trim() ?: ""
+                val timeEl = postEl.selectFirst(".authi .mtime")
+                val timeText = timeEl?.ownText()?.trim() ?: timeEl?.text()?.trim() ?: ""
 
-                val pstatus = postEl.select(".message .pstatus").first()
+                val messageEl = postEl.selectFirst(".message")
+                val pstatus = messageEl?.selectFirst(".pstatus")
                 val editedText = pstatus?.text()?.trim()?.ifEmpty { null }
 
-                val messageEl = postEl.select(".message").first()
-                val contentHtml =
-                    if (messageEl != null) {
-                        val clone = messageEl.clone()
-                        clone.select(".pstatus").remove()
-                        clone.html().trim()
-                    } else {
-                        ""
-                    }
+                // Build contentHtml by removing .pstatus
+                // in-place then restoring, avoiding clone.
+                val contentHtml: String
+                if (messageEl != null && pstatus != null) {
+                    pstatus.remove()
+                    contentHtml = messageEl.html().trim()
+                    // Restore pstatus as first child
+                    messageEl.prependChild(pstatus)
+                } else {
+                    contentHtml = messageEl?.html()?.trim() ?: ""
+                }
+
+                // Post title extraction — operates
+                // directly on the live DOM, no clone.
+                val postTitle = extractPostTitle(messageEl)
 
                 val images = mutableListOf<PostImage>()
                 val imgEls = messageEl?.select("img") ?: emptyList()
                 for (img in imgEls) {
                     val src = img.attr("src")
                     if (src.isEmpty()) continue
-                    if (src.contains("static/image/smiley") ||
-                        src.contains("static/image/common")
+                    if (src.contains("static/image/smiley") || src.contains("static/image/common")
                     ) {
                         continue
                     }
@@ -136,19 +126,15 @@ class ThreadPageParser : Parser<ThreadPage> {
                 val attachments = mutableListOf<Attachment>()
                 val attachmentList = postEl.select("ul.post_attlist li.b_t.p5")
                 for (attachmentItem in attachmentList) {
-                    val aTag = attachmentItem.select("a").first() ?: continue
+                    val aTag = attachmentItem.selectFirst("a") ?: continue
                     val url = aTag.attr("href")
-                    val name = attachmentItem.select(".tit .link").text().trim()
+                    val name = attachmentItem.selectFirst(".tit .link")?.text()?.trim() ?: ""
 
                     val pTags = attachmentItem.select(".tit p.pl5.f_9")
-                    val timeUpload =
-                        pTags.first()?.text()?.substringBefore("上传")?.trim()
-                            ?: ""
+                    val timeUpload = pTags.first()?.text()?.substringBefore("上传")?.trim() ?: ""
 
-                    val sizeAndDownloadsText =
-                        pTags.last()?.text()?.trim() ?: ""
-                    val fileSize =
-                        sizeAndDownloadsText.substringBefore(",").trim()
+                    val sizeAndDownloadsText = pTags.last()?.text()?.trim() ?: ""
+                    val fileSize = sizeAndDownloadsText.substringBefore(",").trim()
                     val downloadTimes =
                         sizeAndDownloadsText
                             .substringAfter("下载次数: ")
@@ -169,37 +155,33 @@ class ThreadPageParser : Parser<ThreadPage> {
                     }
                 }
 
-                // Comments (点评) for this post
+                // Comments — search within sibling scope,
+                // not entire document.
                 val comments = mutableListOf<PostComment>()
-                val commentContainer = doc.select("#comment_$pidStr").first()
+                val commentContainer =
+                    postEl.selectFirst("#comment_$pidStr")
+                        ?: postEl.parent()?.selectFirst("#comment_$pidStr")
                 if (commentContainer != null) {
-                    val commentEls =
-                        commentContainer.select("[id^=commentdetail_]")
+                    val commentEls = commentContainer.select("[id^=commentdetail_]")
                     for (commentEl in commentEls) {
-                        val commentAuthorEl =
-                            commentEl.select(".authi .z a").first()
-                        val commentAuthorName =
-                            commentAuthorEl?.text()?.trim() ?: ""
+                        val commentAuthorEl = commentEl.selectFirst(".authi .z a")
+                        val commentAuthorName = commentAuthorEl?.text()?.trim() ?: ""
                         val commentAuthorUid =
-                            commentAuthorEl?.attr("href")?.let {
-                                ParseUtils.extractUid(it)
-                            }
+                            commentAuthorEl?.attr("href")?.let { ParseUtils.extractUid(it) }
                                 ?: UserId(0)
                         val commentAvatarUrl =
                             commentEl
-                                .select(".avatar img, .user_avatar")
-                                .attr("src")
-                                .ifEmpty { null }
+                                .selectFirst(".avatar img, .user_avatar")
+                                ?.attr("src")
+                                ?.ifEmpty { null }
                         val commentUser =
                             User(
                                 uid = commentAuthorUid,
                                 name = commentAuthorName,
                                 avatarUrl = commentAvatarUrl
                             )
-                        val commentTimeText =
-                            commentEl.select(".mtime").text().trim()
-                        val commentMessage =
-                            commentEl.select(".mtxt").text().trim()
+                        val commentTimeText = commentEl.selectFirst(".mtime")?.text()?.trim() ?: ""
+                        val commentMessage = commentEl.selectFirst(".mtxt")?.text()?.trim() ?: ""
                         if (commentMessage.isNotEmpty()) {
                             comments.add(
                                 PostComment(
@@ -212,78 +194,51 @@ class ThreadPageParser : Parser<ThreadPage> {
                     }
                 }
 
-                // Rates (评分) for this post
+                // Rates — search within sibling scope,
+                // not entire document.
                 val rates = mutableListOf<PostRate>()
                 var rateParticipatePeople = 0
                 var rateTotalScore = 0
-                val rateContainer = doc.select("#ratelog_$pidStr").first()
+                val rateContainer =
+                    postEl.selectFirst("#ratelog_$pidStr")
+                        ?: postEl.parent()?.selectFirst("#ratelog_$pidStr")
                 if (rateContainer != null) {
                     val rateItems = rateContainer.select("li.flex-box.mli.p0")
                     for (rateItem in rateItems) {
-                        // Skip header row (contains 参与人数) and footer row
-                        // (contains 查看全部评分)
+                        // Skip header row and footer row
                         val headerCheck = rateItem.select(".xw1").text()
-                        if (headerCheck.contains("参与人数") ||
-                            headerCheck.contains("理由")
-                        ) {
+                        if (headerCheck.contains("参与人数") || headerCheck.contains("理由")) {
                             if (headerCheck.contains("参与人数")) {
-                                val spans =
-                                    rateItem.select("span.xi1")
+                                val spans = rateItem.select("span.xi1")
                                 rateParticipatePeople =
                                     spans.getOrNull(0)
                                         ?.text()
-                                        ?.replace(
-                                            Regex(
-                                                "[^\\d]"
-                                            ),
-                                            ""
-                                        )
+                                        ?.replace(NON_DIGIT_RE, "")
                                         ?.toIntOrNull()
                                         ?: 0
                                 rateTotalScore =
                                     spans.getOrNull(1)
                                         ?.text()
-                                        ?.replace(
-                                            Regex(
-                                                "[^\\d\\-\\+]"
-                                            ),
-                                            ""
-                                        )
+                                        ?.replace(NON_DIGIT_SIGN_RE, "")
                                         ?.toIntOrNull()
                                         ?: 0
                             }
                             continue
                         }
-                        if (rateItem.select(".dialog").isNotEmpty())
-                            continue
+                        if (rateItem.selectFirst(".dialog") != null) continue
 
                         val rateUserName =
-                            rateItem.select(".flex-2 a")
-                                .first()
-                                ?.text()
-                                ?.trim()
-                                ?: continue
+                            rateItem.selectFirst(".flex-2 a")?.text()?.trim() ?: continue
                         val rateScoreText =
-                            rateItem.select(".xi1")
-                                .text()
-                                .trim()
-                                .ifEmpty {
-                                    rateItem.select(
-                                        ".flex-2.xs1.xi1"
-                                    )
-                                        .text()
-                                        .trim()
-                                }
+                            rateItem.selectFirst(".xi1")?.text()?.trim()?.ifEmpty {
+                                rateItem.selectFirst(".flex-2.xs1.xi1")?.text()?.trim() ?: ""
+                            }
+                                ?: ""
                         val rateScore =
-                            rateScoreText
-                                .replace(Regex("[^\\d\\-]"), "")
-                                .toIntOrNull()
-                                ?: 0
+                            rateScoreText.replace(NON_DIGIT_MINUS_RE, "").toIntOrNull() ?: 0
                         val rateReason =
-                            rateItem.select(".flex-3")
-                                .text()
-                                .trim()
-                                .ifEmpty { "" }
+                            rateItem.selectFirst(".flex-3")?.text()?.trim()?.ifEmpty { "" }
+                                ?: ""
                         rates.add(
                             PostRate(
                                 userName = rateUserName,
@@ -298,6 +253,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                     Post(
                         pid = pid,
                         floor = floor,
+                        title = postTitle,
                         author = author,
                         timeText = timeText,
                         editedText = editedText,
@@ -308,8 +264,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                         rateBlock =
                             RateBlock(
                                 rates = rates,
-                                rateParticipatePeople =
-                                    rateParticipatePeople,
+                                rateParticipatePeople = rateParticipatePeople,
                                 rateTotalScore = rateTotalScore
                             )
                     )
@@ -319,11 +274,178 @@ class ThreadPageParser : Parser<ThreadPage> {
             // --- Pagination ---
             val pageNav = ParseUtils.parsePageNav(doc)
 
-            ParseResult.Success(
-                ThreadPage(thread = threadInfo, posts = posts, pageNav = pageNav)
-            )
+            ParseResult.Success(ThreadPage(thread = threadInfo, posts = posts, pageNav = pageNav))
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse thread page", e)
+        }
+    }
+
+    companion object {
+
+        // Pre-compiled regex — avoids recompilation per call.
+        private val WHITESPACE_RE = Regex("\\s")
+        private val NON_DIGIT_RE = Regex("\\D")
+        private val NON_DIGIT_SIGN_RE = Regex("[^\\d\\-+]")
+        private val NON_DIGIT_MINUS_RE = Regex("[^\\d\\-]")
+
+        // Regex for text that is only decorative symbols
+        private val DECORATIVE_ONLY = Regex("^[#&*\\-=~_./|\\\\·•◆◇■□▲△○●★☆]+$")
+
+        // Regex for chapter number (e.g. "1", "42", "A44")
+        private val CHAPTER_NUMBER = Regex("^[A-Za-z]?\\d{1,4}$")
+
+        // Inline tags that are content wrappers
+        private val INLINE_WRAPPERS = setOf("span", "font", "div", "p")
+
+        // Tags to skip during title scanning
+        private val SKIP_CLASSES = setOf("pstatus", "showcollapse_box", "quote")
+
+        /**
+         * Extract post title directly from the live message element — no clone/removal needed.
+         *
+         * Walks top-level children, skipping .pstatus, .showcollapse_box, .quote, and <br> tags.
+         * Single-pass: checks <strong>/<h2> first, then collects fragments for chapter pattern.
+         */
+        internal fun extractPostTitle(messageEl: Element?): String {
+            if (messageEl == null) return ""
+
+            // Single pass: collect fragments while
+            // also checking for <strong>/<h2> title.
+            val fragments = mutableListOf<String>()
+            var foundStrongTitle: String? = null
+
+            scanForTitle(
+                messageEl,
+                fragments,
+                maxFragments = 6,
+                onStrongFound = { title ->
+                    if (foundStrongTitle == null) {
+                        foundStrongTitle = title
+                    }
+                }
+            )
+
+            // <strong>/<h2> title takes priority
+            foundStrongTitle?.let {
+                return it
+            }
+
+            if (fragments.isEmpty()) return ""
+
+            // Detect "#N#" chapter pattern
+            detectChapterPattern(fragments)?.let {
+                return it
+            }
+
+            // Fall back to first meaningful fragment
+            return fragments.firstOrNull { isMeaningfulTitle(it) } ?: ""
+        }
+
+        /**
+         * Single-pass scan of element children. Skips .pstatus, .showcollapse_box, .quote. Reports
+         * <strong>/<h2> hits via callback. Collects text fragments for pattern matching.
+         */
+        private fun scanForTitle(
+            el: Element,
+            fragments: MutableList<String>,
+            maxFragments: Int,
+            onStrongFound: (String) -> Unit,
+            strongSearchActive: Boolean = true
+        ) {
+            for (node in el.childNodes()) {
+                if (fragments.size >= maxFragments) return
+
+                // Skip <br>
+                if (node is Element && node.tagName() == "br") continue
+
+                // Skip noise elements by class
+                if (node is Element && shouldSkipElement(node)) continue
+
+                if (node is TextNode) {
+                    val t = node.text().trim()
+                    if (t.isEmpty()) continue
+                    fragments.add(t)
+                    // If we hit meaningful text before
+                    // finding <strong>, stop looking.
+                    // (decorative text like "#" is ok)
+                    continue
+                }
+
+                if (node is Element) {
+                    val tag = node.tagName()
+
+                    // Check for <strong> / <h2> title
+                    if (strongSearchActive) {
+                        if (tag == "strong" || tag == "h2") {
+                            val t = node.text().trim()
+                            if (isMeaningfulTitle(t)) {
+                                onStrongFound(t)
+                                return
+                            }
+                        }
+                        // Check nested <strong>/<h2>
+                        val strong = node.selectFirst("strong, h2")
+                        if (strong != null) {
+                            val t = strong.text().trim()
+                            if (isMeaningfulTitle(t)) {
+                                onStrongFound(t)
+                                return
+                            }
+                        }
+                    }
+
+                    // For inline wrappers, recurse into
+                    // children for fragment collection
+                    if (tag in INLINE_WRAPPERS) {
+                        scanForTitle(
+                            node,
+                            fragments,
+                            maxFragments,
+                            onStrongFound,
+                            strongSearchActive = strongSearchActive
+                        )
+                    } else {
+                        val t = node.text().trim()
+                        if (t.isNotEmpty()) fragments.add(t)
+                    }
+                }
+            }
+        }
+
+        /** Check if an element should be skipped */
+        private fun shouldSkipElement(el: Element): Boolean {
+            val cls = el.className()
+            if (cls.isEmpty()) return false
+            return SKIP_CLASSES.any { cls.contains(it) }
+        }
+
+        /** Detect "#N#" or "#N" chapter patterns */
+        private fun detectChapterPattern(fragments: List<String>): String? {
+            if (fragments.size < 2) return null
+            if (fragments.size >= 3 &&
+                DECORATIVE_ONLY.matches(fragments[0]) &&
+                CHAPTER_NUMBER.matches(fragments[1]) &&
+                DECORATIVE_ONLY.matches(fragments[2])
+            ) {
+                return fragments[1]
+            }
+            if (DECORATIVE_ONLY.matches(fragments[0]) && CHAPTER_NUMBER.matches(fragments[1])) {
+                return fragments[1]
+            }
+            return null
+        }
+
+        private fun Char.isCJK(): Boolean {
+            val code = this.code
+            return code in 0x4E00..0x9FFF || code in 0x3400..0x4DBF || code in 0xF900..0xFAFF
+        }
+
+        /** Check if text is meaningful enough to be a title */
+        private fun isMeaningfulTitle(text: String): Boolean {
+            if (text.isEmpty()) return false
+            if (DECORATIVE_ONLY.matches(text)) return false
+            if (text.length == 1) return text[0].isCJK()
+            return true
         }
     }
 }

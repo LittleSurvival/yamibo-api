@@ -17,14 +17,13 @@ class ProfilePageParser : Parser<ProfilePage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
 
             // --- Username from avatar section ---
-            val username = doc.select(".avatar_bg .name").text().trim()
+            val username = doc.selectFirst(".avatar_bg .name")?.text()?.trim() ?: ""
 
             // --- Avatar URL ---
             val avatarUrl =
-                doc.select(".avatar_m img")
-                    .attr("src")
-                    .substringBefore("?")
-                    .ifEmpty { null }
+                doc.selectFirst(".avatar_m img")?.attr("src")?.substringBefore("?")?.ifEmpty {
+                    null
+                }
 
             // --- Credits / Points from user_box ---
             val creditItems = doc.select(".user_box li")
@@ -34,7 +33,7 @@ class ProfilePageParser : Parser<ProfilePage> {
 
             for (li in creditItems) {
                 val text = li.text()
-                val spanText = li.select("span").text().trim()
+                val spanText = li.selectFirst("span")?.text()?.trim() ?: ""
                 val value = spanText.replace("点", "").trim().toIntOrNull() ?: 0
 
                 when {
@@ -56,12 +55,14 @@ class ProfilePageParser : Parser<ProfilePage> {
 
             for (li in infoItems) {
                 val label = li.ownText().trim()
-                val value = li.select("span").text().trim()
+                val value = li.selectFirst("span")?.text()?.trim() ?: ""
 
                 when {
                     label == "UID" -> uid = UserId(value.toIntOrNull() ?: 0)
                     label.contains("用户组") || label.contains("用戶組") ->
-                        userGroup = li.select("span font").text().trim().ifEmpty { value }
+                        userGroup =
+                            li.selectFirst("span font")?.text()?.trim()?.ifEmpty { value }
+                                ?: value
 
                     label.contains("性别") || label.contains("性別") -> gender = value.ifEmpty { null }
                     label.contains("生日") -> birthday = value.takeIf { it != "-" && it.isNotEmpty() }
@@ -78,16 +79,13 @@ class ProfilePageParser : Parser<ProfilePage> {
                 }
             }
 
-            // --- Form Hash from logout link ---
+            // --- Form Hash from input or logout link ---
             val formHash =
-                doc.select("input[name=formhash]")
-                    .attr("value")
-                    .ifEmpty {
-                        // Fallback: extract from logout link
-                        val logoutHref = doc.select(".btn_exit a").attr("href")
-                        Regex("formhash=([a-f0-9]+)").find(logoutHref)?.groupValues?.get(1)
+                doc.selectFirst("input[name=formhash]")?.attr("value")?.ifEmpty { null }
+                    ?: doc.selectFirst(".btn_exit a")?.attr("href")?.let {
+                        FORMHASH_RE.find(it)?.groupValues?.get(1)
                     }
-                    ?.let { FormHash(it) }
+            val formHashValue = formHash?.let { FormHash(it) }
 
             ParseResult.Success(
                 ProfilePage(
@@ -103,11 +101,15 @@ class ProfilePageParser : Parser<ProfilePage> {
                     onlineHours = onlineHours,
                     registerTime = registerTime,
                     lastVisit = lastVisit,
-                    formHash = formHash
+                    formHash = formHashValue
                 )
             )
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse profile page", e)
         }
+    }
+
+    companion object {
+        private val FORMHASH_RE = Regex("formhash=([a-f0-9]+)")
     }
 }

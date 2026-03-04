@@ -91,6 +91,17 @@ data class Post(
     val floor: Int,
 
     /**
+     * Post Title.
+     *
+     * By parsing tons of examples, found a rule for getting the post title.
+     *
+     * This feature is basically only for novel forum.
+     *
+     * Example: 不共戴天的银发千金
+     */
+    val title: String,
+
+    /**
      * Post author.
      *
      * Should include uid/name/avatarUrl when available.

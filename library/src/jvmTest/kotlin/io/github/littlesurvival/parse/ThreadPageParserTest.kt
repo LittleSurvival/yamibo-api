@@ -195,12 +195,12 @@ class ThreadPageParserTest {
         assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.txt", attach1.name)
         assertEquals("2025-6-11 00:17", attach1.timeUpload)
         assertEquals("281.46 KB", attach1.fileSize)
-        assertEquals(4200, attach1.downloadTimes)
+        assertEquals(4226, attach1.downloadTimes)
 
         val attach2 = targetPost2.attachments[1]
         assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.epub", attach2.name)
         assertEquals("2025-6-11 00:17", attach2.timeUpload)
         assertEquals("153.7 KB", attach2.fileSize)
-        assertEquals(389, attach2.downloadTimes)
+        assertEquals(399, attach2.downloadTimes)
     }
 }

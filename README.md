@@ -4,8 +4,8 @@
 [![Version](https://img.shields.io/badge/version-1.0.3-green.svg)]()
 
 [English](#english-version) | [中文](#traditional-chinese-version)
-
 ---
+<h2 id="english-version"> </h2>
 A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client library for the Yamibo forum. `yamibo-api` handles network requests, session management, and HTML parsing, translating complex forum data into highly accessible, strongly-typed Kotlin Data Transfer Objects (DTOs) for Android, iOS, and JVM.
 
 ### ✨ Features
@@ -148,6 +148,7 @@ suspend fun interact() {
 
 ---
 
+<h2 id="traditional-chinese-version"> </h2>
 <br>
 這是一個專為 Yamibo 百合會論壇設計的 Kotlin Multiplatform (KMP) 客戶端函式庫。`yamibo-api` 處理了所有底層的網路請求、連線階段管理以及繁瑣的 HTML 結構解析，並將論壇資料轉換為強型別且易用的 Kotlin 資料傳輸物件 (DTO)，完美支援 Android、iOS 以及 JVM 平台。
 

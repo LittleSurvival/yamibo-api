@@ -31,7 +31,7 @@ Add the dependency to your `build.gradle.kts`:
 
 ```kotlin
 dependencies {
-    implementation("io.github.littlesurvival:yamibo-api:1.0.3")
+    implementation("io.github.littlesurvival:yamibo-api:1.0.5")
 }
 ```
 
@@ -42,7 +42,7 @@ Include the following in your `pom.xml`:
 <dependency>
     <groupId>io.github.littlesurvival</groupId>
     <artifactId>yamibo-api</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 
@@ -177,7 +177,7 @@ suspend fun interact() {
 
 ```kotlin
 dependencies {
-    implementation("io.github.littlesurvival:yamibo-api:1.0.3")
+    implementation("io.github.littlesurvival:yamibo-api:1.0.5")
 }
 ```
 
@@ -188,7 +188,7 @@ dependencies {
 <dependency>
     <groupId>io.github.littlesurvival</groupId>
     <artifactId>yamibo-api</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.5</version>
 </dependency>
 ```
 

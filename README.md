@@ -3,12 +3,9 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
 [![Version](https://img.shields.io/badge/version-1.0.3-green.svg)]()
 
-[English Version](#english-version) | [中文版](#traditional-chinese-version)
+[English](#english-version) | [中文](#traditional-chinese-version)
 
 ---
-
-<h2 id="english-version">English Version</h2>
-
 A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client library for the Yamibo forum. `yamibo-api` handles network requests, session management, and HTML parsing, translating complex forum data into highly accessible, strongly-typed Kotlin Data Transfer Objects (DTOs) for Android, iOS, and JVM.
 
 ### ✨ Features
@@ -29,7 +26,7 @@ A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client libra
 #### Gradle (Kotlin DSL)
 Add the dependency to your `build.gradle.kts`:
 
-```kotlin
+```kotlin notebook
 dependencies {
     implementation("io.github.littlesurvival:yamibo-api:1.0.5")
 }
@@ -51,7 +48,7 @@ Include the following in your `pom.xml`:
 #### 1. Initialization & Authentication
 The entry point of the library is the `YamiboClient`. Most Yamibo routes require authentication, so you must supply the user's cookie.
 
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.fetch.FetchFactory
 
@@ -68,7 +65,7 @@ client.setCookie("your_user_cookie_here")
 #### 2. Handling API Results
 All methods return a `YamiboResult<T>`, ensuring you handle all edge cases elegantly.
 
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.core.YamiboResult
 
 suspend fun fetchYamiboHome() {
@@ -93,7 +90,7 @@ suspend fun fetchYamiboHome() {
 #### 3. Core API Examples
 
 **Fetching a Forum Page:**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.ForumId
 
 suspend fun loadForum() {
@@ -103,7 +100,7 @@ suspend fun loadForum() {
 ```
 
 **Fetching a Thread Context:**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.ThreadId
 
 suspend fun loadThread() {
@@ -113,7 +110,7 @@ suspend fun loadThread() {
 ```
 
 **Fetching User Profile:**
-```kotlin
+```kotlin notebook
 suspend fun loadProfile() {
     // Requires a valid cookie to parse current user details
     val profileResult = client.fetchProfileInfo()
@@ -121,7 +118,7 @@ suspend fun loadProfile() {
 ```
 
 **Searching the Forum:**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.FormHash
 
 suspend fun doSearch() {
@@ -134,7 +131,7 @@ suspend fun doSearch() {
 ```
 
 **Interactions (Replying, Rating, Favorites):**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.PostId
 
 suspend fun interact() {
@@ -152,9 +149,6 @@ suspend fun interact() {
 ---
 
 <br>
-
-<h2 id="traditional-chinese-version">中文版</h2>
-
 這是一個專為 Yamibo 百合會論壇設計的 Kotlin Multiplatform (KMP) 客戶端函式庫。`yamibo-api` 處理了所有底層的網路請求、連線階段管理以及繁瑣的 HTML 結構解析，並將論壇資料轉換為強型別且易用的 Kotlin 資料傳輸物件 (DTO)，完美支援 Android、iOS 以及 JVM 平台。
 
 ### ✨ 核心特性
@@ -175,7 +169,7 @@ suspend fun interact() {
 #### Gradle (Kotlin DSL)
 請在模組內的 `build.gradle.kts` 新增依賴：
 
-```kotlin
+```kotlin notebook
 dependencies {
     implementation("io.github.littlesurvival:yamibo-api:1.0.5")
 }
@@ -197,7 +191,7 @@ dependencies {
 #### 1. 初始化與身份驗證
 操作本函式庫最核心的點位就是 `YamiboClient`。由於大多數的 Yamibo 網站路由都需要論壇使用者權限，你必須利用方法設定有效的使用者 Cookie。
 
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.fetch.FetchFactory
 
@@ -214,7 +208,7 @@ client.setCookie("請輸入你的_user_cookie")
 #### 2. 處理 API 回傳結果
 所有牽涉到網路的 API 方法都會回傳 `YamiboResult<T>`，這項類別會幫助你應對各種網路和未知的解析情況。
 
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.core.YamiboResult
 
 suspend fun fetchYamiboHome() {
@@ -239,7 +233,7 @@ suspend fun fetchYamiboHome() {
 #### 3. 各項 API 使用範例
 
 **讀取特定看板 (Forum)：**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.ForumId
 
 suspend fun loadForum() {
@@ -249,7 +243,7 @@ suspend fun loadForum() {
 ```
 
 **讀取討論串內容 (Thread)：**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.ThreadId
 
 suspend fun loadThread() {
@@ -259,7 +253,7 @@ suspend fun loadThread() {
 ```
 
 **取得當前使用者資訊 (Profile)：**
-```kotlin
+```kotlin notebook
 suspend fun loadProfile() {
     // 發出請求，解析並獲得當前登入使用者的個人資訊、頭像與相關統計數據
     val profileResult = client.fetchProfileInfo()
@@ -267,7 +261,7 @@ suspend fun loadProfile() {
 ```
 
 **全站或特定看板內搜尋 (Search)：**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.FormHash
 
 suspend fun doSearch() {
@@ -280,7 +274,7 @@ suspend fun doSearch() {
 ```
 
 **各類使用者網頁操作 (發出回覆、給予評分、收藏文章)：**
-```kotlin
+```kotlin notebook
 import io.github.littlesurvival.dto.value.PostId
 
 suspend fun interact() {

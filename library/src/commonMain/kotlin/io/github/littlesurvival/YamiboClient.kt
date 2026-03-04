@@ -67,6 +67,9 @@ class YamiboClient(
     suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, page: Int = 1): YamiboResult<ThreadPage> =
         fetchAndParse(YamiboRoute.Thread(tId, authorId,page).build(), threadPageParser)
 
+    suspend fun fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId): YamiboResult<ThreadPage> =
+        fetchAndParse(YamiboRoute.FindPost(authorId, threadId, postId).build(), threadPageParser)
+
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
 

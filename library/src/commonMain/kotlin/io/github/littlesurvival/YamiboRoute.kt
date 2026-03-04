@@ -159,16 +159,16 @@ sealed class YamiboRoute {
         }
     }
 
-    data class RedirectToPost(val authorId: UserId,val threadId: ThreadId, val postId: PostId): YamiboRoute() {
+    data class FindPost(val authorId: UserId?, val threadId: ThreadId?, val postId: PostId): YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
                     encodedPath = "forum.php"
                     parameters.append("mod", "redirect")
                     parameters.append("goto", "findpost")
-                    parameters.append("ptid", threadId.value.toString())
+                    parameters.append("ptid", threadId?.value?.toString() ?: "")
                     parameters.append("pid", postId.value.toString())
-                    parameters.append("fromuid", authorId.value.toString())
+                    parameters.append("fromuid", authorId?.value?.toString() ?: "")
                 }.buildString()
         }
     }

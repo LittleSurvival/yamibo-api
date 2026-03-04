@@ -54,6 +54,12 @@ class FetchTest {
     }
 
     @Test
+    fun testFindPost(): Unit = runBlocking {
+        val findPostResult = client.fetchFindPost(postId = PostId(41251744))
+        debugLog("fetchFindPost", findPostResult)
+    }
+
+    @Test
     fun testRatePost(): Unit = runBlocking {
         val ratePostResult = client.fetchRatePost(ThreadId(565238), PostId(41426069), 5, "", formHash)
         debugLog("fetchRatePost", ratePostResult)

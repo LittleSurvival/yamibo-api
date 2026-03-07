@@ -30,13 +30,15 @@ class FavoritePageParser : Parser<FavoritePage> {
                 // Delete link
                 val deleteLink = li.selectFirst("a.mdel") ?: continue
                 val deleteUrl = deleteLink.attr("href")
+                val fvIdValue = Regex("[?&]favid=(\\d+)").find(deleteUrl)?.groupValues?.get(1)?.toIntOrNull() ?: continue
+                val favId = io.github.littlesurvival.dto.value.FavoriteId(fvIdValue)
 
                 // Content link (the second <a>, not the delete one)
                 val contentLink = li.selectFirst("a:not(.mdel)") ?: continue
                 val url = contentLink.attr("href")
                 val name = contentLink.text().trim()
 
-                items.add(FavoriteItem(name = name, url = url, deleteUrl = deleteUrl))
+                items.add(FavoriteItem(name = name, url = url, favId = favId))
             }
 
             // --- Pagination ---

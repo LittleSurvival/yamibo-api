@@ -40,3 +40,26 @@ data class Post(
 ```
 Add Title value for Post DTO, it parses the possibly title from the start of post content.
 This feature is design for forum "文學區".
+
+# v1.0.7
+Update FavoriteItem DTO :
+```kotlin notebook
+data class FavoriteItem(
+    val name: String,
+    val url: String,
+    val favId: FavoriteId
+)
+```
+Change delete url param to favoriteId.
+
+Add Delete and AddForum to YamiboRoute.Favorite : 
+```kotlin notebook
+data class Delete(val favoriteId: FavoriteId) : YamiboRoute()
+ data class AddForum(val forumId: ForumId, val formHash: FormHash) : YamiboRoute()
+```
+
+Make fetchFavorite can accept forum id and thread id.
+The Id type is the interface that all type-safe id implements.
+```kotlin notebook
+suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String>
+```

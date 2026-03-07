@@ -1,6 +1,7 @@
 package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.parse.util.ParseUtils
 
@@ -13,7 +14,7 @@ data class FavoritePage(
 data class FavoriteItem(
     val name: String,
     val url: String,
-    val deleteUrl: String
+    val favId: FavoriteId
 ) {
     fun toThreadId(): ThreadId? {
         return ParseUtils.extractTid(this@FavoriteItem.url)

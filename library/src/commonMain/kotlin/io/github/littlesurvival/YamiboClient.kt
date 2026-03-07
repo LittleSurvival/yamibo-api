@@ -12,6 +12,7 @@ import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.Id
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -93,8 +94,12 @@ class YamiboClient(
     suspend fun fetchSearchById(query: String, searchId: SearchId, page: Int = 1): YamiboResult<SearchPage> =
         fetchAndParse(YamiboRoute.Search.BySearchId(query, searchId, page).build(), searchPageParser)
 
-    suspend fun fetchAddFavorite(tId: ThreadId, formHash: FormHash): YamiboResult<String> {
-        return when (val result = favoriteFactory.addThread(formHash, tId)) {
+    suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String> {
+        return when (val result = when(id) {
+            is ThreadId -> favoriteFactory.addThread(formHash, id)
+            is ForumId -> favoriteFactory.addForum(formHash, id)
+            else -> throw IllegalArgumentException("Unknown id type: $id")
+        }) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

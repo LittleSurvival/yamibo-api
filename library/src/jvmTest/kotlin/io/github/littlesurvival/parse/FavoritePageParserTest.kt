@@ -28,7 +28,7 @@ class FavoritePageParserTest {
         println("=== FavoritePage ===")
         println("Type: ${page.type}")
         println("Items (${page.items.size}):")
-        page.items.forEach { println("  ${it.name} | ${it.url} | ${it.deleteUrl}") }
+        page.items.forEach { println("  ${it.name} | ${it.url} | ${it.favId.value}") }
         println("PageNav: ${page.pageNav}")
         println()
 
@@ -43,8 +43,8 @@ class FavoritePageParserTest {
         assertTrue(first.name.contains("孤僻的我向可爱的女孩子进行了意外的爱的告白"))
         assertEquals("forum.php?mod=viewthread&tid=555362&mobile=2", first.url)
         assertEquals(
-                "home.php?mod=spacecp&ac=favorite&op=delete&favid=2469660&mobile=2",
-                first.deleteUrl
+                2469660,
+                first.favId.value
         )
 
         // Last item
@@ -52,8 +52,8 @@ class FavoritePageParserTest {
         assertTrue(last.name.contains("我的朋友毫不踌躇"))
         assertEquals("forum.php?mod=viewthread&tid=565218&mobile=2", last.url)
         assertEquals(
-                "home.php?mod=spacecp&ac=favorite&op=delete&favid=2454764&mobile=2",
-                last.deleteUrl
+                2454764,
+                last.favId.value
         )
 
         // Pagination

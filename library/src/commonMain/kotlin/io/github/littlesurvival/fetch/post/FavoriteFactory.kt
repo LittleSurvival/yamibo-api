@@ -3,9 +3,11 @@ package io.github.littlesurvival.fetch.post
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.dto.value.FormHash
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
+import com.fleeksoft.ksoup.Ksoup
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
@@ -52,6 +54,44 @@ class FavoriteFactory(private val fetcher: FetchFactory) {
             val message = PostResponseUtils.parseMessageText(body) ?: body
 
             if (response.status.isSuccess() && PostResponseUtils.isSuccess(body)) {
+                FetchResult.Success(value = message, statusCode = response.status.value, url = url)
+            } else {
+                FetchResult.Failure.HttpError(
+                    statusCode = response.status.value,
+                    url = url,
+                    bodyPreview = message
+                )
+            }
+        } catch (e: HttpRequestTimeoutException) {
+            FetchResult.Failure.Timeout(url, e)
+        } catch (e: Exception) {
+            FetchResult.Failure.NetworkError(url, e)
+        }
+    }
+
+    /**
+     * Add a forum to the user's favorites.
+     *
+     * Performs a GET to `home.php?mod=spacecp&ac=favorite&type=forum&id=...` with the given
+     * [formHash] and [forumId]. The server responds with an HTML page containing the result
+     * message inside a `.jump_c p` element.
+     *
+     * @param formHash The formhash token from the current session.
+     * @param forumId The forum ID to add to favorites.
+     * @return [FetchResult.Success] containing the response message, or a [FetchResult.Failure] if the
+     * request fails.
+     */
+    suspend fun addForum(formHash: FormHash, forumId: ForumId): FetchResult<String> {
+        val url = YamiboRoute.Favorite.AddForum(forumId, formHash).build()
+        return try {
+            val response = fetcher.perform(HttpMethod.Get, url)
+
+            val body = response.bodyAsText()
+            val doc = Ksoup.parse(body)
+            // Extract the first message paragraph from jump_c
+            val message = doc.selectFirst(".jump_c p")?.text()?.trim() ?: body
+
+            if (response.status.isSuccess() && !PostResponseUtils.isIllegal(body)) {
                 FetchResult.Success(value = message, statusCode = response.status.value, url = url)
             } else {
                 FetchResult.Failure.HttpError(

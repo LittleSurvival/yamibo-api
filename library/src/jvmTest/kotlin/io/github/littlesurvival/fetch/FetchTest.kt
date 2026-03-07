@@ -6,6 +6,7 @@ import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.value.FormHash
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -38,6 +39,12 @@ class FetchTest {
     }
 
     @Test
+    fun testAddForum() : Unit = runBlocking {
+        val favoriteResult = client.fetchAddFavorite(ForumId(55), formHash)
+        debugLog("fetchAddFavorite", favoriteResult)
+    }
+
+    @Test
     fun testFavorite(): Unit = runBlocking {
         val favoriteResult = client.fetchFavorite(type = FavoriteType.Thread, page = 1)
         debugLog("fetchFavorite", favoriteResult)
@@ -45,8 +52,8 @@ class FetchTest {
 
     @Test
     fun testThread(): Unit = runBlocking {
-        // 568055, 535612, 564532, 565033, 557223
-        val threadResult = client.fetchThreadById(ThreadId(568055), page = 1)
+        // 568055, 535612, 564532, 565033, 557223, 535057
+        val threadResult = client.fetchThreadById(ThreadId(535057), page = 1)
         if (threadResult is YamiboResult.Success) {
             println("post size : ${threadResult.value.posts.size}")
         }

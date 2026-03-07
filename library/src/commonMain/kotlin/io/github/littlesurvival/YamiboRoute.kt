@@ -1,6 +1,8 @@
 package io.github.littlesurvival
 
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.value.FavoriteId
+import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
@@ -153,6 +155,39 @@ sealed class YamiboRoute {
                         parameters.append("spaceuid", "0")
                         parameters.append("mobile", "2")
                         parameters.append("handlekey", "favoriteform_${threadId.value}")
+                        parameters.append("inajax", "1")
+                    }.buildString()
+            }
+        }
+
+        data class AddForum(val forumId: ForumId, val formHash: FormHash) : YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain)
+                    .apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "spacecp")
+                        parameters.append("ac", "favorite")
+                        parameters.append("type", FavoriteType.Forum.typeId)
+                        parameters.append("id", forumId.value.toString())
+                        parameters.append("handlekey", "favoriteforum")
+                        parameters.append("formhash", formHash.value)
+                        parameters.append("mobile", "2")
+                    }.buildString()
+            }
+        }
+
+        data class Delete(val favoriteId: FavoriteId) : YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain)
+                    .apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "spacecp")
+                        parameters.append("ac", "favorite")
+                        parameters.append("op", "delete")
+                        parameters.append("favid", favoriteId.value.toString())
+                        parameters.append("type", "all")
+                        parameters.append("mobile", "2")
+                        parameters.append("handlekey", "favoriteform_${favoriteId.value}")
                         parameters.append("inajax", "1")
                     }.buildString()
             }

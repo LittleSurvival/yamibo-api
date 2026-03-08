@@ -80,3 +80,13 @@ Add VotePoll feature:
 suspend fun votePoll(formHash: FormHash, forumId: ForumId, threadId: ThreadId, options: List<PollOptionId>): FetchResult<String>
 ```
 Perform a POST request to vote in a poll. It supports selecting multiple options since `options` is a `List`.
+
+Update ThreadSummary DTO :
+```kotlin notebook
+data class ThreadSummary(
+    ...
+    val hasPoll: Boolean,
+    ...
+)
+```
+Add `hasPoll` to `ThreadSummary` to identify if a thread contains a poll when displayed in a thread list like forum or search pages.

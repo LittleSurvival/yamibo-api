@@ -10,6 +10,12 @@ data class ThreadSummary(
     /** Thread title. */
     val title: String,
 
+    /**
+     * whether the thread is a poll thread.
+     * if true, it's would have icon "投票" next to title.
+     */
+    val hasPoll: Boolean,
+
     /** Link to the thread page. */
     val url: String,
 

@@ -93,6 +93,7 @@ class ForumPageParser : Parser<ForumPage> {
                 val url = titleLink.attr("href")
                 val tid = ParseUtils.extractTid(url) ?: continue
                 val title = el.selectFirst(".threadlist_tit em")?.text()?.trim() ?: ""
+                val hasPoll = el.selectFirst(".threadlist_tit .micon")?.text()?.trim() == "投票"
 
                 // Author
                 val authorLink = el.selectFirst(".threadlist_top .muser a")
@@ -143,6 +144,7 @@ class ForumPageParser : Parser<ForumPage> {
                     ThreadSummary(
                         tid = tid,
                         title = title,
+                        hasPoll = hasPoll,
                         url = url,
                         author = author,
                         description = description,

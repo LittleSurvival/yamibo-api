@@ -50,6 +50,7 @@ class SearchPageParser : Parser<SearchPage> {
 
                 // Special tag (e.g. "投票")
                 val tag = item.selectFirst(".threadlist_tit .micon")?.text()?.trim()
+                val hasPoll = tag == "投票"
 
                 // Author info
                 val authorLink = item.selectFirst(".threadlist_top .muser h3 a.mmc")
@@ -97,6 +98,7 @@ class SearchPageParser : Parser<SearchPage> {
                     ThreadSummary(
                         tid = tid,
                         title = title,
+                        hasPoll = hasPoll,
                         url = threadUrl,
                         author = author,
                         description = description,

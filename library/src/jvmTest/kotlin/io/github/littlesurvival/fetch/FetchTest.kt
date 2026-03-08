@@ -36,7 +36,7 @@ class FetchTest {
 
     @Test
     fun testForum(): Unit = runBlocking {
-        val forumResult = client.fetchForumById(YamiboForum.TRANSLATED_LIGHT_NOVEL.id)
+        val forumResult = client.fetchForumById(YamiboForum.SEA.id)
         debugLog("fetchForumById", forumResult)
     }
 

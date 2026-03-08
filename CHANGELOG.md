@@ -90,3 +90,16 @@ data class ThreadSummary(
 )
 ```
 Add `hasPoll` to `ThreadSummary` to identify if a thread contains a poll when displayed in a thread list like forum or search pages.
+
+# v1.0.9
+Old :
+```html
+<div id="postmessage_{id}" class="postmessage">
+    {content}
+</div>
+```
+New :
+```html
+{content}
+```
+Fix the issue that poll thread HTML content is not parsed correctly.

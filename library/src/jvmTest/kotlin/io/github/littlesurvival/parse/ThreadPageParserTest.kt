@@ -12,6 +12,8 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
+import toKotlinCode
+import java.io.File
 
 class ThreadPageParserTest {
 
@@ -202,5 +204,44 @@ class ThreadPageParserTest {
         assertEquals("2025-6-11 00:17", attach2.timeUpload)
         assertEquals("153.7 KB", attach2.fileSize)
         assertEquals(399, attach2.downloadTimes)
+    }
+
+    @Test
+    fun dumpAllThreadsAndPollsToTxt() = runBlocking {
+        val parser = ThreadPageParser()
+        val assetsDir = File("src/commonTest/resources/assets")
+        val txtDir = File("src/commonTest/resources/txt")
+        if (!txtDir.exists()) txtDir.mkdirs()
+
+        val htmlFiles = mutableListOf<File>()
+        
+        // Add thread examples
+        assetsDir.listFiles { _, name -> name.startsWith("threadexample") && name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+        
+        // Add post_response files
+        assetsDir.listFiles { _, name -> name.startsWith("post_response") && name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+        
+        // Add files from threads dir
+        File(assetsDir, "threads").listFiles { _, name -> name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+
+        // Add files from special_threads dir
+        File(assetsDir, "special_threads").listFiles { _, name -> name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+        
+        // Add files from poll dir
+        val pollDir = File(assetsDir, "poll")
+        if (pollDir.exists()) {
+            pollDir.listFiles { _, name -> name.endsWith(".html") && !name.contains("forum") }?.forEach { htmlFiles.add(it) }
+        }
+
+        for (file in htmlFiles) {
+            val html = file.readText()
+            val result = parser.parse(html)
+            if (result is ParseResult.Success) {
+                println("Dumping ${file.name} to txt...")
+                File(txtDir, file.name).writeText(toKotlinCode(result.value, indentSize = 4))
+            } else {
+                println("Failed to parse ${file.name}: $result")
+            }
+        }
     }
 }

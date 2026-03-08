@@ -165,19 +165,15 @@ class ThreadPageParser : Parser<ThreadPage> {
                     )
                 }
 
-                // Build contentHtml by removing .pstatus and .poll
-                // in-place then restoring, avoiding clone.
-                val contentHtml: String
-                if (messageEl != null) {
-                    pstatus?.remove()
-                    pollEl?.remove()
-                    contentHtml = messageEl.html().trim()
-                    
-                    pollEl?.let { messageEl.appendChild(it) }
-                    pstatus?.let { messageEl.prependChild(it) }
-                } else {
-                    contentHtml = ""
-                }
+                // Build contentHtml by uncovering the actual text
+                // from inside .postmessage wrapper (if present).
+                messageEl?.selectFirst("div[id^=postmessage_]")?.unwrap()
+
+                // Remove .pstatus and .poll in-place.
+                pstatus?.remove()
+                pollEl?.remove()
+
+                val contentHtml = messageEl?.html()?.trim() ?: ""
 
                 val images = mutableListOf<PostImage>()
                 val imgEls = messageEl?.select("img") ?: emptyList()

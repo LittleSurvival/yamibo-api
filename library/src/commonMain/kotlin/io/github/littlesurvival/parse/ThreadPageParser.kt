@@ -8,6 +8,7 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.*
 import io.github.littlesurvival.dto.page.*
 import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
@@ -93,21 +94,90 @@ class ThreadPageParser : Parser<ThreadPage> {
                 val pstatus = messageEl?.selectFirst(".pstatus")
                 val editedText = pstatus?.text()?.trim()?.ifEmpty { null }
 
-                // Build contentHtml by removing .pstatus
-                // in-place then restoring, avoiding clone.
-                val contentHtml: String
-                if (messageEl != null && pstatus != null) {
-                    pstatus.remove()
-                    contentHtml = messageEl.html().trim()
-                    // Restore pstatus as first child
-                    messageEl.prependChild(pstatus)
-                } else {
-                    contentHtml = messageEl?.html()?.trim() ?: ""
-                }
-
                 // Post title extraction — operates
                 // directly on the live DOM, no clone.
                 val postTitle = extractPostTitle(messageEl)
+
+                // Poll extraction
+                var poll: Poll? = null
+                val pollEl = messageEl?.selectFirst(".poll")
+                if (pollEl != null && floor == 1) {
+                    var pollType = PollType.SingleChoice
+                    var pollInfoStr = ""
+                    var endTimeStr = ""
+
+                    pollEl.select(".poll_txt")?.forEach { pt ->
+                        val text = pt.text().replace("\\s+".toRegex(), " ").trim()
+                        if (text.contains("距结束还有:")) {
+                            endTimeStr = text
+                        } else {
+                            pollInfoStr = text
+                            if (text.contains("多选投票")) {
+                                pollType = PollType.MultipleChoice
+                            }
+                        }
+                    }
+
+                    val pollBox = pollEl.selectFirst(".poll_box")
+                    val isVoted = pollBox?.selectFirst("span.xi1")?.text()?.contains("您已经投过票") == true
+                    val status = if (isVoted) PollStatus.Voted else PollStatus.NotVoted
+
+                    val options = mutableListOf<PollOption>()
+                    pollBox?.select("p")?.forEach { p ->
+                        val label = p.selectFirst("label")
+                        val optionNameStr = label?.text()?.trim() ?: ""
+
+                        val input = p.selectFirst("input")
+                        val optionIdStr = input?.attr("value")?.ifEmpty { null }
+                        val optionId = optionIdStr?.toIntOrNull() ?: 0
+
+                        var percentage: Float? = null
+                        var totalVoted: Int? = null
+
+                        val em = p.selectFirst("em")
+                        if (em != null) {
+                            val emText = em.text().trim() // e.g., "35.36% (64票)"
+                            val percStr = emText.substringBefore("%").trim()
+                            percentage = percStr.toFloatOrNull()
+
+                            val voteCountStr = emText.substringAfter("(").substringBefore("票").trim()
+                            totalVoted = voteCountStr.toIntOrNull()
+                        }
+
+                        if (optionNameStr.isNotEmpty()) {
+                            options.add(
+                                PollOption(
+                                    option = PollOptionId(optionId),
+                                    optionName = optionNameStr,
+                                    percentage = percentage,
+                                    totalVoted = totalVoted
+                                )
+                            )
+                        }
+                    }
+
+                    poll = Poll(
+                        status = status,
+                        type = pollType,
+                        endTime = endTimeStr,
+                        pollInfo = pollInfoStr,
+                        option = options
+                    )
+                }
+
+                // Build contentHtml by removing .pstatus and .poll
+                // in-place then restoring, avoiding clone.
+                val contentHtml: String
+                if (messageEl != null) {
+                    pstatus?.remove()
+                    pollEl?.remove()
+                    contentHtml = messageEl.html().trim()
+                    
+                    pollEl?.let { messageEl.appendChild(it) }
+                    pstatus?.let { messageEl.prependChild(it) }
+                } else {
+                    contentHtml = ""
+                }
 
                 val images = mutableListOf<PostImage>()
                 val imgEls = messageEl?.select("img") ?: emptyList()
@@ -259,6 +329,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                         editedText = editedText,
                         contentHtml = contentHtml,
                         images = images,
+                        poll = poll,
                         attachments = attachments,
                         comments = comments,
                         rateBlock =

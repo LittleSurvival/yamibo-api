@@ -13,8 +13,8 @@ internal expect fun createPlatformHttpClient(): HttpClient
 internal expect fun createPlatformHttpClientNoRedirect(): HttpClient
 
 class FetchFactory(
-        var device: Device,
-        var timeoutMillis: Long,
+    var device: Device,
+    var timeoutMillis: Long,
 ) : Fetcher<String> {
     companion object {
         enum class Device(val userAgent: String) {
@@ -87,9 +87,9 @@ class FetchFactory(
                 FetchResult.Success(value = text, statusCode = response.status.value, url = url)
             } else {
                 FetchResult.Failure.HttpError(
-                        statusCode = response.status.value,
-                        url = url,
-                        bodyPreview = text
+                    statusCode = response.status.value,
+                    url = url,
+                    bodyPreview = text
                 )
             }
         } catch (e: HttpRequestTimeoutException) {

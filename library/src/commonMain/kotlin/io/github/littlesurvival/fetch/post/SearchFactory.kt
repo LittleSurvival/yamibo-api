@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.PostFactory
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
@@ -14,8 +15,8 @@ import io.ktor.http.*
 import io.ktor.utils.io.charsets.Charsets
 
 class SearchFactory(
-    private val fetcher: FetchFactory,
-) {
+    override val fetcher: FetchFactory,
+) : PostFactory(fetcher) {
     /**
      * Submit a search query and return the redirect location URL.
      *

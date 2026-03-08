@@ -60,6 +60,19 @@ object PostResponseUtils {
     }
 
     /**
+     * Check whether the response is reload the page.
+     * ```html
+     * <?xml version="1.0" encoding="utf-8"?>
+     * <root>
+     *  <![CDATA[<script type="text/javascript" reload="1">window.location.href='forum.php?mod=viewthread&tid=559877&mobile=2';</script>]]>
+     * </root>
+     * ```
+     */
+    fun isVoteSuccess(body: String): Boolean {
+        return body.contains("<root><![CDATA[<script type=\"text/javascript\" reload=\"1\">")
+    }
+
+    /**
      * Check whether the response is illegal body response.
      * Which contains
      * ```html

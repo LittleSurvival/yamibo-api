@@ -261,7 +261,7 @@ sealed class YamiboRoute {
      *
      * formhash=(formHash)&handlekey=&message=(message)
      */
-    data class PostReply(val tId: ThreadId, val pId: PostId, val page: Int = 1) : YamiboRoute() {
+    data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
@@ -269,8 +269,8 @@ sealed class YamiboRoute {
                     parameters.append("mod", "post")
                     parameters.append("action", "reply")
                     parameters.append("comment", "yes")
-                    parameters.append("tid", tId.value.toString())
-                    parameters.append("pid", pId.value.toString())
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("pid", postId.value.toString())
                     parameters.append("extra", "")
                     parameters.append("page", page.toString())
                     parameters.append("commentsubmit", "yes")
@@ -281,6 +281,36 @@ sealed class YamiboRoute {
                 }.buildString()
         }
     }
+
+    /**
+     * 投票帖子.
+     *
+     * This is a POST request.
+     *
+     * Content-Type : application/x-www-form-urlencoded; charset=UTF-8
+     *
+     * FormData
+     * formhash=(formHash)&pollanswers[]=(option id)
+     */
+    data class VotePoll(val forumId: ForumId, val threadId: ThreadId) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "misc")
+                    parameters.append("action", "votepoll")
+                    parameters.append("fid", forumId.value.toString())
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("pollsubmit", "yes")
+                    parameters.append("quickforward", "yes")
+                    parameters.append("mobile", "2")
+                    parameters.append("handlekey", "poll")
+                    parameters.append("inajax", "1")
+                }.buildString()
+        }
+    }
+
+
 
     data object Login : YamiboRoute() {
         override fun build(): String {

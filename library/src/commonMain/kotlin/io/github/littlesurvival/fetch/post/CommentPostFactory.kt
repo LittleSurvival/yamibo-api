@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.PostFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -15,8 +16,8 @@ import io.ktor.http.*
 import io.ktor.utils.io.charsets.Charsets
 
 class CommentPostFactory(
-    private val fetcher: FetchFactory
-) {
+    override val fetcher: FetchFactory
+) : PostFactory(fetcher) {
 
     /**
      * Comment on a post in a thread.
@@ -41,7 +42,7 @@ class CommentPostFactory(
         postId: PostId,
         message: String
     ): FetchResult<String> {
-        val url = YamiboRoute.PostReply(tId = threadId, pId = postId).build()
+        val url = YamiboRoute.PostReply(threadId = threadId, postId = postId).build()
         return try {
             val response =
                 fetcher.perform(HttpMethod.Post, url) {

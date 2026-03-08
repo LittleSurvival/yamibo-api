@@ -5,8 +5,10 @@ import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.page.PollOption
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -52,8 +54,8 @@ class FetchTest {
 
     @Test
     fun testThread(): Unit = runBlocking {
-        // 568055, 535612, 564532, 565033, 557223, 535057
-        val threadResult = client.fetchThreadById(ThreadId(535057), page = 1)
+        // 568055, 535612, 564532, 565033, 557223, 535057, 568285, 567394, 568356
+        val threadResult = client.fetchThreadById(ThreadId(568356), page = 1)
         if (threadResult is YamiboResult.Success) {
             println("post size : ${threadResult.value.posts.size}")
         }
@@ -90,5 +92,16 @@ class FetchTest {
     fun testSetHomePage() = runBlocking {
         val homePage = client.fetchHomePage()
         debugLog("fetchHomePage", homePage)
+    }
+
+    @Test
+    fun testVotePoll() = runBlocking {
+        val pollResult = client.votePoll(
+            YamiboForum.SEA.id,
+            ThreadId(559877),
+            listOf(PollOptionId(32952), PollOptionId(32954)),
+            formHash
+        )
+        debugLog("votePoll", pollResult)
     }
 }

@@ -7,12 +7,14 @@ import io.github.littlesurvival.dto.page.FavoritePage
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.page.ForumPage
 import io.github.littlesurvival.dto.page.HomePage
+import io.github.littlesurvival.dto.page.PollOption
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.Id
+import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -22,6 +24,7 @@ import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.RateFactory
 import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
+import io.github.littlesurvival.fetch.post.VotePollFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
@@ -41,6 +44,7 @@ class YamiboClient(
     private val favoriteFactory: FavoriteFactory = FavoriteFactory(fetcher as FetchFactory)
     private val rateFactory: RateFactory = RateFactory(fetcher as FetchFactory)
     private val commentPostFactory: CommentPostFactory = CommentPostFactory(fetcher as FetchFactory)
+    private val votePollFactory: VotePollFactory = VotePollFactory(fetcher as FetchFactory)
 
     /** Initialize Values */
     fun setCookie(cookie: String) {
@@ -74,6 +78,12 @@ class YamiboClient(
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
 
+    suspend fun votePoll(fId: ForumId, tId: ThreadId, pollOptionIds: List<PollOptionId>, formHash: FormHash): YamiboResult<String> {
+        return when (val pollResult = votePollFactory.votePoll(formHash, fId, tId, pollOptionIds)) {
+            is FetchResult.Success -> YamiboResult.Success(pollResult.value)
+            is FetchResult.Failure -> mapFetchFailure(pollResult, pollResult.url)
+        }
+    }
     suspend fun fetchFavorite(
         userId: UserId? = null,
         type: FavoriteType,

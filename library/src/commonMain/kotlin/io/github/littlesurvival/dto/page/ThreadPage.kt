@@ -3,6 +3,7 @@ package io.github.littlesurvival.dto.page
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.User
+import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 
@@ -135,6 +136,11 @@ data class Post(
      * */
     val images: List<PostImage> = emptyList(),
 
+    /**
+     * Poll attached to the post, it's unique in the whole thread and forced to be at first floor.
+     */
+    val poll: Poll?,
+
     /** File attachments in the post. */
     val attachments: List<Attachment> = emptyList(),
 
@@ -197,7 +203,7 @@ data class PostRate(
     val reason: String? = null
 )
 
-/** A attachment on the post. */
+/** An attachment on the post. */
 data class Attachment(
     /** The name of attachment. */
     val name: String,
@@ -210,3 +216,35 @@ data class Attachment(
     /** The times it has been downloaded (e.g. 122) */
     val downloadTimes: Int,
 )
+
+data class Poll(
+    val status: PollStatus,
+    val type: PollType,
+    /** How long did the poll end (e.g. 距结束还有: 101 天 17 小时 11 分钟) */
+    val endTime: String,
+    /**
+     * The information about the poll, contains poll type, maximum choices, turnout, etc
+     *
+     * (e.g. 多选投票: ( 最多可选 3 项 ), 共有 264 人参与投票)
+     * */
+    val pollInfo: String,
+    val option: List<PollOption>
+)
+
+data class PollOption(
+    val option: PollOptionId,
+    val optionName: String,
+    /** The percentage of the option was voted, format with ".2f" . (e.g. 3.02%) */
+    val percentage: Float?,
+    val totalVoted: Int?,
+)
+
+enum class PollStatus {
+    NotVoted,
+    Voted,
+}
+
+enum class PollType {
+    SingleChoice,
+    MultipleChoice,
+}

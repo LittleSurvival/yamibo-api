@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.PostFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -14,7 +15,7 @@ import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.charsets.Charsets
 
-class RateFactory(private val fetcher: FetchFactory) {
+class RateFactory(override val fetcher: FetchFactory) : PostFactory(fetcher) {
 
     /**
      * Rate a post in a thread.

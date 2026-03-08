@@ -8,13 +8,14 @@ import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import com.fleeksoft.ksoup.Ksoup
+import io.github.littlesurvival.fetch.PostFactory
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 
-class FavoriteFactory(private val fetcher: FetchFactory) {
+class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher) {
 
     /**
      * Add a thread to the user's favorites.

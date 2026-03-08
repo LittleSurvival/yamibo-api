@@ -63,3 +63,20 @@ The Id type is the interface that all type-safe id implements.
 ```kotlin notebook
 suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String>
 ```
+
+# v1.0.8
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val poll: Poll?,
+    ...
+)
+```
+Add `poll` to `Post` to represent the poll information located at the top of the thread page. Note that polls are unique in a thread and forced to be at the first floor.
+
+Add VotePoll feature:
+```kotlin notebook
+suspend fun votePoll(formHash: FormHash, forumId: ForumId, threadId: ThreadId, options: List<PollOptionId>): FetchResult<String>
+```
+Perform a POST request to vote in a poll. It supports selecting multiple options since `options` is a `List`.

@@ -54,8 +54,8 @@ class FetchTest {
 
     @Test
     fun testThread(): Unit = runBlocking {
-        // 568055, 535612, 564532, 565033, 557223, 535057, 568285, 567394, 568356
-        val threadResult = client.fetchThreadById(ThreadId(568356), page = 1)
+        // 568055, 535612, 564532, 565033, 557223, 535057, 568285, 567394, 568356, 568493, 566241
+        val threadResult = client.fetchThreadById(ThreadId(566241), page = 1)
         if (threadResult is YamiboResult.Success) {
             println("post size : ${threadResult.value.posts.size}")
         }
@@ -64,7 +64,7 @@ class FetchTest {
 
     @Test
     fun testFindPost(): Unit = runBlocking {
-        val findPostResult = client.fetchFindPost(postId = PostId(41251744))
+        val findPostResult = client.fetchFindPost(postId = PostId(41206202))
         debugLog("fetchFindPost", findPostResult)
     }
 

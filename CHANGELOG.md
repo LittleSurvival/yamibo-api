@@ -113,5 +113,5 @@ data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int =
 data class ThreadReply(val threadId: ThreadId, val page: Int = 1)
 ```
 
-# 1.0.11
+# 1.0.12
 Fix PostReply build the wrong url issue.

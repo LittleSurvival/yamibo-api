@@ -20,4 +20,8 @@ sealed class YamiboResult<out T> {
     data object NotLoggedIn : YamiboResult<Nothing>() {
         override fun message(): String = "抱歉，您尚未登录，没有权限访问该版块"
     }
+
+    data class NoPermission(val reason: String) : YamiboResult<Nothing>() {
+        override fun message(): String = reason
+    }
 }

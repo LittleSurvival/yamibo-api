@@ -148,6 +148,7 @@ class YamiboClient(
                     is ParseResult.Success -> YamiboResult.Success(parsed.value)
                     is ParseResult.NotLoggedIn -> YamiboResult.NotLoggedIn
                     is ParseResult.Maintenance -> YamiboResult.Maintenance
+                    is ParseResult.NoPermission -> YamiboResult.NoPermission(parsed.reason)
                     is ParseResult.Failure -> {
                         val errorLine = parsed.exception?.let { "\n  error : $it" } ?: ""
                         YamiboResult.Failure(

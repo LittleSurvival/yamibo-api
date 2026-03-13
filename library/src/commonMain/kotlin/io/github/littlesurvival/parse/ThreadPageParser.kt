@@ -21,6 +21,7 @@ class ThreadPageParser : Parser<ThreadPage> {
             val doc = Ksoup.parse(html)
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
+            if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
 
             // Thread info
             val viewTit = doc.selectFirst(".view_tit")

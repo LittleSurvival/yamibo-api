@@ -34,6 +34,10 @@ internal fun <T> debugLog(label: String, result: YamiboResult<T>) {
             println("🔒 [NotLoggedIn]")
             println("   ${result.message()}")
         }
+        is YamiboResult.NoPermission -> {
+            println("🔒 [NoPermission]")
+            println("   ${result.message()}")
+        }
     }
     println("$divider\n")
 }

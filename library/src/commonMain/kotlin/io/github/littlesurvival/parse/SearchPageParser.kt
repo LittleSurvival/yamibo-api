@@ -16,6 +16,7 @@ class SearchPageParser : Parser<SearchPage> {
             val doc = Ksoup.parse(html)
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
+            if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
 
             // Query
             val query = doc.selectFirst(".threadlist_box h2 em .emfont")?.text() ?: ""

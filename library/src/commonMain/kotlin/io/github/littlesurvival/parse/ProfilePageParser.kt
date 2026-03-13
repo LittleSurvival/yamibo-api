@@ -15,6 +15,7 @@ class ProfilePageParser : Parser<ProfilePage> {
             val doc = Ksoup.parse(html)
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
+            if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
 
             // --- Username from avatar section ---
             val username = doc.selectFirst(".avatar_bg .name")?.text()?.trim() ?: ""

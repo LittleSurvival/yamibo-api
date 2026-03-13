@@ -114,8 +114,8 @@ class ThreadPageParserTest {
 
         // Reply URL
         assertNotNull(page.thread.replyUrl)
-        assertTrue(page.thread.replyUrl!!.contains("action=reply"))
-        assertTrue(page.thread.replyUrl!!.contains("tid=556787"))
+        assertTrue(page.thread.replyUrl.contains("action=reply"))
+        assertTrue(page.thread.replyUrl.contains("tid=556787"))
 
         // First post (floor 1) - should have comments and rates
         val firstPost = page.posts[0]

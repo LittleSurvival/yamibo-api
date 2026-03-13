@@ -92,13 +92,37 @@ object ParseUtils {
 
         // Desktop: message text indicating not logged in
         val messageText = doc.selectFirst("#messagetext")?.text() ?: ""
-        if (messageText.contains("尚未登录") || messageText.contains("没有权限访问")) return true
+        if (messageText.contains("尚未登录")) return true
 
         // Desktop: login form present in #messagelogin area
         if (doc.selectFirst("#messagelogin") != null && doc.selectFirst("#main_message") != null)
             return true
 
         return false
+    }
+
+    /**
+     * Detect whether the HTML is a "no permission" page.
+     */
+    internal fun isNoPermission(doc: Document): Boolean {
+        val jumpC = doc.selectFirst(".jump_c")?.text() ?: ""
+        if (jumpC.contains("阅读权限高于") || jumpC.contains("閱讀權限高於") ||
+            jumpC.contains("没有权限访问") || jumpC.contains("沒有權限訪問")) return true
+
+        val messageText = doc.selectFirst("#messagetext")?.text() ?: ""
+        if (messageText.contains("阅读权限高于") || messageText.contains("閱讀權限高於") ||
+                messageText.contains("没有权限访问") || messageText.contains("沒有權限訪問")) return true
+
+        return false
+    }
+
+    internal fun parsePromptMessage(doc: Document): String {
+        return doc.select(".jump_c p")
+            .firstOrNull()
+            ?.text()
+            ?.trim()
+            ?.ifEmpty { null }
+            ?: "未知權限錯誤"
     }
 
     /**

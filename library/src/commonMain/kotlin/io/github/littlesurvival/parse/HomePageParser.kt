@@ -16,6 +16,7 @@ class HomePageParser : Parser<HomePage> {
             val doc = Ksoup.parse(html)
             if (ParseUtils.isMaintenance(doc)) return ParseResult.Maintenance
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
+            if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
             val categories = mutableListOf<ForumCategory>()
 
             val categoryHeaders = doc.select(".forumlist .subforumshow")

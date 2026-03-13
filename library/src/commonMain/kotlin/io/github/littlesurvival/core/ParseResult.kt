@@ -15,4 +15,7 @@ sealed class ParseResult<out T> {
 
     /** The website is currently under maintenance. */
     data object Maintenance : ParseResult<Nothing>()
+
+    /** The user does not have permission to view this content. */
+    data class NoPermission(val reason: String) : ParseResult<Nothing>()
 }

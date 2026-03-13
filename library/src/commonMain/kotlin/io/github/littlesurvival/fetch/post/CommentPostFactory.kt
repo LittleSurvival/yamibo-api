@@ -42,7 +42,7 @@ class CommentPostFactory(
         postId: PostId,
         message: String
     ): FetchResult<String> {
-        val url = YamiboRoute.PostReply(threadId = threadId, postId = postId).build()
+        val url = YamiboRoute.PostComment(threadId = threadId, postId = postId).build()
         return try {
             val response =
                 fetcher.perform(HttpMethod.Post, url) {

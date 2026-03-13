@@ -261,7 +261,7 @@ sealed class YamiboRoute {
      *
      * formhash=(formHash)&handlekey=&message=(message)
      */
-    data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int = 1) : YamiboRoute() {
+    data class PostComment(val threadId: ThreadId, val postId: PostId, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
@@ -278,6 +278,46 @@ sealed class YamiboRoute {
                     parameters.append("inajax", "1")
                     parameters.append("handlekey", "commentform")
                     parameters.append("inajax", "1")
+                }.buildString()
+        }
+    }
+
+    /**
+     * 針對某帖子回復
+     *
+     * This is only for building a url for webview now.
+     */
+    data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int = 1) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("action", "reply")
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("repquote", postId.value.toString())
+                    parameters.append("extra", "")
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }.buildString()
+        }
+    }
+
+    /**
+     * 回復整個討論串(不引用)
+     *
+     * This is only for building a url for webview now.
+     */
+    data class ThreadReply(val threadId: ThreadId, val page: Int = 1) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "post")
+                    parameters.append("action", "reply")
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("reppost", "0")
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
                 }.buildString()
         }
     }

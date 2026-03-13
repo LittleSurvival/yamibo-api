@@ -104,7 +104,7 @@ New :
 ```
 Fix the issue that poll thread HTML content is not parsed correctly.
 
-# 1.1.10
+# 1.0.10
 Add two link builder in YamiboRoute :
 ```kotlin notebook
 //Reply a specific post(mention a post)
@@ -112,3 +112,6 @@ data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int =
 //Reply the thread : 
 data class ThreadReply(val threadId: ThreadId, val page: Int = 1)
 ```
+
+# 1.0.11
+Fix PostReply build the wrong url issue.

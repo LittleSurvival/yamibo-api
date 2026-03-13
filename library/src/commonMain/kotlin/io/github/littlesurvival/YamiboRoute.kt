@@ -292,6 +292,7 @@ sealed class YamiboRoute {
             return URLBuilder(domain)
                 .apply {
                     encodedPath = "forum.php"
+                    parameters.append("mod", "post")
                     parameters.append("action", "reply")
                     parameters.append("tid", threadId.value.toString())
                     parameters.append("repquote", postId.value.toString())

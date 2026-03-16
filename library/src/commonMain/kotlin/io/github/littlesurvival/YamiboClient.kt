@@ -88,7 +88,7 @@ class YamiboClient(
         fetchAndParse(YamiboRoute.FindPost(authorId, threadId, postId).build(), threadPageParser)
 
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
-        fetchAndParse(YamiboRoute.Forum(forum.id, page).build(), forumPageParser)
+        fetchAndParse(YamiboRoute.Forum(forum.forumId, page).build(), forumPageParser)
 
     suspend fun votePoll(fId: ForumId, tId: ThreadId, pollOptionIds: List<PollOptionId>, formHash: FormHash): YamiboResult<String> {
         return when (val pollResult = votePollFactory.votePoll(formHash, fId, tId, pollOptionIds)) {

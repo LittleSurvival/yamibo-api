@@ -149,3 +149,12 @@ data class ThreadSummary(
 )
 ```
 Added `fid` and `attachmentType` to `ThreadSummary` specifically for tag search result pages, mapping common attachment icons to `Image` or `Other`.
+
+# v1.0.14
+Add Forum Type classify function in YamiboForum
+```kotlin notebook
+fun isNovelForum(name: String)
+fun isNovelForum(forumId: ForumId)
+fun isMangaForum(name: String)
+fun isMangaForum(forumId: ForumId)
+```

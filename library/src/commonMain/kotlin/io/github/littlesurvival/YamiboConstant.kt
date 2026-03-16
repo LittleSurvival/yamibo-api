@@ -7,7 +7,7 @@ import io.github.littlesurvival.dto.value.ForumId
  *
  * All forums on bbs.yamibo.com with their forum IDs.
  */
-enum class YamiboForum(val forumName: String, val id: ForumId) {
+enum class YamiboForum(val forumName: String, val forumId: ForumId) {
 
     // ── 庙堂 ──
     /** 管理版 */
@@ -49,5 +49,14 @@ enum class YamiboForum(val forumName: String, val id: ForumId) {
     /** 資源交流區 - 海纳百川 */
     RESOURCE("資源交流區", ForumId(19)),
     /** 非百合資源區 (資源交流區子版) */
-    NON_YURI_RESOURCE("非百合資源區", ForumId(27)),
+    NON_YURI_RESOURCE("非百合資源區", ForumId(27));
+    companion object {
+        val NOVEL_THREADS = arrayOf(LITERATURE, TRANSLATED_LIGHT_NOVEL)
+        val MANGA_THREADS = arrayOf(ORIGINAL_WORK, TRANSLATED_YURI_MANGA, YURI_MANGA_SOURCE)
+
+        fun isNovelForum(name: String) = NOVEL_THREADS.any { it.forumName == name }
+        fun isNovelForum(forumId: ForumId) = NOVEL_THREADS.any { it.forumId == forumId }
+        fun isMangaForum(name: String) = MANGA_THREADS.any { it.forumName == name }
+        fun isMangaForum(forumId: ForumId) = MANGA_THREADS.any { it.forumId == forumId }
+    }
 }

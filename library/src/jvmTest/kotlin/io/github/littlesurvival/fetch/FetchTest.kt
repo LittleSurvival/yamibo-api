@@ -36,7 +36,7 @@ class FetchTest {
 
     @Test
     fun testForum(): Unit = runBlocking {
-        val forumResult = client.fetchForumById(YamiboForum.SEA.id)
+        val forumResult = client.fetchForumById(YamiboForum.SEA.forumId)
         debugLog("fetchForumById", forumResult)
     }
 
@@ -97,7 +97,7 @@ class FetchTest {
     @Test
     fun testVotePoll() = runBlocking {
         val pollResult = client.votePoll(
-            YamiboForum.SEA.id,
+            YamiboForum.SEA.forumId,
             ThreadId(559877),
             listOf(PollOptionId(32952), PollOptionId(32954)),
             formHash

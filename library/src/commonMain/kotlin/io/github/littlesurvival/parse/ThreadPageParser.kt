@@ -10,6 +10,7 @@ import io.github.littlesurvival.dto.page.*
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.parse.util.ParseUtils
@@ -99,6 +100,9 @@ class ThreadPageParser : Parser<ThreadPage> {
                 // directly on the live DOM, no clone.
                 val postTitle = extractPostTitle(messageEl)
 
+                // Tags extraction (only for first floor)
+                val tags = ParseTag().parseFromElement(postEl, messageEl)
+
                 // Poll extraction
                 var poll: Poll? = null
                 val pollEl = messageEl?.selectFirst(".poll")
@@ -107,7 +111,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                     var pollInfoStr = ""
                     var endTimeStr = ""
 
-                    pollEl.select(".poll_txt")?.forEach { pt ->
+                    pollEl.select(".poll_txt").forEach { pt ->
                         val text = pt.text().replace("\\s+".toRegex(), " ").trim()
                         if (text.contains("距结束还有:")) {
                             endTimeStr = text
@@ -326,6 +330,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                         editedText = editedText,
                         contentHtml = contentHtml,
                         images = images,
+                        tags = tags,
                         poll = poll,
                         attachments = attachments,
                         comments = comments,
@@ -348,8 +353,73 @@ class ThreadPageParser : Parser<ThreadPage> {
         }
     }
 
-    companion object {
+    class ParseTag : Parser<Tags> {
 
+        override suspend fun parse(html: String): ParseResult<Tags> {
+            return try {
+                val doc = Ksoup.parse(html)
+                ParseResult.Success(parseFromElement(doc, doc))
+            } catch (e: Exception) {
+                ParseResult.Failure("Failed to parse tags", e)
+            }
+        }
+
+        fun parseFromElement(postEl: Element?, messageEl: Element?): Tags {
+            if (postEl == null && messageEl == null) return Tags()
+
+            val tagElements = buildList {
+                postEl?.select(TAG_LINK_SELECTOR)?.let(::addAll)
+                messageEl?.select(TAG_LINK_SELECTOR)?.let(::addAll)
+            }
+
+            val tags = tagElements
+                .asSequence()
+                .mapNotNull(::toTagValue)
+                .distinctBy { it.id }
+                .toList()
+
+            return Tags(value = tags)
+        }
+
+        private fun toTagValue(a: Element): TagValue? {
+            val href = a.attr("href")
+            val id = extractTagId(href) ?: return null
+
+            val name = extractTagName(a)
+            if (name.isBlank()) return null
+
+            return TagValue(
+                id = id,
+                name = name
+            )
+        }
+
+        private fun extractTagName(a: Element): String {
+            return a.text()
+                .orEmpty()
+                .replace('\u00A0', ' ')
+                .replace(Regex("\\s+"), " ")
+                .trim()
+                .removePrefix(",")
+                .trim()
+        }
+
+        private fun extractTagId(url: String): TagId? {
+            return TAG_ID_REGEX
+                .find(url)
+                ?.groupValues
+                ?.getOrNull(1)
+                ?.toIntOrNull()
+                ?.let(::TagId)
+        }
+
+        private companion object {
+            const val TAG_LINK_SELECTOR = """a[href*="mod=tag"]"""
+            val TAG_ID_REGEX = Regex("""(?:\?|&)id=(\d+)""")
+        }
+    }
+
+    companion object {
         // Pre-compiled regex — avoids recompilation per call.
         private val WHITESPACE_RE = Regex("\\s")
         private val NON_DIGIT_RE = Regex("\\D")

@@ -12,6 +12,7 @@ object ParseUtils {
 
     // Pre-compiled regex patterns for URL extraction
     private val FID_RE = Regex("[?&]fid=(\\d+)")
+    private val FID_PATH_RE = Regex("forum-(\\d+)-")
     private val TID_QUERY_RE = Regex("[?&]tid=(\\d+)")
     private val TID_PATH_RE = Regex("thread-(\\d+)-")
     private val UID_QUERY_RE = Regex("[?&]uid=(\\d+)")
@@ -19,9 +20,11 @@ object ParseUtils {
     private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
     private val PAGE_NUMBER_RE = Regex("(\\d+)")
 
-    /** Extract forum id (fid) from a URL query parameter. */
+    /** Extract forum id (fid) from a URL query (query param or SEO path). */
     fun extractFid(url: String): ForumId? {
-        return FID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ForumId(it) }
+        val queryMatch = FID_RE.find(url)
+        if (queryMatch != null) return queryMatch.groupValues[1].toIntOrNull()?.let { ForumId(it) }
+        return FID_PATH_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ForumId(it) }
     }
 
     /** Extract thread id (tid) from a URL (query param or SEO path). */

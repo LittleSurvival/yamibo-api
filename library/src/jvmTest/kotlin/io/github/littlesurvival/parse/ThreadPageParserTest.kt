@@ -5,6 +5,7 @@ import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
+import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.UserId
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -233,6 +234,12 @@ class ThreadPageParserTest {
             pollDir.listFiles { _, name -> name.endsWith(".html") && !name.contains("forum") }?.forEach { htmlFiles.add(it) }
         }
 
+        // Add files from tags dir
+        val tagsDir = File(assetsDir, "tags")
+        if (tagsDir.exists()) {
+            tagsDir.listFiles { _, name -> name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+        }
+
         for (file in htmlFiles) {
             val html = file.readText()
             val result = parser.parse(html)
@@ -243,5 +250,44 @@ class ThreadPageParserTest {
                 println("Failed to parse ${file.name}: $result")
             }
         }
+    }
+
+    @Test
+    fun parseThreadTagsFromMobileAsset() = runBlocking {
+        val html = loadAsset("tags/女友亦女友6_mobile.html")
+        val result = ThreadPageParser().parse(html)
+
+        val success = assertIs<ParseResult.Success<ThreadPage>>(result)
+        val page = success.value
+
+        // In 女友亦女友6_mobile.html, first post (floor 1) should have tags
+        val firstPost = page.posts[0]
+        assertEquals(1, firstPost.floor)
+        assertTrue(firstPost.tags.value.isNotEmpty(), "First post should have tags")
+
+        // Look for the "本作目录" tag
+        val catalogTag = firstPost.tags.value.find { it.name == "本作目录" }
+        assertNotNull(catalogTag, "Tag '本作目录' not found")
+        assertEquals(TagId(21578), catalogTag.id)
+    }
+
+    @Test
+    fun parseThreadTagsFromDesktopAsset() = runBlocking {
+        val html = loadAsset("tags/戀死39_desktop.html")
+        val result = ThreadPageParser().parse(html)
+
+        val success = assertIs<ParseResult.Success<ThreadPage>>(result)
+        val page = success.value
+
+        val firstPost = page.posts[0]
+        assertEquals(1, firstPost.floor)
+        
+        // Should find 3 tags: 提灯喵汉化组 (20666), あおのなち (21058), 与你相恋到生命尽头 (19473)
+        val tags = firstPost.tags.value
+        assertEquals(3, tags.size, "Should find 3 tags in desktop asset")
+        
+        assertTrue(tags.any { it.name == "提灯喵汉化组" && it.id == TagId(20666) })
+        assertTrue(tags.any { it.name == "あおのなち" && it.id == TagId(21058) })
+        assertTrue(tags.any { it.name == "与你相恋到生命尽头" && it.id == TagId(19473) })
     }
 }

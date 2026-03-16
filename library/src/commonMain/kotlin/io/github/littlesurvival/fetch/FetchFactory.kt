@@ -16,11 +16,10 @@ class FetchFactory(
     var device: Device,
     var timeoutMillis: Long,
 ) : Fetcher<String> {
-    companion object {
-        enum class Device(val userAgent: String) {
-            MOBILE("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"),
-            DESKTOP("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
-        }
+
+    enum class Device(val userAgent: String) {
+        MOBILE("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36"),
+        DESKTOP("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36")
     }
 
     /** Raw cookie string to send with every request. e.g. "key=value; key2=value2" */
@@ -33,12 +32,12 @@ class FetchFactory(
      * Set cookie string for all requests.
      * @param cookie The raw cookie string in format "key=value; key2=value2"
      */
-    fun setCookies(cookie: String) {
+    override fun setCookies(cookie: String) {
         cookieString = cookie.replace("\n", "").trim()
     }
 
     /** Clear cookies. */
-    fun clearCookies() {
+    override fun clearCookies() {
         cookieString = null
     }
 

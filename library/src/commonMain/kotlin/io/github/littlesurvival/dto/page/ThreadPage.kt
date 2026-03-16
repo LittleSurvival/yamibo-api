@@ -2,6 +2,7 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.model.Tags
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
@@ -135,6 +136,11 @@ data class Post(
      * Especial for manga view mode.
      * */
     val images: List<PostImage> = emptyList(),
+
+    /**
+     * Tags, usually appear in manga thread, made for catalog.
+     */
+    val tags: Tags,
 
     /**
      * Poll attached to the post, it's unique in the whole thread and forced to be at first floor.

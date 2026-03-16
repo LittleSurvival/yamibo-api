@@ -22,3 +22,8 @@ interface Id
  * Type-safe favorite id (fvid)
  */
 @JvmInline value class FavoriteId(val value: Int) : Id
+
+/**
+ * Type-safe tag id
+ */
+@JvmInline value class TagId(val value: Int) : Id

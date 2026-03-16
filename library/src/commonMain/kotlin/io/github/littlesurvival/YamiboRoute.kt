@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
+import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.ktor.http.*
@@ -70,6 +71,21 @@ sealed class YamiboRoute {
                     parameters.append("mobile", "2")
                 }
                 .buildString()
+        }
+    }
+
+    /**
+     * This is a Desktop Page.
+     */
+    data class TagPage(val tagId: TagId, val page: Int = 1) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "misc.php"
+                    parameters.append("mod", "tag")
+                    parameters.append("id", tagId.value.toString())
+                    parameters.append("type", "thread")
+                }.buildString()
         }
     }
 

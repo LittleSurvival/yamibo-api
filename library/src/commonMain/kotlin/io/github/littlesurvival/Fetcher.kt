@@ -6,4 +6,7 @@ import io.github.littlesurvival.core.YamiboResult
 
 interface Fetcher<T> {
     suspend fun getResult(url: String): FetchResult<T>
+    fun setCookies(cookie: String)
+    fun clearCookies()
+
 }

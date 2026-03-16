@@ -3,13 +3,14 @@ package io.github.littlesurvival
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
+import io.github.littlesurvival.dto.model.Tags
 import io.github.littlesurvival.dto.page.FavoritePage
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.page.ForumPage
 import io.github.littlesurvival.dto.page.HomePage
-import io.github.littlesurvival.dto.page.PollOption
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.SearchPage
+import io.github.littlesurvival.dto.page.TagPage
 import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -17,6 +18,7 @@ import io.github.littlesurvival.dto.value.Id
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
+import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
@@ -31,24 +33,26 @@ import io.github.littlesurvival.parse.ForumPageParser
 import io.github.littlesurvival.parse.HomePageParser
 import io.github.littlesurvival.parse.ProfilePageParser
 import io.github.littlesurvival.parse.SearchPageParser
+import io.github.littlesurvival.parse.TagPagParser
 import io.github.littlesurvival.parse.ThreadPageParser
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
-    val device: FetchFactory.Companion.Device = FetchFactory.Companion.Device.MOBILE,
     val timeoutMillis: Long = 30_000L,
 ) {
     /** Fetcher */
-    private val fetcher: Fetcher<String> = FetchFactory(device, timeoutMillis)
-    private val searchFactory: SearchFactory = SearchFactory(fetcher as FetchFactory)
-    private val favoriteFactory: FavoriteFactory = FavoriteFactory(fetcher as FetchFactory)
-    private val rateFactory: RateFactory = RateFactory(fetcher as FetchFactory)
-    private val commentPostFactory: CommentPostFactory = CommentPostFactory(fetcher as FetchFactory)
-    private val votePollFactory: VotePollFactory = VotePollFactory(fetcher as FetchFactory)
+    private val mobileFetcher: Fetcher<String> = FetchFactory(FetchFactory.Device.MOBILE, timeoutMillis)
+    private val desktopFetcher: Fetcher<String> = FetchFactory(FetchFactory.Device.DESKTOP, timeoutMillis)
+    private val searchFactory: SearchFactory = SearchFactory(mobileFetcher as FetchFactory)
+    private val favoriteFactory: FavoriteFactory = FavoriteFactory(mobileFetcher as FetchFactory)
+    private val rateFactory: RateFactory = RateFactory(mobileFetcher as FetchFactory)
+    private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher as FetchFactory)
+    private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
 
     /** Initialize Values */
     fun setCookie(cookie: String) {
-        (fetcher as FetchFactory).setCookies(cookie)
+        mobileFetcher.setCookies(cookie)
+        desktopFetcher.setCookies(cookie)
     }
 
     /** Parser */
@@ -56,6 +60,8 @@ class YamiboClient(
     private val profilePageParser = ProfilePageParser()
     private val forumPageParser = ForumPageParser()
     private val threadPageParser = ThreadPageParser()
+    private val threadPageExtractTagParser = ThreadPageParser.ParseTag()
+    private val tagPageParser = TagPagParser()
     private val searchPageParser = SearchPageParser()
     private val favoritePageParser = FavoritePageParser()
 
@@ -71,6 +77,12 @@ class YamiboClient(
 
     suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, page: Int = 1): YamiboResult<ThreadPage> =
         fetchAndParse(YamiboRoute.Thread(tId, authorId,page).build(), threadPageParser)
+
+    suspend fun fetchTagPageById(tagId: TagId, page: Int = 1): YamiboResult<TagPage> =
+        fetchAndParse(YamiboRoute.TagPage(tagId, page).build(), tagPageParser, true)
+
+    suspend fun fetchExtractTagsInThreadById(tId: ThreadId): YamiboResult<Tags> =
+        fetchAndParse(YamiboRoute.Thread(tId).build(), threadPageExtractTagParser, true)
 
     suspend fun fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId): YamiboResult<ThreadPage> =
         fetchAndParse(YamiboRoute.FindPost(authorId, threadId, postId).build(), threadPageParser)
@@ -141,7 +153,8 @@ class YamiboClient(
     }
 
     /** Core fetch-and-parse pipeline. */
-    private suspend fun <T> fetchAndParse(url: String, parser: Parser<T>): YamiboResult<T> {
+    private suspend fun <T> fetchAndParse(url: String, parser: Parser<T>, desktop: Boolean = false): YamiboResult<T> {
+        val fetcher = if (desktop) desktopFetcher else mobileFetcher
         return when (val fetched = fetcher.getResult(url)) {
             is FetchResult.Success -> {
                 when (val parsed = parser.parse(fetched.value)) {

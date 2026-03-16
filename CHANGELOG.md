@@ -115,3 +115,37 @@ data class ThreadReply(val threadId: ThreadId, val page: Int = 1)
 
 # 1.0.12
 Fix PostReply build the wrong url issue.
+
+# v1.0.13
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val tags: Tags,
+    ...
+)
+```
+Add `tags` to `Post` to represent the tag information associated with a thread. Tags are typically extracted from the first floor of a thread and are commonly used in forums like manga for cataloging.
+
+Add Tag Search Result Parsing :
+Implemented `TagPagParser` and `TagPage` DTO to support parsing for tag search result pages (e.g., `misc.php?mod=tag`).
+
+Update ThreadSummary DTO :
+```kotlin notebook
+data class ThreadSummary(
+    ...
+    /** 
+     * Forum Id (fid). 
+     * @see TagPage only 
+     */
+    val fid: ForumId? = null,
+
+    /** 
+     * Attachment type. 
+     * @see TagPage only 
+     */
+    val attachmentType: AttachmentType? = null,
+    ...
+)
+```
+Added `fid` and `attachmentType` to `ThreadSummary` specifically for tag search result pages, mapping common attachment icons to `Image` or `Other`.

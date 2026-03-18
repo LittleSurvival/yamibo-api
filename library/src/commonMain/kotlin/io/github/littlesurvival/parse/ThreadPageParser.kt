@@ -178,10 +178,19 @@ class ThreadPageParser : Parser<ThreadPage> {
                 pstatus?.remove()
                 pollEl?.remove()
 
-                val contentHtml = messageEl?.html()?.trim() ?: ""
+                val imgOneEl = postEl.selectFirst(".img_one")
+                val contentHtml = buildString {
+                    append(messageEl?.html()?.trim() ?: "")
+                    if (imgOneEl != null) {
+                        append(imgOneEl.outerHtml())
+                    }
+                }
 
                 val images = mutableListOf<PostImage>()
-                val imgEls = messageEl?.select("img") ?: emptyList()
+                val imgEls = buildList {
+                    messageEl?.select("img")?.let { addAll(it) }
+                    imgOneEl?.select("img")?.let { addAll(it) }
+                }
                 for (img in imgEls) {
                     val src = img.attr("src")
                     if (src.isEmpty()) continue

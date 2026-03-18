@@ -158,3 +158,6 @@ fun isNovelForum(forumId: ForumId)
 fun isMangaForum(name: String)
 fun isMangaForum(forumId: ForumId)
 ```
+
+# v1.0.15
+Fix the issue of cannot get image from some type of thread

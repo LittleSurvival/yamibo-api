@@ -16,3 +16,4 @@ xcuserdata
 # User specified ignore
 commonTest/
 *.txt
+*.log

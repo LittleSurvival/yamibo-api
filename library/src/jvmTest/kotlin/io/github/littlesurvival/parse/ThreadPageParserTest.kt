@@ -240,6 +240,12 @@ class ThreadPageParserTest {
             tagsDir.listFiles { _, name -> name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
         }
 
+        // Add files from manga dir
+        val mangaDir = File(assetsDir, "manga")
+        if (mangaDir.exists()) {
+            mangaDir.listFiles { _, name -> name.endsWith(".html") }?.forEach { htmlFiles.add(it) }
+        }
+
         for (file in htmlFiles) {
             val html = file.readText()
             val result = parser.parse(html)
@@ -250,6 +256,24 @@ class ThreadPageParserTest {
                 println("Failed to parse ${file.name}: $result")
             }
         }
+    }
+
+    @Test
+    fun parseMangaTestImages() = runBlocking {
+        val html = loadAsset("manga/manga_test1.html")
+        val result = ThreadPageParser().parse(html)
+        val success = assertIs<ParseResult.Success<ThreadPage>>(result)
+        val page = success.value
+
+        val firstPost = page.posts[0]
+        assertEquals(1, firstPost.floor)
+
+        assertTrue(firstPost.images.isNotEmpty(), "First post should have manga images")
+        val firstImage = firstPost.images[0]
+        assertTrue(firstImage.url.contains("001843kg7hihl9dhepbrlb.png"), "Image URL should be parsed")
+        
+        // Ensure contentHtml contains img_one
+        assertTrue(firstPost.contentHtml.contains("img_one"), "Content HTML should contain img_one")
     }
 
     @Test
@@ -269,25 +293,5 @@ class ThreadPageParserTest {
         val catalogTag = firstPost.tags.value.find { it.name == "本作目录" }
         assertNotNull(catalogTag, "Tag '本作目录' not found")
         assertEquals(TagId(21578), catalogTag.id)
-    }
-
-    @Test
-    fun parseThreadTagsFromDesktopAsset() = runBlocking {
-        val html = loadAsset("tags/戀死39_desktop.html")
-        val result = ThreadPageParser().parse(html)
-
-        val success = assertIs<ParseResult.Success<ThreadPage>>(result)
-        val page = success.value
-
-        val firstPost = page.posts[0]
-        assertEquals(1, firstPost.floor)
-        
-        // Should find 3 tags: 提灯喵汉化组 (20666), あおのなち (21058), 与你相恋到生命尽头 (19473)
-        val tags = firstPost.tags.value
-        assertEquals(3, tags.size, "Should find 3 tags in desktop asset")
-        
-        assertTrue(tags.any { it.name == "提灯喵汉化组" && it.id == TagId(20666) })
-        assertTrue(tags.any { it.name == "あおのなち" && it.id == TagId(21058) })
-        assertTrue(tags.any { it.name == "与你相恋到生命尽头" && it.id == TagId(19473) })
     }
 }

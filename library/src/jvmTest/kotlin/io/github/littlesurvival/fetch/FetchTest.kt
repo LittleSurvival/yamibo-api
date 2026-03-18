@@ -54,8 +54,8 @@ class FetchTest {
 
     @Test
     fun testThread(): Unit = runBlocking {
-        // 568055, 535612, 564532, 565033, 557223, 535057, 568285, 567394, 568356, 568493, 566241, 551879, 568644
-        val threadResult = client.fetchThreadById(ThreadId(568644), page = 1)
+        // 568055, 535612, 564532, 565033, 557223, 535057, 568285, 567394, 568356, 568493, 566241, 551879, 568644, 568760
+        val threadResult = client.fetchThreadById(ThreadId(568760), page = 1)
         if (threadResult is YamiboResult.Success) {
             println("post size : ${threadResult.value.posts.size}")
         }

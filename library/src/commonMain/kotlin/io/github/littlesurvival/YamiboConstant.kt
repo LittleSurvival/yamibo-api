@@ -50,9 +50,13 @@ enum class YamiboForum(val forumName: String, val forumId: ForumId) {
     RESOURCE("資源交流區", ForumId(19)),
     /** 非百合資源區 (資源交流區子版) */
     NON_YURI_RESOURCE("非百合資源區", ForumId(27));
+
     companion object {
         val NOVEL_THREADS = arrayOf(LITERATURE, TRANSLATED_LIGHT_NOVEL)
         val MANGA_THREADS = arrayOf(ORIGINAL_WORK, TRANSLATED_YURI_MANGA, YURI_MANGA_SOURCE)
+
+        fun toForumName(forumId: ForumId): String? = entries.firstOrNull { it.forumId.value == forumId.value }?.forumName
+        fun toForumId(forumName: String): ForumId? = entries.firstOrNull { it.forumName == forumName }?.forumId
 
         fun isNovelForum(name: String) = NOVEL_THREADS.any { it.forumName == name }
         fun isNovelForum(forumId: ForumId) = NOVEL_THREADS.any { it.forumId == forumId }

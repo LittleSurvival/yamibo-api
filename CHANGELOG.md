@@ -161,3 +161,10 @@ fun isMangaForum(forumId: ForumId)
 
 # v1.0.15
 Fix the issue of cannot get image from some type of thread
+
+# v1.0.16
+Add two function in YamiboForum
+```kotlin notebook
+fun toForumName(forumId: ForumId): String?
+fun toForumId(forumName: String): ForumId?
+```

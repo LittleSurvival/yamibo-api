@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.16"
+version = "1.0.17"
 
 kotlin {
     jvm()

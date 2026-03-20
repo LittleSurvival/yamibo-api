@@ -16,6 +16,7 @@ import io.github.littlesurvival.dto.model.ThreadSummary
  * - LastUpdateText
  */
 data class TagPage(
+    val tagName: String,
     val threadSummaries : List<ThreadSummary>,
     val pageNav: PageNav? = null
 )

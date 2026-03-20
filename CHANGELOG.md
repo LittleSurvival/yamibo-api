@@ -168,3 +168,13 @@ Add two function in YamiboForum
 fun toForumName(forumId: ForumId): String?
 fun toForumId(forumName: String): ForumId?
 ```
+
+# v1.0.17
+Add tagName param to TagPage.
+```kotlin notebook
+data class TagPage(
+    val tagName: String,
+    val threadSummaries : List<ThreadSummary>,
+    val pageNav: PageNav? = null
+)
+```

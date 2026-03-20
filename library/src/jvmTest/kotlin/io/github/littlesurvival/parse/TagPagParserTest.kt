@@ -31,6 +31,7 @@ class TagPagParserTest {
         val page = success.value
 
         println("=== TagPage ===")
+        println("Tag Title: ${page.tagName}")
         println("Threads (${page.threadSummaries.size}):")
         page.threadSummaries.forEach { t ->
             println("  [tid=${t.tid}] ${t.title}")

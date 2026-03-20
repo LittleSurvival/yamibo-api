@@ -18,6 +18,7 @@ class TagPagParser : Parser<TagPage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
             if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
 
+            val title = doc.title().split(" ").getOrNull(2) ?: doc.title()
             // Thread list
             // Rows sit inside: div.bm.tl > div.bm_c > table > tr
             val threads = mutableListOf<ThreadSummary>()
@@ -83,6 +84,7 @@ class TagPagParser : Parser<TagPage> {
 
             ParseResult.Success(
                 TagPage(
+                    tagName = title,
                     threadSummaries = threads,
                     pageNav = pageNav,
                 )

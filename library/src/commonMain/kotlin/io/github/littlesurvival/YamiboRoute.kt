@@ -85,6 +85,7 @@ sealed class YamiboRoute {
                     parameters.append("mod", "tag")
                     parameters.append("id", tagId.value.toString())
                     parameters.append("type", "thread")
+                    parameters.append("page", page.toString())
                 }.buildString()
         }
     }

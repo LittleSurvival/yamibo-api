@@ -178,3 +178,6 @@ data class TagPage(
     val pageNav: PageNav? = null
 )
 ```
+
+# v1.0.18
+Fix TagPage Link did not load page param issue.

@@ -1,10 +1,13 @@
 package io.github.littlesurvival.dto.model
 
+import kotlinx.serialization.Serializable
+
 /**
  * Pagination navigation URLs for multipage listings.
  *
  * Used by both forum pages and thread pages.
  */
+@Serializable
 data class PageNav(
     /** URL to the next page, if available. */
     val nextUrl: String? = null,

@@ -3,8 +3,10 @@ package io.github.littlesurvival.dto.model
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.page.TagPage
+import kotlinx.serialization.Serializable
 
 /** Thread item shown in a forum thread list. */
+@Serializable
 data class ThreadSummary(
     /** Thread id (tid). */
     val tid: ThreadId,
@@ -63,6 +65,7 @@ data class ThreadSummary(
     val lastUpdateText: String? = null,
 )
 
+@Serializable
 enum class AttachmentType {
     Image,
     Other,

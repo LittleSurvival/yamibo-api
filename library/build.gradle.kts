@@ -1,6 +1,5 @@
 import com.android.build.api.dsl.androidLibrary
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -11,7 +10,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.18"
+version = "1.0.19"
 
 kotlin {
     jvm()

@@ -2,6 +2,7 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.UserId
+import kotlinx.serialization.Serializable
 
 /**
  * Profile page data model.
@@ -20,6 +21,7 @@ import io.github.littlesurvival.dto.value.UserId
  * @property lastVisit Last visit time(最後訪問, e.g. "2026-2-24 00:49").
  * @property formHash Form hash(Important Info, use for all post request.).
  */
+@Serializable
 data class ProfilePage(
     val uid: UserId,
     val username: String,

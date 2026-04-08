@@ -4,13 +4,16 @@ import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.parse.util.ParseUtils
+import kotlinx.serialization.Serializable
 
+@Serializable
 data class FavoritePage(
     val type: FavoriteType,
     val items: List<FavoriteItem>,
     val pageNav: PageNav? = null
 )
 
+@Serializable
 data class FavoriteItem(
     val name: String,
     val url: String,
@@ -20,6 +23,7 @@ data class FavoriteItem(
         return ParseUtils.extractTid(this@FavoriteItem.url)
     }
 }
+@Serializable
 enum class FavoriteType(val typeName: String, val typeId: String) {
     Thread("帖子", "thread"),
     Forum("版块", "forum"),

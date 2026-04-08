@@ -1,12 +1,14 @@
 package io.github.littlesurvival.dto.model
 
 import io.github.littlesurvival.dto.value.ForumId
+import kotlinx.serialization.Serializable
 
 /**
  * A forum entry shown on the home page.
  *
  * This represents a clickable forum block that leads to a forumdisplay page.
  */
+@Serializable
 data class ForumSummary(
     /**
      * Forum id (fid) extracted from the forumdisplay URL.

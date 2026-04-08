@@ -4,6 +4,7 @@ import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.value.ThreadId
+import kotlinx.serialization.Serializable
 
 /**
  * Forum page model.
@@ -15,6 +16,7 @@ import io.github.littlesurvival.dto.value.ThreadId
  *
  * This model is a read-only snapshot parsed from the forum page.
  */
+@Serializable
 data class ForumPage(
     /** Forum basic information. */
     val forum: ForumSummary,
@@ -49,6 +51,7 @@ data class ForumPage(
 )
 
 /** Item pinned at the top of a forum page. */
+@Serializable
 sealed interface PinnedItem {
 
     /**
@@ -56,6 +59,7 @@ sealed interface PinnedItem {
      *
      * Example: 欢迎光临。
      */
+    @Serializable
     data class Announcement(
         /** Announcement title. */
         val title: String,
@@ -65,6 +69,7 @@ sealed interface PinnedItem {
     ) : PinnedItem
 
     /** Pinned thread. */
+    @Serializable
     data class Thread(
         /** Thread id (tid). */
         val tid: ThreadId,

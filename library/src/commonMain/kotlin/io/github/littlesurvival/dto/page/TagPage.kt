@@ -2,21 +2,10 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.ThreadSummary
+import kotlinx.serialization.Serializable
 
-/**
- * Support :
- * - Tid
- * - Thread Title
- * - Url
- * - Fid
- * - Author
- * - AttachmentType
- * - ReplyCount
- * - ViewCount
- * - LastUpdateText
- */
+@Serializable
 data class TagPage(
-    val tagName: String,
     val threadSummaries : List<ThreadSummary>,
     val pageNav: PageNav? = null
 )

@@ -1,6 +1,7 @@
 package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.ForumSummary
+import kotlinx.serialization.Serializable
 
 /**
  * Forum home page model.
@@ -10,6 +11,7 @@ import io.github.littlesurvival.dto.model.ForumSummary
  *
  * This model is read-only and intended to be a snapshot of the parsed page.
  */
+@Serializable
 data class HomePage(
     /**
      * Ordered list of forum categories shown on the home page.
@@ -28,6 +30,7 @@ data class HomePage(
 )
 
 /** A yearly summary or event banner info. */
+@Serializable
 data class YearlySummary(
     /** Display name (e.g. "2025年度总结"). */
     val name: String,
@@ -45,6 +48,7 @@ data class YearlySummary(
  * A category is a visual grouping used by the forum (e.g. 庙堂, 江湖), containing multiple forums that
  * users can enter.
  */
+@Serializable
 data class ForumCategory(
     /**
      * Display title of the category.

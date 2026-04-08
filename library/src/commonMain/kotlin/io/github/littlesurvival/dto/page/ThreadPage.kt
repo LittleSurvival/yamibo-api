@@ -7,6 +7,7 @@ import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
+import kotlinx.serialization.Serializable
 
 /**
  * Thread page model.
@@ -17,6 +18,7 @@ import io.github.littlesurvival.dto.value.ThreadId
  *
  * This model is a read-only snapshot parsed from the thread page.
  */
+@Serializable
 data class ThreadPage(
     /** Thread header information. */
     val thread: ThreadInfo,
@@ -37,6 +39,7 @@ data class ThreadPage(
 )
 
 /** Basic thread information extracted from the thread page. */
+@Serializable
 data class ThreadInfo(
     /** Thread id (tid). */
     val tid: ThreadId,
@@ -81,6 +84,7 @@ data class ThreadInfo(
 )
 
 /** A single post (a floor) within a thread page. */
+@Serializable
 data class Post(
     /** Post id (pid). */
     val pid: PostId,
@@ -158,6 +162,7 @@ data class Post(
 )
 
 /** An image referenced in a post. */
+@Serializable
 data class PostImage(
     /**
      * Full image URL (href or src).
@@ -175,6 +180,7 @@ data class PostImage(
 )
 
 /** A comment (点评) left on a post. */
+@Serializable
 data class PostComment(
     /** The user who left the comment. */
     val user: User,
@@ -187,6 +193,7 @@ data class PostComment(
 )
 
 /** A rate entry (评分) on a post. */
+@Serializable
 data class RateBlock(
     /** Total number of people who participated in rating this post. */
     val rateParticipatePeople: Int = 0,
@@ -198,6 +205,7 @@ data class RateBlock(
     val rates: List<PostRate> = emptyList(),
 )
 
+@Serializable
 data class PostRate(
     /** The user who rated. */
     val userName: String,
@@ -210,6 +218,7 @@ data class PostRate(
 )
 
 /** An attachment on the post. */
+@Serializable
 data class Attachment(
     /** The name of attachment. */
     val name: String,
@@ -223,6 +232,7 @@ data class Attachment(
     val downloadTimes: Int,
 )
 
+@Serializable
 data class Poll(
     val status: PollStatus,
     val type: PollType,
@@ -237,6 +247,7 @@ data class Poll(
     val option: List<PollOption>
 )
 
+@Serializable
 data class PollOption(
     val option: PollOptionId,
     val optionName: String,
@@ -245,11 +256,13 @@ data class PollOption(
     val totalVoted: Int?,
 )
 
+@Serializable
 enum class PollStatus {
     NotVoted,
     Voted,
 }
 
+@Serializable
 enum class PollType {
     SingleChoice,
     MultipleChoice,

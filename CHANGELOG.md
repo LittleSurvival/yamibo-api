@@ -184,3 +184,6 @@ Fix TagPage Link did not load page param issue.
 
 # v1.0.19
 Make all data classes @Serializable.
+
+# v1.0.20
+Fix/Add kotlin serialization plugin compilation.

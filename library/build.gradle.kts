@@ -7,10 +7,11 @@ plugins {
     alias(libs.plugins.vanniktech.mavenPublish)
     alias(libs.plugins.compose.multiplatform)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.kotlinSerialization)
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.19"
+version = "1.0.20"
 
 kotlin {
     jvm()

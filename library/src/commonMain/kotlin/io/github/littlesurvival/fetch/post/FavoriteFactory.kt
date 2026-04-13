@@ -8,6 +8,7 @@ import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import com.fleeksoft.ksoup.Ksoup
+import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.fetch.PostFactory
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -32,7 +33,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
      * @return [FetchResult.Success] containing the response body, or a [FetchResult.Failure] if the
      * request fails.
      */
-    suspend fun addThread(formHash: FormHash, threadId: ThreadId): FetchResult<String> {
+    suspend fun addThread(formHash: FormHash, threadId: ThreadId, description: String): FetchResult<String> {
         val url = YamiboRoute.Favorite.AddThread(threadId).build()
         val referer = YamiboRoute.Thread(threadId).build()
         return try {
@@ -45,7 +46,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
                                 append("favoritesubmit", "true")
                                 append("referer", referer)
                                 append("formhash", formHash.value)
-                                append("description", "手机收藏")
+                                append("description", description)
                             }
                         )
                     )
@@ -93,6 +94,43 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
             val message = doc.selectFirst(".jump_c p")?.text()?.trim() ?: body
 
             if (response.status.isSuccess() && !PostResponseUtils.isIllegal(body)) {
+                FetchResult.Success(value = message, statusCode = response.status.value, url = url)
+            } else {
+                FetchResult.Failure.HttpError(
+                    statusCode = response.status.value,
+                    url = url,
+                    bodyPreview = message
+                )
+            }
+        } catch (e: HttpRequestTimeoutException) {
+            FetchResult.Failure.Timeout(url, e)
+        } catch (e: Exception) {
+            FetchResult.Failure.NetworkError(url, e)
+        }
+    }
+
+    /**
+     * Remove favorite
+     */
+    suspend fun removeFavorite(formHash: FormHash, favoriteId: FavoriteId): FetchResult<String> {
+        val url = YamiboRoute.Favorite.Delete(favoriteId).build()
+        return try {
+            val response = fetcher.perform(HttpMethod.Post, url) {
+                header("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("referer", "https://bbs.yamibo.com/")
+                            append("deletesubmit", "true")
+                            append("formhash", formHash.value)
+                        }
+                    )
+                )
+            }
+
+            val body = response.bodyAsText()
+            val message = PostResponseUtils.parseMessageText(body) ?: body
+            if (response.status.isSuccess() && PostResponseUtils.isSuccess(body)) {
                 FetchResult.Success(value = message, statusCode = response.status.value, url = url)
             } else {
                 FetchResult.Failure.HttpError(

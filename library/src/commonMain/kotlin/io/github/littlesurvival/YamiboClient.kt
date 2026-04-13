@@ -12,6 +12,7 @@ import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.page.TagPage
 import io.github.littlesurvival.dto.page.ThreadPage
+import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.Id
@@ -96,7 +97,7 @@ class YamiboClient(
             is FetchResult.Failure -> mapFetchFailure(pollResult, pollResult.url)
         }
     }
-    suspend fun fetchFavorite(
+    suspend fun fetchFavoritePage(
         userId: UserId? = null,
         type: FavoriteType,
         page: Int = 1
@@ -116,12 +117,19 @@ class YamiboClient(
     suspend fun fetchSearchById(query: String, searchId: SearchId, page: Int = 1): YamiboResult<SearchPage> =
         fetchAndParse(YamiboRoute.Search.BySearchId(query, searchId, page).build(), searchPageParser)
 
-    suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String> {
+    suspend fun fetchAddFavorite(id: Id, formHash: FormHash, description: String = "手机收藏"): YamiboResult<String> {
         return when (val result = when(id) {
-            is ThreadId -> favoriteFactory.addThread(formHash, id)
+            is ThreadId -> favoriteFactory.addThread(formHash, id, description)
             is ForumId -> favoriteFactory.addForum(formHash, id)
             else -> throw IllegalArgumentException("Unknown id type: $id")
         }) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    suspend fun fetchRemoveFavorite(id: FavoriteId, formHash: FormHash): YamiboResult<String> {
+        return when(val result = favoriteFactory.removeFavorite(formHash, id)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

@@ -146,6 +146,7 @@ sealed class YamiboRoute {
                         parameters.append("do", "favorite")
                         parameters.append("view", "me")
                         parameters.append("type", type.typeId)
+                        parameters.append("page", page.toString())
                         parameters.append("mobile", "2")
                     }.buildString()
             }

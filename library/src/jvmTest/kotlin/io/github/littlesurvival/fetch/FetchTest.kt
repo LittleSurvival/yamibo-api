@@ -5,6 +5,7 @@ import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PollOptionId
@@ -48,8 +49,14 @@ class FetchTest {
 
     @Test
     fun testFavorite(): Unit = runBlocking {
-        val favoriteResult = client.fetchFavorite(type = FavoriteType.Thread, page = 1)
+        val favoriteResult = client.fetchFavoritePage(type = FavoriteType.Thread, page = 1)
         debugLog("fetchFavorite", favoriteResult)
+    }
+
+    @Test
+    fun testRemoveFavorite(): Unit = runBlocking {
+        val removeFavorite = client.fetchRemoveFavorite(FavoriteId(2549313), formHash)
+        debugLog("fetchRemoveFavorite", removeFavorite)
     }
 
     @Test

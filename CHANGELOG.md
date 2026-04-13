@@ -187,3 +187,10 @@ Make all data classes @Serializable.
 
 # v1.0.20
 Fix/Add kotlin serialization plugin compilation.
+
+# v1.0.21
+Add removeFavorite feature
+```kotlin notebook
+suspend fun removeFavorite(favoriteId: FavoriteId): YamiboResult<String>
+```
+The FavoriteId can only get from FavoritePage.

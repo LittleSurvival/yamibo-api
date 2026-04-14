@@ -13,6 +13,7 @@ import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class ThreadPageParser : Parser<ThreadPage> {
@@ -164,7 +165,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                     poll = Poll(
                         status = status,
                         type = pollType,
-                        endTime = endTimeStr,
+                        endTime = TimeInfo.parse(endTimeStr),
                         pollInfo = pollInfoStr,
                         option = options
                     )
@@ -227,7 +228,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                             Attachment(
                                 name = name,
                                 url = url,
-                                timeUpload = timeUpload,
+                                timeUpload = TimeInfo.parse(timeUpload),
                                 fileSize = fileSize,
                                 downloadTimes = downloadTimes
                             )
@@ -266,7 +267,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                             comments.add(
                                 PostComment(
                                     user = commentUser,
-                                    timeText = commentTimeText,
+                                    time = TimeInfo.parse(commentTimeText),
                                     message = commentMessage
                                 )
                             )
@@ -335,8 +336,8 @@ class ThreadPageParser : Parser<ThreadPage> {
                         floor = floor,
                         title = postTitle,
                         author = author,
-                        timeText = timeText,
-                        editedText = editedText,
+                        timeCreate = TimeInfo.parse(timeText),
+                        lastEditedTime = editedText?.let { TimeInfo.parse(it) },
                         contentHtml = contentHtml,
                         images = images,
                         tags = tags,

@@ -2,6 +2,7 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.UserId
+import io.github.littlesurvival.dto.model.TimeInfo
 import kotlinx.serialization.Serializable
 
 /**
@@ -33,7 +34,7 @@ data class ProfilePage(
     val gender: String?,
     val birthday: String?,
     val onlineHours: Int,
-    val registerTime: String?,
-    val lastVisit: String?,
+    val registerTime: TimeInfo?,
+    val lastVisit: TimeInfo?,
     val formHash: FormHash?
 )

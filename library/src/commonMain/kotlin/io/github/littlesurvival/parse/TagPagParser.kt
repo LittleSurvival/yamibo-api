@@ -7,6 +7,7 @@ import io.github.littlesurvival.dto.model.AttachmentType
 import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.TagPage
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class TagPagParser : Parser<TagPage> {
@@ -74,7 +75,7 @@ class TagPagParser : Parser<TagPage> {
                         author = author,
                         replyCount = replyCount,
                         viewCount = viewCount,
-                        lastUpdateText = lastUpdateText ?: authorDate,
+                        lastUpdate = (lastUpdateText ?: authorDate)?.let { TimeInfo.parse(it) },
                     )
                 )
             }

@@ -51,6 +51,16 @@ class FetchTest {
     fun testFavorite(): Unit = runBlocking {
         val favoriteResult = client.fetchFavoritePage(type = FavoriteType.Thread, page = 1)
         debugLog("fetchFavorite", favoriteResult)
+
+        if (favoriteResult is YamiboResult.Success) {
+            val ids = favoriteResult.value.items.map { it.favId.also { id -> println(id) } }
+            var isSort = true
+            for (i in ids.indices) {
+                if (i == ids.size - 1) break
+                if (ids[i].value < ids[i + 1].value) isSort = false
+            }
+            println("isSort : $isSort")
+        }
     }
 
     @Test

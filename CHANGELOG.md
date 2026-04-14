@@ -194,3 +194,34 @@ Add removeFavorite feature
 suspend fun removeFavorite(favoriteId: FavoriteId): YamiboResult<String>
 ```
 The FavoriteId can only get from FavoritePage.
+
+# v1.0.22
+Add official `kotlinx-datetime` dependency for robust date-time conversions in KMP (`commonMain`).
+
+Introduce `TimeInfo` Model :
+```kotlin notebook
+data class TimeInfo(
+    val text: String,
+    val specialText: String? = null,
+    val epoch: Long
+)
+```
+Store time data with its computed UTC+8 epoch timestamp, raw date text, and explicit contextual text if exists (e.g., "本帖最后由...").
+
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val timeCreate: TimeInfo,
+    val lastEditedTime: TimeInfo?,
+    ...
+)
+```
+Renamed `timeText` to `timeCreate` and `editedText` to `lastEditedTime`.
+
+Refactor time string properties to `TimeInfo` across DTOs :
+- `ThreadPage.PostComment` : `time`
+- `ThreadPage.Attachment` : `timeUpload`
+- `ThreadPage.Poll` : `endTime`
+- `ThreadSummary` : Renamed `lastUpdateText` to `lastUpdate`
+- `ProfilePage` : `registerTime`, `lastVisit`

@@ -38,8 +38,8 @@ class ThreadPageParserTest {
         page.posts.forEach { post ->
             println("  Post #${post.floor} (pid=${post.pid}):")
             println("    Author: ${post.author}")
-            println("    Time: ${post.timeText}")
-            if (post.editedText != null) println("    Edited: ${post.editedText}")
+            println("    Time: ${post.timeCreate.text}")
+            if (post.lastEditedTime != null) println("    Edited: ${post.lastEditedTime.specialText ?: post.lastEditedTime.text}")
             println("    Content: ${post.contentHtml.take(120)}...")
             if (post.images.isNotEmpty()) println("    Images: ${post.images}")
         }
@@ -64,16 +64,16 @@ class ThreadPageParserTest {
         assertEquals(UserId(657969), firstPost.author.uid)
         assertEquals("11111111zlk", firstPost.author.name)
         assertNotNull(firstPost.author.avatarUrl)
-        assertEquals("2026-1-29 21:07", firstPost.timeText)
-        assertNotNull(firstPost.editedText)
-        assertTrue(firstPost.editedText!!.contains("编辑"))
+        assertEquals("2026-1-29 21:07", firstPost.timeCreate.text)
+        assertNotNull(firstPost.lastEditedTime)
+        assertTrue(firstPost.lastEditedTime.specialText!!.contains("编辑"))
         assertTrue(firstPost.contentHtml.contains("接坑"))
 
         // Second post
         val secondPost = page.posts[1]
         assertEquals(PostId(41458180), secondPost.pid)
         assertEquals(2, secondPost.floor)
-        assertEquals("2026-1-29 21:16", secondPost.timeText)
+        assertEquals("2026-1-29 21:16", secondPost.timeCreate.text)
         assertTrue(secondPost.contentHtml.contains("第十一话"))
 
         // Third post
@@ -97,7 +97,7 @@ class ThreadPageParserTest {
         page.posts.forEach { post ->
             println("  Post #${post.floor} (pid=${post.pid}):")
             println("    Author: ${post.author}")
-            println("    Time: ${post.timeText}")
+            println("    Time: ${post.timeCreate.text}")
             println("    Comments (${post.comments.size}): ${post.comments}")
             println("    Rates (${post.rateBlock.rates.size}): ${post.rateBlock.rates}")
         }
@@ -179,7 +179,7 @@ class ThreadPageParserTest {
                 attachment.url.contains("mod=attachment&aid="),
                 "Attachment URL should contain mod=attachment"
         )
-        assertEquals("2026-1-10 21:08", attachment.timeUpload)
+        assertEquals("2026-1-10 21:08", attachment.timeUpload.text)
         assertEquals("17.93 KB", attachment.fileSize)
         assertEquals(122, attachment.downloadTimes)
 
@@ -196,13 +196,13 @@ class ThreadPageParserTest {
 
         val attach1 = targetPost2.attachments[0]
         assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.txt", attach1.name)
-        assertEquals("2025-6-11 00:17", attach1.timeUpload)
+        assertEquals("2025-6-11 00:17", attach1.timeUpload.text)
         assertEquals("281.46 KB", attach1.fileSize)
         assertEquals(4226, attach1.downloadTimes)
 
         val attach2 = targetPost2.attachments[1]
         assertEquals("直到与变成了义妹的毒舌系后辈成为真正的家人.epub", attach2.name)
-        assertEquals("2025-6-11 00:17", attach2.timeUpload)
+        assertEquals("2025-6-11 00:17", attach2.timeUpload.text)
         assertEquals("153.7 KB", attach2.fileSize)
         assertEquals(399, attach2.downloadTimes)
     }

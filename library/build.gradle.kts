@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.0.21"
+version = "1.0.22"
 
 kotlin {
     jvm()
@@ -36,6 +36,7 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.ktor.client.core)
             implementation(libs.ksoup)
+            implementation(libs.kotlinx.datetime)
 
             // Compose Multiplatform
             implementation(compose.runtime)

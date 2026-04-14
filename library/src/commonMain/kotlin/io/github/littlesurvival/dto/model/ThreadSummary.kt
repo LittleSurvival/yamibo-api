@@ -55,14 +55,12 @@ data class ThreadSummary(
     val tag: String? = null,
 
     /**
-     * Last update time text shown in the list.
+     * Last update time info.
      *
      * Usually comes from the forum list timestamp (e.g. "2025-12-2 04:41").
      * For Tag page it's only have y-m-d, the info's position is below author name (e.g. 2025-1-11).
-     *
-     * Kept as raw text to avoid parsing and timezone issues.
      */
-    val lastUpdateText: String? = null,
+    val lastUpdate: TimeInfo? = null,
 )
 
 @Serializable

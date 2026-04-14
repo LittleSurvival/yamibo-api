@@ -6,6 +6,7 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.model.User
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.page.*
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.parse.util.ParseUtils
@@ -152,7 +153,7 @@ class ForumPageParser : Parser<ForumPage> {
                         replyCount = replyCount,
                         viewCount = viewCount,
                         tag = tag,
-                        lastUpdateText = lastUpdateText
+                        lastUpdate = lastUpdateText?.let { TimeInfo.parse(it) }
                     )
                 )
             }

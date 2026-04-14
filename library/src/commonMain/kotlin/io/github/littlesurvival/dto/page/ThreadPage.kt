@@ -3,6 +3,7 @@ package io.github.littlesurvival.dto.page
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.Tags
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
@@ -115,18 +116,18 @@ data class Post(
     val author: User,
 
     /**
-     * Post time text as displayed on the page.
+     * Post time creation info.
      *
      * Example: "2026-2-6 01:54"
      */
-    val timeText: String,
+    val timeCreate: TimeInfo,
 
     /**
      * Optional edit info text shown inside the post body.
      *
-     * Example: "本帖最后由 XXX 于 ... 编辑"
+     * Example: "本帖最后由 XXX 于 2026-2-6 01:54 编辑"
      */
-    val editedText: String? = null,
+    val lastEditedTime: TimeInfo? = null,
 
     /**
      * Raw HTML of the post content area.
@@ -185,8 +186,8 @@ data class PostComment(
     /** The user who left the comment. */
     val user: User,
 
-    /** Time text of the comment. */
-    val timeText: String,
+    /** Time info of the comment. */
+    val time: TimeInfo,
 
     /** The comment message text. */
     val message: String
@@ -225,7 +226,7 @@ data class Attachment(
     /** The download link of attachment. */
     val url: String,
     /** The time it was uploaded (e.g. 2026-1-10 21:08) */
-    val timeUpload: String,
+    val timeUpload: TimeInfo,
     /** The size of the attachment (e.g. 17.93 KB) */
     val fileSize: String,
     /** The times it has been downloaded (e.g. 122) */
@@ -237,7 +238,7 @@ data class Poll(
     val status: PollStatus,
     val type: PollType,
     /** How long did the poll end (e.g. 距结束还有: 101 天 17 小时 11 分钟) */
-    val endTime: String,
+    val endTime: TimeInfo,
     /**
      * The information about the poll, contains poll type, maximum choices, turnout, etc
      *

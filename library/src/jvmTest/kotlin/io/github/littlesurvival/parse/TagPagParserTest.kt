@@ -36,7 +36,7 @@ class TagPagParserTest {
         page.threadSummaries.forEach { t ->
             println("  [tid=${t.tid}] ${t.title}")
             println("    fid=${t.fid}, attachment=${t.attachmentType}, author=${t.author}")
-            println("    replies=${t.replyCount}, views=${t.viewCount}, lastUpdate=${t.lastUpdateText}")
+            println("    replies=${t.replyCount}, views=${t.viewCount}, lastUpdate=${t.lastUpdate?.text}")
         }
         println("PageNav: ${page.pageNav}")
 

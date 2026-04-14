@@ -6,6 +6,7 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.UserId
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class ProfilePageParser : Parser<ProfilePage> {
@@ -100,8 +101,8 @@ class ProfilePageParser : Parser<ProfilePage> {
                     gender = gender,
                     birthday = birthday,
                     onlineHours = onlineHours,
-                    registerTime = registerTime,
-                    lastVisit = lastVisit,
+                    registerTime = registerTime?.let { TimeInfo.parse(it) },
+                    lastVisit = lastVisit?.let { TimeInfo.parse(it) },
                     formHash = formHashValue
                 )
             )

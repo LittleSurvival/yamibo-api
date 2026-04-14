@@ -65,7 +65,7 @@ class ForumPageParserTest {
         assertEquals(85773, first.viewCount)
         assertEquals(211, first.replyCount)
         assertEquals("公告", first.tag)
-        assertEquals("2023-5-29 22:41", first.lastUpdateText)
+        assertEquals("2023-5-29 22:41", first.lastUpdate?.text)
     }
 
     @Test

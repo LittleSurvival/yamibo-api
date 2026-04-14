@@ -7,6 +7,7 @@ import io.github.littlesurvival.dto.model.ThreadSummary
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.value.SearchId
+import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class SearchPageParser : Parser<SearchPage> {
@@ -106,7 +107,7 @@ class SearchPageParser : Parser<SearchPage> {
                         replyCount = replyCount,
                         viewCount = viewCount,
                         tag = forumTag ?: tag,
-                        lastUpdateText = timeText
+                        lastUpdate = timeText?.let { TimeInfo.parse(it) }
                     )
                 )
             }

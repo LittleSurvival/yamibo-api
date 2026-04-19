@@ -225,3 +225,6 @@ Refactor time string properties to `TimeInfo` across DTOs :
 - `ThreadPage.Poll` : `endTime`
 - `ThreadSummary` : Renamed `lastUpdateText` to `lastUpdate`
 - `ProfilePage` : `registerTime`, `lastVisit`
+# v1.0.23
+
+Stop getting all /static/image URLs as images in ThreadPage

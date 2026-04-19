@@ -195,10 +195,8 @@ class ThreadPageParser : Parser<ThreadPage> {
                 for (img in imgEls) {
                     val src = img.attr("src")
                     if (src.isEmpty()) continue
-                    if (src.contains("static/image/smiley") || src.contains("static/image/common")
-                    ) {
-                        continue
-                    }
+                    // Remove static images (yamibo website icons).
+                    if (src.contains("static/image/")) continue
                     val alt = img.attr("alt").ifEmpty { null }
                     images.add(PostImage(url = src, alt = alt))
                 }
@@ -406,7 +404,6 @@ class ThreadPageParser : Parser<ThreadPage> {
 
         private fun extractTagName(a: Element): String {
             return a.text()
-                .orEmpty()
                 .replace('\u00A0', ' ')
                 .replace(Regex("\\s+"), " ")
                 .trim()
@@ -425,7 +422,7 @@ class ThreadPageParser : Parser<ThreadPage> {
 
         private companion object {
             const val TAG_LINK_SELECTOR = """a[href*="mod=tag"]"""
-            val TAG_ID_REGEX = Regex("""(?:\?|&)id=(\d+)""")
+            val TAG_ID_REGEX = Regex("""[?&]id=(\d+)""")
         }
     }
 

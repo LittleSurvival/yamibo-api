@@ -369,6 +369,25 @@ sealed class YamiboRoute {
         }
     }
 
+    /**
+     * Post新的Thread.
+     *
+     * This is only for building a url for webview now.
+     * https://bbs.yamibo.com/forum.php?mod=post&action=newthread&fid=55&mobile=2
+     */
+    data class PostThread(val forumId: ForumId) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "post")
+                    parameters.append("action", "newthread")
+                    parameters.append("fid", forumId.value.toString())
+                    parameters.append("mobile", "2")
+                }.buildString()
+        }
+    }
+
 
 
     data object Login : YamiboRoute() {

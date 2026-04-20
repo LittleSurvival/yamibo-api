@@ -231,4 +231,8 @@ Stop getting all /static/image URLs as images in ThreadPage
 
 # v1.0.24
 
-Change NotLoggedIn Result's message to "登入狀態已失效或尚未登入，請重新登入"
+- Change NotLoggedIn Result's message to "登入狀態已失效或尚未登入，請重新登入"
+- Add New URL builder "PostThread".
+```kotlin notebook
+data class PostThread(val forumId: ForumId)
+```

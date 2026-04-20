@@ -18,7 +18,7 @@ sealed class YamiboResult<out T> {
 
     /** The user is not logged in or their session has expired. */
     data object NotLoggedIn : YamiboResult<Nothing>() {
-        override fun message(): String = "抱歉，您尚未登录，没有权限访问该版块"
+        override fun message(): String = "登入狀態已失效或尚未登入，請重新登入"
     }
 
     data class NoPermission(val reason: String) : YamiboResult<Nothing>() {

@@ -9,9 +9,16 @@ import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.page.ForumPage
 import io.github.littlesurvival.dto.page.HomePage
 import io.github.littlesurvival.dto.page.ProfilePage
+import io.github.littlesurvival.dto.page.RatePopoutPage
 import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.page.TagPage
 import io.github.littlesurvival.dto.page.ThreadPage
+import io.github.littlesurvival.dto.page.UserSpaceBlogPage
+import io.github.littlesurvival.dto.page.UserSpaceFriendPage
+import io.github.littlesurvival.dto.page.UserSpaceNoticePage
+import io.github.littlesurvival.dto.page.UserSpacePrivateMessagePage
+import io.github.littlesurvival.dto.page.UserSpaceThreadPage
+import io.github.littlesurvival.dto.page.UserSpaceThreadReplyPage
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -33,9 +40,16 @@ import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
 import io.github.littlesurvival.parse.HomePageParser
 import io.github.littlesurvival.parse.ProfilePageParser
+import io.github.littlesurvival.parse.RatePopoutPageParser
 import io.github.littlesurvival.parse.SearchPageParser
 import io.github.littlesurvival.parse.TagPagParser
 import io.github.littlesurvival.parse.ThreadPageParser
+import io.github.littlesurvival.parse.UserSpaceBlogPageParser
+import io.github.littlesurvival.parse.UserSpaceFriendPageParser
+import io.github.littlesurvival.parse.UserSpaceNoticePageParser
+import io.github.littlesurvival.parse.UserSpacePrivateMessagePageParser
+import io.github.littlesurvival.parse.UserSpaceThreadPageParser
+import io.github.littlesurvival.parse.UserSpaceThreadReplyPageParser
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
@@ -65,13 +79,62 @@ class YamiboClient(
     private val tagPageParser = TagPagParser()
     private val searchPageParser = SearchPageParser()
     private val favoritePageParser = FavoritePageParser()
+    private val ratePopoutPageParser = RatePopoutPageParser()
+    private val userSpaceThreadPageParser = UserSpaceThreadPageParser()
+    private val userSpaceThreadReplyPageParser = UserSpaceThreadReplyPageParser()
+    private val userSpaceBlogPageParser = UserSpaceBlogPageParser()
+    private val userSpaceFriendPageParser = UserSpaceFriendPageParser()
+    private val userSpacePrivateMessagePageParser = UserSpacePrivateMessagePageParser()
+    private val userSpaceNoticePageParser = UserSpaceNoticePageParser()
 
     /** Fetch Pages */
     suspend fun fetchHomePage(): YamiboResult<HomePage> =
         fetchAndParse(YamiboRoute.Home.build(), homePageParser)
 
-    suspend fun fetchProfileInfo(): YamiboResult<ProfilePage> =
-        fetchAndParse(YamiboRoute.ProfileInfo.build(), profilePageParser)
+    suspend fun fetchProfileInfo(userId: UserId? = null): YamiboResult<ProfilePage> =
+        fetchAndParse(YamiboRoute.UserSpace.ProfileInfo(userId).build(), profilePageParser)
+
+    suspend fun fetchUserSpaceThreads(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadPage> =
+        fetchAndParse(
+            YamiboRoute.UserSpace.Thread(userId, YamiboRoute.UserSpace.ThreadType.Thread, page).build(),
+            userSpaceThreadPageParser
+        )
+
+    suspend fun fetchUserSpaceThreadReplies(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadReplyPage> =
+        fetchAndParse(
+            YamiboRoute.UserSpace.Thread(userId, YamiboRoute.UserSpace.ThreadType.Reply, page).build(),
+            userSpaceThreadReplyPageParser
+        )
+
+    suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage> =
+        fetchAndParse(YamiboRoute.UserSpace.Blog.MyBlog(userId, page).build(), userSpaceBlogPageParser)
+
+    suspend fun fetchUserSpaceFriendBlogs(page: Int = 1): YamiboResult<UserSpaceBlogPage> =
+        fetchAndParse(YamiboRoute.UserSpace.Blog.FriendBlog(page).build(), userSpaceBlogPageParser)
+
+    suspend fun fetchUserSpaceViewAllBlogs(
+        type: YamiboRoute.UserSpace.Blog.ViewAllType = YamiboRoute.UserSpace.Blog.ViewAllType.Latest,
+        page: Int = 1
+    ): YamiboResult<UserSpaceBlogPage> =
+        fetchAndParse(YamiboRoute.UserSpace.Blog.ViewAll(type, page).build(), userSpaceBlogPageParser)
+
+    suspend fun fetchUserSpaceFriends(
+        type: YamiboRoute.UserSpace.FriendPageType,
+        page: Int = 1
+    ): YamiboResult<UserSpaceFriendPage> =
+        fetchAndParse(YamiboRoute.UserSpace.MyFriend(type, page).build(), userSpaceFriendPageParser)
+
+    suspend fun fetchUserSpacePrivateMessages(page: Int = 1): YamiboResult<UserSpacePrivateMessagePage> =
+        fetchAndParse(
+            YamiboRoute.UserSpace.Notification(YamiboRoute.UserSpace.NotificationType.MyMessage, page).build(),
+            userSpacePrivateMessagePageParser
+        )
+
+    suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage> =
+        fetchAndParse(
+            YamiboRoute.UserSpace.Notification(YamiboRoute.UserSpace.NotificationType.MyNotice, page).build(),
+            userSpaceNoticePageParser
+        )
 
     suspend fun fetchForumById(fId: ForumId, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
@@ -90,6 +153,9 @@ class YamiboClient(
 
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(forum.forumId, page).build(), forumPageParser)
+
+    suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage> =
+        fetchAndParse(YamiboRoute.RatePopout(tId, pId).build(), ratePopoutPageParser)
 
     suspend fun votePoll(fId: ForumId, tId: ThreadId, pollOptionIds: List<PollOptionId>, formHash: FormHash): YamiboResult<String> {
         return when (val pollResult = votePollFactory.votePoll(formHash, fId, tId, pollOptionIds)) {
@@ -140,9 +206,10 @@ class YamiboClient(
         pId: PostId,
         score: Int,
         reason: String,
-        formHash: FormHash
+        formHash: FormHash,
+        noticeAuthor: Boolean = false,
     ): YamiboResult<String> {
-        return when (val result = rateFactory.addRate(formHash, tId, pId, score, reason)) {
+        return when (val result = rateFactory.addRate(formHash, tId, pId, score, reason, noticeAuthor)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

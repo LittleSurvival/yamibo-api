@@ -23,18 +23,188 @@ sealed class YamiboRoute {
         override fun build(): String = domain
     }
 
-    data object ProfileInfo : YamiboRoute() {
-        override fun build(): String {
-            return URLBuilder(domain)
-                .apply {
+    sealed class UserSpace {
+        data class ProfileInfo(val userId: UserId? = null) : YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain)
+                    .apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "space")
+                        //For some unknown reason, the uid field can be empty.
+                        parameters.append("uid", userId?.value?.toString() ?: "")
+                        parameters.append("mycenter", "1")
+                        parameters.append("mobile", "2")
+                    }
+                    .buildString()
+            }
+        }
+
+
+        /**
+         * Ta的主題
+         */
+        enum class ThreadType {
+            /**
+             * 主題
+             */
+            Thread,
+            /**
+             * 回復
+             */
+            Reply
+        }
+
+        data class Thread(val userId: UserId?,val type: ThreadType, val page: Int = 1) : YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain)
+                    .apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "space")
+                        parameters.append("uid", userId?.value?.toString() ?: "")
+                        parameters.append("do", "thread")
+                        parameters.append("view", "me")
+                        parameters.append("order", "dateline")
+                        if (type == ThreadType.Reply) parameters.append("type", "reply")
+                        parameters.append("page", page.toString())
+                        parameters.append("mobile", "2")
+                    }.buildString()
+            }
+        }
+
+        sealed class Blog {
+            /**
+             * 好友的日志
+             *
+             * It can only use on our own user page.
+             *
+             * DO NOT USE IT ON OTHER USER.
+             */
+            data class FriendBlog(val page: Int = 1) : YamiboRoute() {
+                override fun build(): String {
+                    return URLBuilder(domain)
+                        .apply {
+                            encodedPath = "home.php"
+                            parameters.append("mod", "space")
+                            parameters.append("do", "blog")
+                            parameters.append("view", "we")
+                            parameters.append("page", page.toString())
+                            parameters.append("mobile", "2")
+                        }.buildString()
+                }
+            }
+
+            /**
+             * 我的日志
+             */
+            data class MyBlog(val userId: UserId?, val page: Int = 1) : YamiboRoute() {
+                override fun build(): String {
+                    return URLBuilder(domain)
+                        .apply {
+                            encodedPath = "home.php"
+                            parameters.append("mod", "space")
+                            parameters.append("do", "blog")
+                            parameters.append("view", "me")
+                            if (userId != null) parameters.append("uid", userId.value.toString())
+                            parameters.append("page", page.toString())
+                            parameters.append("mobile", "2")
+                        }.buildString()
+                }
+            }
+
+            enum class ViewAllType {
+                /**
+                 * 最新發表的日治
+                 */
+                Latest,
+                /**
+                 * 推薦閱讀的日志
+                 */
+                Hot
+            }
+
+            /**
+             * 隨便看看
+             */
+            data class ViewAll(val type: ViewAllType, val page: Int = 1) : YamiboRoute() {
+                override fun build(): String {
+                    return URLBuilder(domain).apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "space")
+                        parameters.append("do", "blog")
+                        parameters.append("view", "all")
+                        if (type == ViewAllType.Hot) parameters.append("order", "hot")
+                        parameters.append("page", page.toString())
+                        parameters.append("mobile", "2")
+                    }.buildString()
+                }
+            }
+        }
+
+        enum class NotificationType {
+            /**
+             * 我的消息
+             */
+            MyMessage,
+            /**
+             * 我的提醒
+             */
+            MyNotice
+        }
+
+        data class Notification(val type: NotificationType, val page: Int) : YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain).apply {
                     encodedPath = "home.php"
                     parameters.append("mod", "space")
-                    //For some unknown reason, the uid field can be empty.
-                    parameters.append("uid", "")
-                    parameters.append("mycenter", "1")
+                    when(type) {
+                        NotificationType.MyMessage -> parameters.append("do", "pm")
+                        NotificationType.MyNotice -> parameters.append("do", "notice")
+                    }
+                    parameters.append("page", page.toString())
                     parameters.append("mobile", "2")
-                }
-                .buildString()
+                }.buildString()
+            }
+        }
+
+        enum class FriendPageType {
+            /**
+             * 我的好友
+             */
+            MyFriend,
+            /**
+             * 在線成員
+             */
+            OnlineMember,
+
+            /**
+             * 我的訪客
+             */
+            MyVisitor,
+            /**
+             * 我的足跡
+             */
+            MyTrace,
+        }
+
+        data class MyFriend(val type: FriendPageType, val page: Int = 1): YamiboRoute() {
+            override fun build(): String {
+                return URLBuilder(domain).apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "space")
+                    parameters.append("do", "friend")
+                    when(type) {
+                        FriendPageType.OnlineMember -> {
+                            parameters.append("view", "online")
+                            parameters.append("type", "member")
+                        }
+                        FriendPageType.MyVisitor -> parameters.append("view", "visitor")
+                        FriendPageType.MyTrace -> parameters.append("view", "trace")
+                        else -> {}
+                    }
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }.buildString()
+            }
         }
     }
 
@@ -268,10 +438,32 @@ sealed class YamiboRoute {
     }
 
     /**
+     * Rating popout form.
+     *
+     * This is a GET request.
+     */
+    data class RatePopout(val threadId: ThreadId, val postId: PostId) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "misc")
+                    parameters.append("action", "rate")
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("pid", postId.value.toString())
+                    parameters.append("mobile", "2")
+                    parameters.append("infloat", "yes")
+                    parameters.append("handlekey", "rate")
+                    parameters.append("inajax", "1")
+                }.buildString()
+        }
+    }
+
+    /**
      * 點評帖子.
      *
      * This is a POST request.
-     * @param page It's seems like the number is actually doesnt matter idk.
+     * @param page It seems like the number is actually doesnt matter idk.
      *
      * Content-Type : application/x-www-form-urlencoded; charset=UTF-8
      *

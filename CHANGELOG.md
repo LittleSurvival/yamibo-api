@@ -236,3 +236,44 @@ Stop getting all /static/image URLs as images in ThreadPage
 ```kotlin notebook
 data class PostThread(val forumId: ForumId)
 ```
+
+# v1.1.0
+
+Add UserSpace page parsing and fetch APIs :
+```kotlin notebook
+suspend fun fetchUserSpaceThreads(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadPage>
+suspend fun fetchUserSpaceThreadReplies(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadReplyPage>
+suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceFriendBlogs(page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceViewAllBlogs(type: YamiboRoute.UserSpace.Blog.ViewAllType, page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceFriends(type: YamiboRoute.UserSpace.FriendPageType, page: Int = 1): YamiboResult<UserSpaceFriendPage>
+suspend fun fetchUserSpacePrivateMessages(page: Int = 1): YamiboResult<UserSpacePrivateMessagePage>
+suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage>
+```
+
+Add RatePopout page parsing and fetch API :
+```kotlin notebook
+data class RatePopoutPage(
+    val availableScores: List<Int>,
+    val defaultReasons: List<String>,
+)
+
+suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage>
+```
+When RatePopout returns a Discuz post response instead of form data, it now parses the message text as a parse failure.
+
+Update ProfilePage DTO :
+```kotlin notebook
+data class ProfilePage(
+    ...
+    val avatarBackgroundUrl: String?,
+    ...
+)
+```
+Add `avatarBackgroundUrl` for profile avatar background image.
+
+Add new typed ID and parse utilities for UserSpace pages :
+```kotlin notebook
+data class NoticeId(override val value: Long) : Id
+```
+Move shared thread, post, blog, notice, and user id extraction into ParseUtils.

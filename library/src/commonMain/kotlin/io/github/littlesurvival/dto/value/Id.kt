@@ -35,3 +35,15 @@ interface Id
  */
 @Serializable
 @JvmInline value class TagId(val value: Int) : Id
+
+/**
+ * Type-safe blog id
+ */
+@Serializable
+@JvmInline value class BlogId(val value: Int) : Id
+
+/**
+ * Type-safe notice id
+ */
+@Serializable
+@JvmInline value class NoticeId(val value: Int) : Id

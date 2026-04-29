@@ -87,7 +87,7 @@ class FetchTest {
 
     @Test
     fun testRatePost(): Unit = runBlocking {
-        val ratePostResult = client.fetchRatePost(ThreadId(565238), PostId(41426069), 5, "", formHash)
+        val ratePostResult = client.fetchRatePost(ThreadId(564532), PostId(41404794), 5, "", formHash)
         debugLog("fetchRatePost", ratePostResult)
     }
 
@@ -135,5 +135,12 @@ class FetchTest {
         val result = client.fetchTagPageById(TagId(20666))
 
         debugLog("TagPage", result)
+    }
+
+    @Test
+    fun testRatePopoutPage() = runBlocking {
+        val result = client.fetchRatePopoutPage(ThreadId(564532), PostId(41404794))
+
+        debugLog("RatePopoutPage", result)
     }
 }

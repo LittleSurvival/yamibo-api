@@ -3,7 +3,9 @@ package io.github.littlesurvival.parse.util
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 
@@ -13,11 +15,14 @@ object ParseUtils {
     // Pre-compiled regex patterns for URL extraction
     private val FID_RE = Regex("[?&]fid=(\\d+)")
     private val FID_PATH_RE = Regex("forum-(\\d+)-")
-    private val TID_QUERY_RE = Regex("[?&]tid=(\\d+)")
+    private val TID_QUERY_RE = Regex("[?&](?:tid|ptid)=(\\d+)")
     private val TID_PATH_RE = Regex("thread-(\\d+)-")
+    private val PID_RE = Regex("[?&]pid=(\\d+)")
     private val UID_QUERY_RE = Regex("[?&]uid=(\\d+)")
+    private val TO_UID_QUERY_RE = Regex("[?&]touid=(\\d+)")
     private val UID_PATH_RE = Regex("uid-(\\d+)")
     private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
+    private val BLOG_ID_RE = Regex("[?&]id=(\\d+)")
     private val PAGE_NUMBER_RE = Regex("(\\d+)")
 
     /** Extract forum id (fid) from a URL query (query param or SEO path). */
@@ -34,6 +39,11 @@ object ParseUtils {
         return TID_PATH_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { ThreadId(it) }
     }
 
+    /** Extract post id (pid) from a URL. */
+    fun extractPid(url: String): PostId? {
+        return PID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { PostId(it) }
+    }
+
     /** Extract user id (uid) from a URL (query param or SEO path). */
     internal fun extractUid(url: String): UserId? {
         val queryMatch = UID_QUERY_RE.find(url)
@@ -41,9 +51,19 @@ object ParseUtils {
         return UID_PATH_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
     }
 
+    /** Extract target user id (touid) from a private-message URL. */
+    fun extractToUid(url: String): UserId? {
+        return TO_UID_QUERY_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
+    }
+
     /** Extract user id (uid) from a script string (e.g., discuz_uid = '123'). */
     internal fun extractUidFromScript(script: String): UserId? {
         return UID_SCRIPT_RE.find(script)?.groupValues?.get(1)?.toIntOrNull()?.let { UserId(it) }
+    }
+
+    /** Extract blog id (id) from a blog URL. */
+    fun extractBid(url: String): BlogId? {
+        return BLOG_ID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { BlogId(it) }
     }
 
     /** Parse pagination from `.pg` widget. */
@@ -113,10 +133,19 @@ object ParseUtils {
             jumpC.contains("没有权限访问") || jumpC.contains("沒有權限訪問")) return true
 
         val messageText = doc.selectFirst("#messagetext")?.text() ?: ""
-        if (messageText.contains("阅读权限高于") || messageText.contains("閱讀權限高於") ||
-                messageText.contains("没有权限访问") || messageText.contains("沒有權限訪問")) return true
+        return messageText.contains("阅读权限高于") || messageText.contains("閱讀權限高於") ||
+            messageText.contains("没有权限访问") || messageText.contains("沒有權限訪問")
+    }
 
-        return false
+    /**
+     * Detect whether the HTML is a "no permission" page.
+     */
+    internal fun isUnDefinedOperation(doc: Document): Boolean {
+        val jumpC = doc.selectFirst(".jump_c")?.text() ?: ""
+        if (jumpC.contains("未定义操作") || jumpC.contains("未定義操作")) return true
+
+        val messageText = doc.selectFirst("#messagetext")?.text() ?: ""
+        return messageText.contains("未定义操作") || messageText.contains("未定義操作")
     }
 
     internal fun parsePromptMessage(doc: Document): String {

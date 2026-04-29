@@ -26,6 +26,10 @@ class ProfilePageParser : Parser<ProfilePage> {
                 doc.selectFirst(".avatar_m img")?.attr("src")?.substringBefore("?")?.ifEmpty {
                     null
                 }
+            val avatarBackgroundUrl =
+                AVATAR_BACKGROUND_RE.find(html)?.groupValues?.get(1)?.substringBefore("?")?.ifEmpty {
+                    null
+                }
 
             // --- Credits / Points from user_box ---
             val creditItems = doc.select(".user_box li")
@@ -98,6 +102,7 @@ class ProfilePageParser : Parser<ProfilePage> {
                     partner = partner,
                     totalPoints = totalPoints,
                     avatarUrl = avatarUrl,
+                    avatarBackgroundUrl = avatarBackgroundUrl,
                     gender = gender,
                     birthday = birthday,
                     onlineHours = onlineHours,
@@ -113,5 +118,6 @@ class ProfilePageParser : Parser<ProfilePage> {
 
     companion object {
         private val FORMHASH_RE = Regex("formhash=([a-f0-9]+)")
+        private val AVATAR_BACKGROUND_RE = Regex("""background-image\s*:\s*url\(([^)]+)\)""")
     }
 }

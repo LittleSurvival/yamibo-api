@@ -40,7 +40,8 @@ class RateFactory(override val fetcher: FetchFactory) : PostFactory(fetcher) {
         threadId: ThreadId,
         postId: PostId,
         score: Int,
-        reason: String = ""
+        reason: String = "",
+        noticeAuthor: Boolean,
     ): FetchResult<String> {
         val url = YamiboRoute.Rate.build()
         return try {
@@ -55,6 +56,7 @@ class RateFactory(override val fetcher: FetchFactory) : PostFactory(fetcher) {
                         append("handlekey", "rate")
                         append("score1", score.toString())
                         append("reason", reason)
+                        if (noticeAuthor) append("sendreasonpm", "on")
                     }))
                 }
 

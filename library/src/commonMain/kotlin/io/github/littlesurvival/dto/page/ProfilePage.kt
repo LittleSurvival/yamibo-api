@@ -15,6 +15,7 @@ import kotlinx.serialization.Serializable
  * @property partner Objects(對象).
  * @property totalPoints Total points(總積分).
  * @property avatarUrl Avatar URL(e.g. "uc_server/data/avatar/000/65/66/26_avatar_big.jpg").
+ * @property avatarBackgroundUrl Avatar background URL from profile header style.
  * @property gender Gender(性別, e.g. "保密").
  * @property birthday Birthday(生日, e.g. "2000-1-1" or "-" if not set).
  * @property onlineHours Online hours(在線時間, e.g. 172).
@@ -31,6 +32,7 @@ data class ProfilePage(
     val partner: Int,
     val totalPoints: Int,
     val avatarUrl: String?,
+    val avatarBackgroundUrl: String?,
     val gender: String?,
     val birthday: String?,
     val onlineHours: Int,

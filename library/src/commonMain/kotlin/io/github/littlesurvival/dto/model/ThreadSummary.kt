@@ -15,7 +15,7 @@ data class ThreadSummary(
     val title: String,
 
     /**
-     * Forum Id (fid).
+     * Forum ID (fid).
      *  @see TagPage only
      *
      *  @see io.github.littlesurvival.YamiboForum to convert fid to forum name.

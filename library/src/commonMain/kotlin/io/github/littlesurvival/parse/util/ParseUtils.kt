@@ -3,6 +3,7 @@ package io.github.littlesurvival.parse.util
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.value.BlogCommentId
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
@@ -23,6 +24,7 @@ object ParseUtils {
     private val UID_PATH_RE = Regex("uid-(\\d+)")
     private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
     private val BLOG_ID_RE = Regex("[?&]id=(\\d+)")
+    private val BLOG_COMMENT_ID_RE = Regex("(?:[?&]cid=|comment_)(\\d+)")
     private val PAGE_NUMBER_RE = Regex("(\\d+)")
 
     /** Extract forum id (fid) from a URL query (query param or SEO path). */
@@ -64,6 +66,11 @@ object ParseUtils {
     /** Extract blog id (id) from a blog URL. */
     fun extractBid(url: String): BlogId? {
         return BLOG_ID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { BlogId(it) }
+    }
+
+    /** Extract blog comment id (cid) from a URL or comment element id. */
+    fun extractBlogCommentId(value: String): BlogCommentId? {
+        return BLOG_COMMENT_ID_RE.find(value)?.groupValues?.get(1)?.toIntOrNull()?.let { BlogCommentId(it) }
     }
 
     /** Parse pagination from `.pg` widget. */

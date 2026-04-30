@@ -41,10 +41,14 @@ class UserSpaceThreadPageParser : Parser<UserSpaceThreadPage> {
                 val description = item.selectFirst(".threadlist_mes")?.text()?.trim()?.ifEmpty { null }
 
                 var forumTag: String? = null
+                var fid = ParseUtils.extractFid(url)
                 var viewCount: Int? = null
                 var replyCount: Int? = null
                 for (li in item.select(".threadlist_foot li")) {
                     if (li.hasClass("mr")) {
+                        li.selectFirst("a[href*=forumdisplay]")?.attr("href")?.let { forumUrl ->
+                            fid = ParseUtils.extractFid(forumUrl) ?: fid
+                        }
                         forumTag = li.text().trim().removePrefix("#").ifEmpty { null }
                     } else if (viewCount == null && li.selectFirst("i.dm-eye-fill") != null) {
                         viewCount = li.text().trim().replace(NON_DIGIT_RE, "").toIntOrNull()
@@ -58,6 +62,7 @@ class UserSpaceThreadPageParser : Parser<UserSpaceThreadPage> {
                     ThreadSummary(
                         tid = tid,
                         title = title,
+                        fid = fid,
                         hasPoll = hasPoll,
                         url = url,
                         author = author,
@@ -96,6 +101,8 @@ class UserSpaceThreadReplyPageParser : Parser<UserSpaceThreadReplyPage> {
                 val titleLink = item.selectFirst("a.mt10[href*=findpost]") ?: continue
                 val titleUrl = titleLink.attr("href")
                 val tId = ParseUtils.extractTid(titleUrl) ?: continue
+                val fid = item.selectFirst("a[href*=forumdisplay]")?.attr("href")?.let { ParseUtils.extractFid(it) }
+                    ?: ParseUtils.extractFid(titleUrl)
                 val title = titleLink.selectFirst(".threadlist_tit em")?.text()?.trim() ?: titleLink.text().trim()
 
                 val posts = item.select("a[href*=findpost][href*=pid=]")
@@ -110,7 +117,7 @@ class UserSpaceThreadReplyPageParser : Parser<UserSpaceThreadReplyPage> {
                         )
                     }
 
-                replies.add(ReplyItem(title = title, tId = tId, url = titleUrl, posts = posts))
+                replies.add(ReplyItem(title = title, tId = tId, fid = fid, url = titleUrl, posts = posts))
             }
 
             ParseResult.Success(UserSpaceThreadReplyPage(replies = replies, pageNav = ParseUtils.parsePageNav(doc)))

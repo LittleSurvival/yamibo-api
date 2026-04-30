@@ -4,9 +4,6 @@ import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.value.NoticeId
-import io.github.littlesurvival.dto.value.PostId
-import io.github.littlesurvival.dto.value.ThreadId
-import io.github.littlesurvival.dto.value.UserId
 import kotlinx.serialization.Serializable
 
 /**
@@ -60,11 +57,9 @@ data class UserSpaceNoticePage(
  *
  * @property noticeId Notice ID.
  * @property type Notice type parsed from Yamibo's ignore URL.
- * @property actor User who triggered the notice; null for system notices.
  * @property avatarUrl Notice avatar URL, including system icon URL.
  * @property timeInfo Notice time.
- * @property message Readable notice text.
- * @property links Links contained in the notice body.
+ * @property contentHtml Raw notice body HTML.
  * @property ignoreUrl URL used to ignore/block this notice type.
  * @property quote Quote/reason text, usually present in rate notices.
  */
@@ -72,11 +67,9 @@ data class UserSpaceNoticePage(
 data class NoticeItem(
     val noticeId: NoticeId,
     val type: NoticeType,
-    val actor: User?,
     val avatarUrl: String?,
     val timeInfo: TimeInfo,
-    val message: String,
-    val links: List<NoticeLink>,
+    val contentHtml: String,
     val ignoreUrl: String? = null,
     val quote: String? = null
 )
@@ -93,21 +86,3 @@ enum class NoticeType {
     System,
     Unknown
 }
-
-/**
- * Link contained in a notice body.
- *
- * @property title Link text.
- * @property url Link URL.
- * @property tid Thread ID parsed from URL, if present.
- * @property pid Post ID parsed from URL, if present.
- * @property uid User ID parsed from URL, if present.
- */
-@Serializable
-data class NoticeLink(
-    val title: String,
-    val url: String,
-    val tid: ThreadId? = null,
-    val pid: PostId? = null,
-    val uid: UserId? = null
-)

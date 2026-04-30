@@ -7,8 +7,6 @@ import io.github.littlesurvival.dto.page.UserSpaceFriendPage
 import io.github.littlesurvival.dto.page.UserSpaceNoticePage
 import io.github.littlesurvival.dto.page.UserSpacePrivateMessagePage
 import io.github.littlesurvival.dto.value.NoticeId
-import io.github.littlesurvival.dto.value.PostId
-import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
@@ -111,20 +109,22 @@ class UserSpaceFriendNotificationPageParserTest {
         val first = page.notices.first()
         assertEquals(NoticeId(4106095), first.noticeId)
         assertEquals(NoticeType.Post, first.type)
-        assertEquals(UserId(675902), first.actor?.uid)
-        assertEquals("黒猫y", first.actor?.name)
         assertEquals("2026-4-6 18:39", first.timeInfo.text)
-        assertTrue(first.message.contains("回复了您的帖子"))
-        assertTrue(first.links.any { it.tid == ThreadId(556584) && it.pid == PostId(41508969) })
+        assertTrue(first.contentHtml.contains("黒猫y"))
+        assertTrue(first.contentHtml.contains("回复了您的帖子"))
+        assertTrue(first.contentHtml.contains("ptid=556584"))
+        assertTrue(first.contentHtml.contains("pid=41508969"))
 
         val rate = page.notices.first { it.type == NoticeType.Rate }
+        assertTrue(rate.contentHtml.contains("blockquote"))
+        assertTrue(rate.contentHtml.contains("你太可爱"))
         assertEquals("你太可爱", rate.quote)
 
         val system = page.notices.first { it.type == NoticeType.System }
-        assertNull(system.actor)
+        assertTrue(system.contentHtml.isNotBlank())
 
         val friend = page.notices.first { it.type == NoticeType.Friend }
         assertEquals(NoticeId(3979501), friend.noticeId)
-        assertTrue(friend.links.any { it.uid == UserId(646528) })
+        assertTrue(friend.contentHtml.contains("uid=646528"))
     }
 }

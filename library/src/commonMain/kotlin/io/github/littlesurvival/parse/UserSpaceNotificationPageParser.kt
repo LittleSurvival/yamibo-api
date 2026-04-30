@@ -1,13 +1,11 @@
 package io.github.littlesurvival.parse
 
 import com.fleeksoft.ksoup.Ksoup
-import com.fleeksoft.ksoup.nodes.Element
 import io.github.littlesurvival.Parser
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.NoticeItem
-import io.github.littlesurvival.dto.page.NoticeLink
 import io.github.littlesurvival.dto.page.NoticeType
 import io.github.littlesurvival.dto.page.PrivateMessageItem
 import io.github.littlesurvival.dto.page.UserSpaceNoticePage
@@ -96,19 +94,18 @@ class UserSpaceNoticePageParser : Parser<UserSpaceNoticePage> {
                 val timeText = item.selectFirst(".mtit span")?.text()?.trim() ?: ""
                 val bodyEl = item.selectFirst(".mbody") ?: continue
                 val quote = item.selectFirst("blockquote")?.text()?.trim()?.ifEmpty { null }
-                val links = parseLinks(bodyEl)
-                val actor = parseActor(item, bodyEl, avatarUrl, type)
-                val message = bodyEl.text().trim()
+                val quoteHtml = item.selectFirst(".quote")?.outerHtml()?.trim()
+                val contentHtml = listOfNotNull(bodyEl.html().trim(), quoteHtml)
+                    .filter { it.isNotEmpty() }
+                    .joinToString("\n")
 
                 notices.add(
                     NoticeItem(
                         noticeId = noticeId,
                         type = type,
-                        actor = actor,
                         avatarUrl = avatarUrl,
                         timeInfo = TimeInfo.parse(timeText),
-                        message = message,
-                        links = links,
+                        contentHtml = contentHtml,
                         ignoreUrl = ignoreUrl,
                         quote = quote
                     )
@@ -135,31 +132,6 @@ class UserSpaceNoticePageParser : Parser<UserSpaceNoticePage> {
             "system" -> NoticeType.System
             else -> NoticeType.Unknown
         }
-    }
-
-    private fun parseLinks(bodyEl: Element): List<NoticeLink> {
-        return bodyEl.select("a[href]").map { link ->
-            val url = link.attr("href")
-            NoticeLink(
-                title = link.text().trim(),
-                url = url,
-                tid = ParseUtils.extractTid(url),
-                pid = ParseUtils.extractPid(url),
-                uid = ParseUtils.extractUid(url)
-            )
-        }
-    }
-
-    private fun parseActor(item: Element, bodyEl: Element, avatarUrl: String?, type: NoticeType): User? {
-        if (type == NoticeType.System) return null
-
-        val avatarLink = item.selectFirst(".mimg a[href*=uid=]")
-        val avatarUid = avatarLink?.attr("href")?.let { ParseUtils.extractUid(it) }
-        val userLink = bodyEl.select("a[href*=uid=]").firstOrNull { it.text().trim().isNotEmpty() }
-        val bodyUid = userLink?.attr("href")?.let { ParseUtils.extractUid(it) }
-        val uid = avatarUid ?: bodyUid ?: return null
-        val name = userLink?.text()?.trim()?.ifEmpty { null } ?: ""
-        return User(uid = uid, name = name, avatarUrl = avatarUrl)
     }
 
     companion object {

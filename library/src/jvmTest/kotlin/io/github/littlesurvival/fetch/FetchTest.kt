@@ -13,6 +13,7 @@ import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
+import io.github.littlesurvival.dto.value.UserId
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 
@@ -142,5 +143,12 @@ class FetchTest {
         val result = client.fetchRatePopoutPage(ThreadId(564532), PostId(41404794))
 
         debugLog("RatePopoutPage", result)
+    }
+
+    @Test
+    fun testUserSpaceThreadPage() = runBlocking {
+        val result = client.fetchUserSpaceThreads(userId = UserId(121222))
+
+        debugLog("UserSpaceThreadPage", result)
     }
 }

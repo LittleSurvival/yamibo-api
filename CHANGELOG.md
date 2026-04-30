@@ -277,3 +277,49 @@ Add new typed ID and parse utilities for UserSpace pages :
 data class NoticeId(override val value: Long) : Id
 ```
 Move shared thread, post, blog, notice, and user id extraction into ParseUtils.
+
+# v1.1.1
+
+Add BlogPage parsing and fetch API :
+```kotlin notebook
+data class BlogPage(
+    val blogInfo: BlogInfo,
+    val rootBlog: BlogComment,
+    val blogComments: List<BlogComment>,
+    val pageNav: PageNav? = null
+)
+
+suspend fun fetchBlogPage(blogId: BlogId, userId: UserId? = null, page: Int = 1): YamiboResult<BlogPage>
+```
+`rootBlog` is parsed on every blog comment page, while `blogComments` and `pageNav` follow the selected page.
+
+Add Blog Comment feature :
+```kotlin notebook
+suspend fun fetchBlogComment(
+    blogId: BlogId,
+    userId: UserId,
+    message: String,
+    formHash: FormHash
+): YamiboResult<String>
+```
+Add `YamiboRoute.BlogComment` and `BlogCommentPostFactory` for Yamibo blog quick comments.
+
+Update UserSpaceNotice DTO :
+```kotlin notebook
+data class NoticeItem(
+    ...
+    val contentHtml: String,
+    ...
+)
+```
+Replace parsed `message`, `actor`, and `links` with raw `contentHtml`.
+
+Update UserSpace thread/reply parsing :
+- Parse `ThreadSummary.fid` from "My threads" forum links.
+- Add `ReplyItem.fid` for "My replies" when the source HTML contains a forum ID.
+
+Add BlogCommentId and shared parse utility :
+```kotlin notebook
+@JvmInline value class BlogCommentId(val value: Int) : Id
+```
+Add `ParseUtils.extractBlogCommentId(...)`.

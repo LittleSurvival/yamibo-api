@@ -1,6 +1,7 @@
 package io.github.littlesurvival
 
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -14,6 +15,11 @@ import io.ktor.http.*
 sealed class YamiboRoute {
     internal val domain = "https://bbs.yamibo.com/"
     abstract fun build(): String
+
+    fun toFullLink(path: String): String {
+        return if (path.startsWith("http://") || path.startsWith("https://")) path
+        else "$domain${path.removePrefix("/")}"
+    }
 
     data object Domain : YamiboRoute() {
         override fun build(): String = domain
@@ -411,6 +417,42 @@ sealed class YamiboRoute {
     }
 
     /**
+     * Blog detail page.
+     */
+    data class BlogPage(val blogId: BlogId, val userId: UserId? = null, val page: Int = 1) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "space")
+                    parameters.append("uid", userId?.value?.toString() ?: "")
+                    parameters.append("do", "blog")
+                    parameters.append("id", blogId.value.toString())
+                    parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }
+                .buildString()
+        }
+    }
+
+    /**
+     * Comment on a blog.
+     *
+     * This is a POST request.
+     */
+    data object BlogComment : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "comment")
+                }
+                .buildString()
+        }
+    }
+
+    /**
      * 評分帖子.
      *
      * This is a POST request.
@@ -580,7 +622,39 @@ sealed class YamiboRoute {
         }
     }
 
+    /**
+     * 發私信
+     *
+     * Only for WebView.
+     */
+    data object SendPrivateMessagePage : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "pm")
+                    parameters.append("mobile", "2")
+                }.buildString()
+        }
+    }
 
+    /**
+     * 發送日誌
+     *
+     * Only for WebView.
+     */
+    data object SendBlogPage : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "blog")
+                    parameters.append("mobile", "2")
+                }.buildString()
+        }
+    }
 
     data object Login : YamiboRoute() {
         override fun build(): String {

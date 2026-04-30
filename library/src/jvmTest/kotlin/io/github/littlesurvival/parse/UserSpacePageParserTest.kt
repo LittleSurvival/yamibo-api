@@ -5,6 +5,7 @@ import io.github.littlesurvival.dto.page.UserSpaceBlogPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadReplyPage
 import io.github.littlesurvival.dto.value.BlogId
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
@@ -35,6 +36,7 @@ class UserSpacePageParserTest {
         assertTrue(page.threads.isNotEmpty())
         val first = page.threads.first()
         assertEquals(ThreadId(570470), first.tid)
+        assertEquals(ForumId(30), first.fid)
         assertEquals("【鰤尾みちる】貘然入梦zzZ 第4话 Kakukuroi汉化组", first.title)
         assertEquals(UserId(691344), first.author?.uid)
         assertEquals("Psychoid", first.author?.name)
@@ -55,6 +57,7 @@ class UserSpacePageParserTest {
         assertTrue(page.replies.isNotEmpty())
         val first = page.replies.first()
         assertEquals(ThreadId(535989), first.tId)
+        assertEquals(null, first.fid)
         assertEquals("百合小说生肉安利专楼", first.title)
         assertEquals(1, first.posts.size)
         assertEquals(PostId(41518669), first.posts.first().pId)

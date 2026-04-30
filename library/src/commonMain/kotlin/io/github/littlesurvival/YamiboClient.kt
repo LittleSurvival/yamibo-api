@@ -4,6 +4,7 @@ import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.model.Tags
+import io.github.littlesurvival.dto.page.BlogPage
 import io.github.littlesurvival.dto.page.FavoritePage
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.page.ForumPage
@@ -23,6 +24,7 @@ import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.Id
+import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.SearchId
@@ -30,12 +32,14 @@ import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.RateFactory
 import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
 import io.github.littlesurvival.fetch.post.VotePollFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
+import io.github.littlesurvival.parse.BlogPageParser
 import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
 import io.github.littlesurvival.parse.HomePageParser
@@ -62,6 +66,7 @@ class YamiboClient(
     private val favoriteFactory: FavoriteFactory = FavoriteFactory(mobileFetcher as FetchFactory)
     private val rateFactory: RateFactory = RateFactory(mobileFetcher as FetchFactory)
     private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher as FetchFactory)
+    private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher as FetchFactory)
     private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
 
     /** Initialize Values */
@@ -79,6 +84,7 @@ class YamiboClient(
     private val tagPageParser = TagPagParser()
     private val searchPageParser = SearchPageParser()
     private val favoritePageParser = FavoritePageParser()
+    private val blogPageParser = BlogPageParser()
     private val ratePopoutPageParser = RatePopoutPageParser()
     private val userSpaceThreadPageParser = UserSpaceThreadPageParser()
     private val userSpaceThreadReplyPageParser = UserSpaceThreadReplyPageParser()
@@ -117,6 +123,9 @@ class YamiboClient(
         page: Int = 1
     ): YamiboResult<UserSpaceBlogPage> =
         fetchAndParse(YamiboRoute.UserSpace.Blog.ViewAll(type, page).build(), userSpaceBlogPageParser)
+
+    suspend fun fetchBlogPage(blogId: BlogId, userId: UserId? = null, page: Int = 1): YamiboResult<BlogPage> =
+        fetchAndParse(YamiboRoute.BlogPage(blogId, userId, page).build(), blogPageParser)
 
     suspend fun fetchUserSpaceFriends(
         type: YamiboRoute.UserSpace.FriendPageType,
@@ -222,6 +231,18 @@ class YamiboClient(
         formHash: FormHash
     ): YamiboResult<String> {
         return when (val result = commentPostFactory.commentPost(formHash, tId, pId, message)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    suspend fun fetchBlogComment(
+        blogId: BlogId,
+        userId: UserId,
+        message: String,
+        formHash: FormHash
+    ): YamiboResult<String> {
+        return when (val result = blogCommentPostFactory.commentBlog(formHash, blogId, userId, message)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

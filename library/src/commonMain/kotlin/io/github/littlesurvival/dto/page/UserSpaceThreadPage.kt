@@ -2,6 +2,7 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.ThreadSummary
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
 import io.github.littlesurvival.dto.value.ThreadId
 import kotlinx.serialization.Serializable
@@ -35,6 +36,7 @@ data class UserSpaceThreadReplyPage(
  *
  * @property title Source thread title.
  * @property tId Source thread ID.
+ * @property fid Source forum ID, if present.
  * @property url Source thread find-post URL.
  * @property posts Reply post previews under this thread.
  */
@@ -42,6 +44,7 @@ data class UserSpaceThreadReplyPage(
 data class ReplyItem(
     val title: String,
     val tId: ThreadId,
+    val fid: ForumId? = null,
     val url: String,
     val posts: List<ReplyPostItems>
 )

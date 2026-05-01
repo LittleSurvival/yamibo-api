@@ -147,7 +147,7 @@ class FetchTest {
 
     @Test
     fun testUserSpaceThreadPage() = runBlocking {
-        val result = client.fetchUserSpaceThreads(userId = UserId(121222))
+        val result = client.fetchUserSpaceThreads(userId = UserId(260328), page = 2)
 
         debugLog("UserSpaceThreadPage", result)
     }

@@ -361,3 +361,9 @@ Forum route now appends `filter=typeid&typeid=...` for filter types and appends 
 
 Update UserSpace notice parsing :
 `NoticeItem.contentHtml` now only uses `.mbody.html()` and no longer merges sibling `.quote` HTML into `contentHtml`. `quote` remains available as its own parsed field.
+
+# v1.1.3
+
+Fix PageNav previous page parsing :
+- Support Discuz mobile pagination where the previous page link is rendered as `.pgb a`.
+- Fix `pageNav.prevUrl` being `null` on UserSpace thread pages such as `home.php?mod=space&do=thread&page=2`.

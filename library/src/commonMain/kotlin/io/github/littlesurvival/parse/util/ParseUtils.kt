@@ -78,7 +78,7 @@ object ParseUtils {
         val pgDiv = doc.selectFirst(".pg") ?: return null
 
         val nextUrl = pgDiv.selectFirst("a.nxt")?.attr("href")?.ifEmpty { null }
-        val prevUrl = pgDiv.selectFirst("a.prev")?.attr("href")?.ifEmpty { null }
+        val prevUrl = pgDiv.selectFirst("a.prev, .pgb a")?.attr("href")?.ifEmpty { null }
 
         // Current page: <strong>1</strong> inside .pg
         val currentPage =

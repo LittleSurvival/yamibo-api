@@ -47,6 +47,20 @@ class UserSpacePageParserTest {
     }
 
     @Test
+    fun parseUserSpaceThreadsSecondPagePrevUrl(): Unit = runBlocking {
+        val html = loadAsset("user_space/ta的主題/主題page2.html")
+        val result = UserSpaceThreadPageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<UserSpaceThreadPage>>(result).value
+        val pageNav = assertNotNull(page.pageNav)
+        val prevUrl = assertNotNull(pageNav.prevUrl)
+        val nextUrl = assertNotNull(pageNav.nextUrl)
+
+        assertTrue(prevUrl.contains("page=1"))
+        assertTrue(nextUrl.contains("page=3"))
+    }
+
+    @Test
     fun parseUserSpaceThreadReplies(): Unit = runBlocking {
         val html = loadAsset("user_space/ta的主題/回復.html")
         val result = UserSpaceThreadReplyPageParser().parse(html)

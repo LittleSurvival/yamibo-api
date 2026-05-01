@@ -323,3 +323,41 @@ Add BlogCommentId and shared parse utility :
 @JvmInline value class BlogCommentId(val value: Int) : Id
 ```
 Add `ParseUtils.extractBlogCommentId(...)`.
+
+# v1.1.2
+
+Update ForumPage DTO and parser :
+```kotlin notebook
+data class ForumPage(
+    ...
+    val filterTypes: List<FilterType>? = null,
+    val orderType: List<OrderType>? = null,
+    ...
+)
+
+data class FilterType(
+    val name: String,
+    val id: ForumFilterTypeId? = null,
+)
+
+data class OrderType(
+    val name: String,
+    val filter: String? = null,
+    val orderBy: String? = null,
+)
+```
+Parse forum filter tabs from `#dhnavs_li` and order tabs from `#dhnav_li`. `FilterType` uses `name` and `typeid`; `OrderType` uses `filter` and `orderby`.
+
+Update Forum route filtering :
+```kotlin notebook
+suspend fun fetchForumById(
+    fId: ForumId,
+    filterType: FilterType? = null,
+    orderType: OrderType? = null,
+    page: Int = 1
+): YamiboResult<ForumPage>
+```
+Forum route now appends `filter=typeid&typeid=...` for filter types and appends `filter` / `orderby` independently for order types.
+
+Update UserSpace notice parsing :
+`NoticeItem.contentHtml` now only uses `.mbody.html()` and no longer merges sibling `.quote` HTML into `contentHtml`. `quote` remains available as its own parsed field.

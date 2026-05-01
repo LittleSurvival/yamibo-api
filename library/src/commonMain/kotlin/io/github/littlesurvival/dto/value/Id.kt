@@ -53,3 +53,9 @@ interface Id
  */
 @Serializable
 @JvmInline value class NoticeId(val value: Int) : Id
+
+/**
+ * Type-safe filter-type id
+ */
+@Serializable
+@JvmInline value class ForumFilterTypeId(val value: Int)

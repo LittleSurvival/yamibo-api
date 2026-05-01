@@ -1,6 +1,8 @@
 package io.github.littlesurvival
 
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.page.FilterType
+import io.github.littlesurvival.dto.page.OrderType
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
@@ -220,13 +222,28 @@ sealed class YamiboRoute {
         }
     }
 
-    data class Forum(val fid: ForumId, val page: Int = 1) : YamiboRoute() {
+    data class Forum(
+        val fid: ForumId,
+        val filterType: FilterType? = null,
+        val orderType: OrderType? = null,
+        val page: Int = 1
+    ) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
                     encodedPath = "forum.php"
                     parameters.append("mod", "forumdisplay")
                     parameters.append("fid", fid.value.toString())
+                    orderType?.let {
+                        if (orderType.filter != null) parameters.append("filter", orderType.filter)
+                        if (orderType.orderBy != null) parameters.append("orderby", orderType.orderBy)
+                    }
+                    filterType?.let {
+                        if (it.id != null) {
+                            parameters.append("filter", "typeid")
+                            parameters.append("typeid", it.id.value.toString())
+                        }
+                    }
                     parameters.append("page", page.toString())
                     parameters.append("mobile", "2")
                 }

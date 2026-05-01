@@ -7,8 +7,10 @@ import io.github.littlesurvival.dto.model.Tags
 import io.github.littlesurvival.dto.page.BlogPage
 import io.github.littlesurvival.dto.page.FavoritePage
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.page.FilterType
 import io.github.littlesurvival.dto.page.ForumPage
 import io.github.littlesurvival.dto.page.HomePage
+import io.github.littlesurvival.dto.page.OrderType
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.RatePopoutPage
 import io.github.littlesurvival.dto.page.SearchPage
@@ -145,8 +147,8 @@ class YamiboClient(
             userSpaceNoticePageParser
         )
 
-    suspend fun fetchForumById(fId: ForumId, page: Int = 1): YamiboResult<ForumPage> =
-        fetchAndParse(YamiboRoute.Forum(fId, page).build(), forumPageParser)
+    suspend fun fetchForumById(fId: ForumId, filterType: FilterType? = null, orderType: OrderType? = null,page: Int = 1): YamiboResult<ForumPage> =
+        fetchAndParse(YamiboRoute.Forum(fId, filterType, orderType, page).build(), forumPageParser)
 
     suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, page: Int = 1): YamiboResult<ThreadPage> =
         fetchAndParse(YamiboRoute.Thread(tId, authorId,page).build(), threadPageParser)
@@ -161,7 +163,7 @@ class YamiboClient(
         fetchAndParse(YamiboRoute.FindPost(authorId, threadId, postId).build(), threadPageParser)
 
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
-        fetchAndParse(YamiboRoute.Forum(forum.forumId, page).build(), forumPageParser)
+        fetchAndParse(YamiboRoute.Forum(forum.forumId, page = page).build(), forumPageParser)
 
     suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage> =
         fetchAndParse(YamiboRoute.RatePopout(tId, pId).build(), ratePopoutPageParser)

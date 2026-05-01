@@ -9,6 +9,7 @@ import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.page.*
 import io.github.littlesurvival.dto.value.ForumId
+import io.github.littlesurvival.dto.value.ForumFilterTypeId
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class ForumPageParser : Parser<ForumPage> {
@@ -53,6 +54,24 @@ class ForumPageParser : Parser<ForumPage> {
                     rank = rank,
                     iconUrl = iconUrl
                 )
+
+            // --- Filter / order navigation ---
+            val orderTypes = doc.select("#dhnav_li a[href*=forumdisplay]").map { link ->
+                val url = link.attr("href")
+                OrderType(
+                    name = link.text().trim(),
+                    filter = extractQueryValue(url, "filter"),
+                    orderBy = extractQueryValue(url, "orderby")
+                )
+            }
+
+            val filterTypes = doc.select("#dhnavs_li a[href*=forumdisplay]").map { link ->
+                val url = link.attr("href")
+                FilterType(
+                    name = link.text().trim(),
+                    id = extractQueryValue(url, "typeid")?.toIntOrNull()?.let { ForumFilterTypeId(it) }
+                )
+            }
 
             // --- Sub forums ---
             val subForums = mutableListOf<ForumSummary>()
@@ -166,12 +185,21 @@ class ForumPageParser : Parser<ForumPage> {
                     forum = forum,
                     pinnedItems = pinnedItems,
                     subForums = subForums,
+                    filterTypes = filterTypes.ifEmpty { null },
+                    orderType = orderTypes.ifEmpty { null },
                     threads = threads,
                     pageNav = pageNav
                 )
             )
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse forum page", e)
+        }
+    }
+
+    companion object {
+        private fun extractQueryValue(url: String, name: String): String? {
+            val pattern = Regex("""[?&]$name=([^&]+)""")
+            return pattern.find(url)?.groupValues?.getOrNull(1)?.ifEmpty { null }
         }
     }
 }

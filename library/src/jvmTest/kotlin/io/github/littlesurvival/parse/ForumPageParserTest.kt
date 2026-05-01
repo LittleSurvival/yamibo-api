@@ -1,6 +1,7 @@
 package io.github.littlesurvival.parse
 
 import io.github.littlesurvival.core.ParseResult
+import io.github.littlesurvival.dto.value.ForumFilterTypeId
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
@@ -10,6 +11,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.runBlocking
 
@@ -40,6 +42,26 @@ class ForumPageParserTest {
         // Forum info
         assertEquals(ForumId(55), page.forum.fid)
         assertEquals("轻小说/译文区", page.forum.name)
+
+        assertEquals(listOf("全部", "最新", "热门", "新帖", "精华"), page.orderType?.map { it.name })
+        assertNull(page.orderType?.first()?.filter)
+        assertNull(page.orderType?.first()?.orderBy)
+        val latest = page.orderType?.first { it.name == "最新" }
+        assertEquals("lastpost", latest?.filter)
+        assertEquals("lastpost", latest?.orderBy)
+        val hot = page.orderType?.first { it.name == "热门" }
+        assertEquals("heat", hot?.filter)
+        assertEquals("heats", hot?.orderBy)
+        val digest = page.orderType?.first { it.name == "精华" }
+        assertEquals("digest", digest?.filter)
+        assertNull(digest?.orderBy)
+
+        assertEquals(
+            listOf("公告", "轻小说", "文学/文艺小说", "其他小说", "外文原文"),
+            page.filterTypes?.map { it.name }
+        )
+        assertEquals(ForumFilterTypeId(147), page.filterTypes?.first()?.id)
+        assertEquals(ForumFilterTypeId(295), page.filterTypes?.getOrNull(1)?.id)
 
         // Pinned items: 1 announcement + pinned threads
         assertTrue(page.pinnedItems.isNotEmpty())

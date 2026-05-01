@@ -116,8 +116,6 @@ class UserSpaceFriendNotificationPageParserTest {
         assertTrue(first.contentHtml.contains("pid=41508969"))
 
         val rate = page.notices.first { it.type == NoticeType.Rate }
-        assertTrue(rate.contentHtml.contains("blockquote"))
-        assertTrue(rate.contentHtml.contains("你太可爱"))
         assertEquals("你太可爱", rate.quote)
 
         val system = page.notices.first { it.type == NoticeType.System }

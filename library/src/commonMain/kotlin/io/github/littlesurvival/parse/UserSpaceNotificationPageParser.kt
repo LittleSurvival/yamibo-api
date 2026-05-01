@@ -94,10 +94,7 @@ class UserSpaceNoticePageParser : Parser<UserSpaceNoticePage> {
                 val timeText = item.selectFirst(".mtit span")?.text()?.trim() ?: ""
                 val bodyEl = item.selectFirst(".mbody") ?: continue
                 val quote = item.selectFirst("blockquote")?.text()?.trim()?.ifEmpty { null }
-                val quoteHtml = item.selectFirst(".quote")?.outerHtml()?.trim()
-                val contentHtml = listOfNotNull(bodyEl.html().trim(), quoteHtml)
-                    .filter { it.isNotEmpty() }
-                    .joinToString("\n")
+                val contentHtml = bodyEl.html().trim()
 
                 notices.add(
                     NoticeItem(

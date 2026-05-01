@@ -3,6 +3,7 @@ package io.github.littlesurvival.dto.page
 import io.github.littlesurvival.dto.model.ForumSummary
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.ThreadSummary
+import io.github.littlesurvival.dto.value.ForumFilterTypeId
 import io.github.littlesurvival.dto.value.ThreadId
 import kotlinx.serialization.Serializable
 
@@ -36,6 +37,16 @@ data class ForumPage(
     val subForums: List<ForumSummary>,
 
     /**
+     *  Filter Type(by id)
+     */
+    val filterTypes: List<FilterType>? = null,
+    /**
+     *  Order Type(by id)
+     *  
+     */
+    val orderType: List<OrderType>? = null,
+
+    /**
      * Normal thread list (non-pinned).
      *
      * Ordered as displayed on the page.
@@ -48,6 +59,19 @@ data class ForumPage(
      * Useful when the forum has multiple pages.
      */
     val pageNav: PageNav? = null
+)
+
+@Serializable
+data class FilterType(
+    val name: String,
+    val id: ForumFilterTypeId? = null,
+)
+
+@Serializable
+data class OrderType(
+    val name: String,
+    val filter: String? = null,
+    val orderBy: String? = null,
 )
 
 /** Item pinned at the top of a forum page. */

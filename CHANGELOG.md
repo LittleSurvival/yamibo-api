@@ -391,3 +391,41 @@ Add 6 new optional fields to `ProfilePage` parsed from the Discuz profile page :
 - `education` — Education level(學歷).
 - `customTitle` — Custom title(自定義頭銜).
 
+# v1.1.5
+
+Add PrivateMessagePage parsing and fetch API :
+```kotlin notebook
+data class PrivateMessagePage(
+    val toUser: UserId,
+    val title: String,
+    val pmId: PrivateMessageId,
+    val messages: List<PrivateMessage>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchPrivateMessagePage(toUser: UserId, page: Int? = null): YamiboResult<PrivateMessagePage>
+```
+The private-message page URL omits `page` by default so Yamibo can jump to the latest page.
+
+Add Private Message send feature :
+```kotlin notebook
+suspend fun fetchSendPrivateMessage(
+    privateMessageId: PrivateMessageId,
+    toUser: UserId,
+    message: String,
+    formHash: FormHash
+): YamiboResult<String>
+```
+Add `YamiboRoute.SendPrivateMessage` and `PrivateMessageFactory` for PM form submission.
+
+Update PageNav :
+```kotlin notebook
+data class PageNav(
+    val nextUrl: String? = null,
+    val nextPageIndex: Int? = null,
+    val prevUrl: String? = null,
+    val prevPageIndex: Int? = null,
+    ...
+)
+```
+Parse page indexes from `prevUrl` / `nextUrl`, and infer `currentPage` from adjacent page links when Yamibo omits the current page marker.

@@ -59,3 +59,8 @@ interface Id
  */
 @Serializable
 @JvmInline value class ForumFilterTypeId(val value: Int)
+/**
+ * Type-safe private-page-message-id(pmid)
+ */
+@Serializable
+@JvmInline value class PrivateMessageId(val value: Int) : Id

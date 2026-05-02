@@ -11,6 +11,7 @@ import io.github.littlesurvival.dto.page.FilterType
 import io.github.littlesurvival.dto.page.ForumPage
 import io.github.littlesurvival.dto.page.HomePage
 import io.github.littlesurvival.dto.page.OrderType
+import io.github.littlesurvival.dto.page.PrivateMessagePage
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.RatePopoutPage
 import io.github.littlesurvival.dto.page.SearchPage
@@ -29,6 +30,7 @@ import io.github.littlesurvival.dto.value.Id
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.PrivateMessageId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -36,6 +38,7 @@ import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
 import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
+import io.github.littlesurvival.fetch.post.PrivateMessageFactory
 import io.github.littlesurvival.fetch.post.RateFactory
 import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
@@ -45,6 +48,7 @@ import io.github.littlesurvival.parse.BlogPageParser
 import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
 import io.github.littlesurvival.parse.HomePageParser
+import io.github.littlesurvival.parse.PrivateMessagePageParser
 import io.github.littlesurvival.parse.ProfilePageParser
 import io.github.littlesurvival.parse.RatePopoutPageParser
 import io.github.littlesurvival.parse.SearchPageParser
@@ -69,6 +73,7 @@ class YamiboClient(
     private val rateFactory: RateFactory = RateFactory(mobileFetcher as FetchFactory)
     private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher as FetchFactory)
     private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher as FetchFactory)
+    private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher as FetchFactory)
     private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
 
     /** Initialize Values */
@@ -87,6 +92,7 @@ class YamiboClient(
     private val searchPageParser = SearchPageParser()
     private val favoritePageParser = FavoritePageParser()
     private val blogPageParser = BlogPageParser()
+    private val privateMessagePageParser = PrivateMessagePageParser()
     private val ratePopoutPageParser = RatePopoutPageParser()
     private val userSpaceThreadPageParser = UserSpaceThreadPageParser()
     private val userSpaceThreadReplyPageParser = UserSpaceThreadReplyPageParser()
@@ -140,6 +146,9 @@ class YamiboClient(
             YamiboRoute.UserSpace.Notification(YamiboRoute.UserSpace.NotificationType.MyMessage, page).build(),
             userSpacePrivateMessagePageParser
         )
+
+    suspend fun fetchPrivateMessagePage(toUser: UserId, page: Int? = null): YamiboResult<PrivateMessagePage> =
+        fetchAndParse(YamiboRoute.PrivateMessagePage(toUser, page).build(), privateMessagePageParser)
 
     suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage> =
         fetchAndParse(
@@ -245,6 +254,18 @@ class YamiboClient(
         formHash: FormHash
     ): YamiboResult<String> {
         return when (val result = blogCommentPostFactory.commentBlog(formHash, blogId, userId, message)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    suspend fun fetchSendPrivateMessage(
+        privateMessageId: PrivateMessageId,
+        toUser: UserId,
+        message: String,
+        formHash: FormHash
+    ): YamiboResult<String> {
+        return when (val result = privateMessageFactory.sendPrivateMessage(formHash, privateMessageId, toUser, message)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }

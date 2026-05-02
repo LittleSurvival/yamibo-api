@@ -10,6 +10,7 @@ import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.PrivateMessageId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -150,5 +151,24 @@ class FetchTest {
         val result = client.fetchUserSpaceThreads(userId = UserId(260328), page = 2)
 
         debugLog("UserSpaceThreadPage", result)
+    }
+
+    @Test
+    fun testPrivateMessagePage() = runBlocking {
+        val result = client.fetchPrivateMessagePage(UserId(723881))
+
+        debugLog("PrivateMessagePage", result)
+    }
+
+    @Test
+    fun testSendPrivateMessage() = runBlocking {
+        val result = client.fetchSendPrivateMessage(
+            privateMessageId =  PrivateMessageId(747834),
+            toUser =  UserId(723881),
+            message = "test",
+            formHash = formHash
+        )
+
+        debugLog("SendPrivateMessage", result)
     }
 }

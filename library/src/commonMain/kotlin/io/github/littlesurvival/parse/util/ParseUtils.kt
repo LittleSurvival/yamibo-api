@@ -25,6 +25,7 @@ object ParseUtils {
     private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
     private val BLOG_ID_RE = Regex("[?&]id=(\\d+)")
     private val BLOG_COMMENT_ID_RE = Regex("(?:[?&]cid=|comment_)(\\d+)")
+    private val PAGE_QUERY_RE = Regex("[?&]page=(\\d+)")
     private val PAGE_NUMBER_RE = Regex("(\\d+)")
 
     /** Extract forum id (fid) from a URL query (query param or SEO path). */
@@ -79,11 +80,15 @@ object ParseUtils {
 
         val nextUrl = pgDiv.selectFirst("a.nxt")?.attr("href")?.ifEmpty { null }
         val prevUrl = pgDiv.selectFirst("a.prev, .pgb a")?.attr("href")?.ifEmpty { null }
+        val nextPageIndex = nextUrl?.let { extractPageIndex(it) }
+        val prevPageIndex = prevUrl?.let { extractPageIndex(it) }
 
         // Current page: <strong>1</strong> inside .pg
         val currentPage =
             pgDiv.selectFirst("strong")?.text()?.trim()?.toIntOrNull()
                 ?: pgDiv.selectFirst("input.px")?.attr("value")?.toIntOrNull()
+                ?: prevPageIndex?.plus(1)
+                ?: nextPageIndex?.minus(1)?.takeIf { it > 0 }
 
         // Total pages: <span title="共 N 页"> / N 页</span> inside .pg label
         val totalPages =
@@ -97,11 +102,17 @@ object ParseUtils {
         ) {
             PageNav(
                 nextUrl = nextUrl,
+                nextPageIndex = nextPageIndex,
                 prevUrl = prevUrl,
+                prevPageIndex = prevPageIndex,
                 currentPage = currentPage,
                 totalPages = totalPages
             )
         } else null
+    }
+
+    private fun extractPageIndex(url: String): Int? {
+        return PAGE_QUERY_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()
     }
 
     /**

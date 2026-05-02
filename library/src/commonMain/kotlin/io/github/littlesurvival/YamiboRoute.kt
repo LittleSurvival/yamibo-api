@@ -8,6 +8,7 @@ import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.PrivateMessageId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -427,6 +428,51 @@ sealed class YamiboRoute {
                     parameters.append("uid", userId.value.toString())
                     parameters.append("do", "profile")
                     parameters.append("mobile", "2")
+                }
+                .buildString()
+        }
+    }
+
+    /**
+     * Private-message conversation page.
+     *
+     * @param page Page index. The default conversation URL omits this parameter and jumps to the latest page.
+     */
+    data class PrivateMessagePage(val toUser: UserId, val page: Int? = null) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "space")
+                    parameters.append("do", "pm")
+                    parameters.append("subop", "view")
+                    parameters.append("touid", toUser.value.toString())
+                    if (page != null) parameters.append("page", page.toString())
+                    parameters.append("mobile", "2")
+                }
+                .buildString()
+        }
+    }
+
+    /**
+     * Send a private message in an existing conversation.
+     *
+     * This is a POST request.
+     */
+    data class SendPrivateMessage(val privateMessageId: PrivateMessageId) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "pm")
+                    parameters.append("op", "send")
+                    parameters.append("pmid", privateMessageId.value.toString())
+                    parameters.append("daterange", "0")
+                    parameters.append("pmsubmit", "yes")
+                    parameters.append("mobile", "2")
+                    parameters.append("handlekey", "pmform")
+                    parameters.append("inajax", "1")
                 }
                 .buildString()
         }

@@ -12,8 +12,14 @@ data class PageNav(
     /** URL to the next page, if available. */
     val nextUrl: String? = null,
 
+    /** Next page index parsed from [nextUrl], if available. */
+    val nextPageIndex: Int? = null,
+
     /** URL to the previous page, if available. */
     val prevUrl: String? = null,
+
+    /** Previous page index parsed from [prevUrl], if available. */
+    val prevPageIndex: Int? = null,
 
     /**
      * Current page number (1-based).

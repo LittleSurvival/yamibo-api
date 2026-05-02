@@ -367,3 +367,27 @@ Update UserSpace notice parsing :
 Fix PageNav previous page parsing :
 - Support Discuz mobile pagination where the previous page link is rendered as `.pgb a`.
 - Fix `pageNav.prevUrl` being `null` on UserSpace thread pages such as `home.php?mod=space&do=thread&page=2`.
+
+# v1.1.4
+
+Update ProfilePage DTO :
+```kotlin notebook
+data class ProfilePage(
+    ...
+    val adminGroup: String? = null,
+    val signatureHtml: String? = null,
+    val birthplace: String? = null,
+    val education: String? = null,
+    val customTitle: String? = null,
+    val homepage: String? = null,
+    ...
+)
+```
+Add 6 new optional fields to `ProfilePage` parsed from the Discuz profile page :
+- `signatureHtml` — Personal signature raw HTML(個人簽名).
+- `adminGroup` — Admin group name(管理組), parsed from `管理组` / `管理組` label.
+- `homepage` — Personal homepage URL(個人主頁), filters out bare `http://` placeholders.
+- `birthplace` — Birthplace(出生地).
+- `education` — Education level(學歷).
+- `customTitle` — Custom title(自定義頭銜).
+

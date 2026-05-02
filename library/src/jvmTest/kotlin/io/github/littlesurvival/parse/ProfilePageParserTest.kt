@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlinx.coroutines.runBlocking
 
 class ProfilePageParserTest {
@@ -25,5 +26,25 @@ class ProfilePageParserTest {
         val page = assertIs<ParseResult.Success<ProfilePage>>(result).value
         assertEquals(UserId(656626), page.uid)
         assertEquals("https://bbs.yamibo.com/uc_server/data/avatar/000/65/66/26_avatar_big.jpg", page.avatarBackgroundUrl)
+    }
+
+    @Test
+    fun parseProfileDetails(): Unit = runBlocking {
+        val html = loadAsset("user_space/space1.html")
+        val result = ProfilePageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<ProfilePage>>(result).value
+        assertEquals(UserId(165700), page.uid)
+        assertEquals("hongyuny", page.username)
+        assertEquals("管理員", page.adminGroup)
+        assertNotNull(page.signatureHtml)
+        assertEquals("女", page.gender)
+        assertEquals("中国 广东省", page.birthplace)
+        assertEquals("本科", page.education)
+        assertNotNull(page.customTitle)
+        assertEquals(55990, page.points)
+        assertEquals(10989, page.partner)
+        assertEquals(59653, page.totalPoints)
+        assertEquals(9358, page.onlineHours)
     }
 }

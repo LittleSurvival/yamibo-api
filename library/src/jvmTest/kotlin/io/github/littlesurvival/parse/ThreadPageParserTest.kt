@@ -162,7 +162,7 @@ class ThreadPageParserTest {
 
     @Test
     fun parseThreadAttachments() = runBlocking {
-        val html = loadAsset("post_response5.html")
+        val html = loadAsset("post_response/post_response5.html")
         val result = ThreadPageParser().parse(html)
 
         val success = assertIs<ParseResult.Success<ThreadPage>>(result)

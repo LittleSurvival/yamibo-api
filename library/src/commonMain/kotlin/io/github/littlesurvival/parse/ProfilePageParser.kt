@@ -18,10 +18,10 @@ class ProfilePageParser : Parser<ProfilePage> {
             if (ParseUtils.isNotLoggedIn(doc)) return ParseResult.NotLoggedIn
             if (ParseUtils.isNoPermission(doc)) return ParseResult.NoPermission(ParseUtils.parsePromptMessage(doc))
 
-            // --- Username from avatar section ---
+            // Username from avatar section 
             val username = doc.selectFirst(".avatar_bg .name")?.text()?.trim() ?: ""
 
-            // --- Avatar URL ---
+            // Avatar URL 
             val avatarUrl =
                 doc.selectFirst(".avatar_m img")?.attr("src")?.substringBefore("?")?.ifEmpty {
                     null
@@ -31,7 +31,11 @@ class ProfilePageParser : Parser<ProfilePage> {
                     null
                 }
 
-            // --- Credits / Points from user_box ---
+            //  Signature HTML from myinfo_list sig 
+            val signatureHtml =
+                doc.selectFirst(".myinfo_list .sig")?.html()?.trim()?.ifEmpty { null }
+
+            //  Credits / Points from user_box 
             val creditItems = doc.select(".user_box li")
             var points = 0
             var partner = 0
@@ -53,8 +57,13 @@ class ProfilePageParser : Parser<ProfilePage> {
             val infoItems = doc.select(".myinfo_list li")
             var uid = UserId(0)
             var userGroup = ""
+            var adminGroup: String? = null
             var gender: String? = null
             var birthday: String? = null
+            var birthplace: String? = null
+            var education: String? = null
+            var customTitle: String? = null
+            var homepage: String? = null
             var onlineHours = 0
             var registerTime: String? = null
             var lastVisit: String? = null
@@ -70,8 +79,21 @@ class ProfilePageParser : Parser<ProfilePage> {
                             li.selectFirst("span font")?.text()?.trim()?.ifEmpty { value }
                                 ?: value
 
+                    label.contains("管理组") || label.contains("管理組") ->
+                        adminGroup =
+                            li.selectFirst("span font")?.text()?.trim()?.ifEmpty { value }
+                                ?: value.ifEmpty { null }
+
+                    label.contains("个人主页") || label.contains("個人主頁") ->
+                        homepage = li.selectFirst("span a")?.attr("href")?.trim()
+                            ?.takeIf { it.isNotEmpty() && it != "http://" }
+
                     label.contains("性别") || label.contains("性別") -> gender = value.ifEmpty { null }
                     label.contains("生日") -> birthday = value.takeIf { it != "-" && it.isNotEmpty() }
+                    label.contains("出生地") -> birthplace = value.ifEmpty { null }
+                    label.contains("学历") || label.contains("學歷") -> education = value.ifEmpty { null }
+                    label.contains("自定义头衔") || label.contains("自定義頭銜") ->
+                        customTitle = value.ifEmpty { null }
                     label.contains("在线时间") || label.contains("在線時間") ->
                         onlineHours =
                             value.replace("小时", "").replace("小時", "").trim().toIntOrNull()
@@ -98,13 +120,19 @@ class ProfilePageParser : Parser<ProfilePage> {
                     uid = uid,
                     username = username,
                     userGroup = userGroup,
+                    adminGroup = adminGroup,
                     points = points,
                     partner = partner,
                     totalPoints = totalPoints,
                     avatarUrl = avatarUrl,
                     avatarBackgroundUrl = avatarBackgroundUrl,
+                    signatureHtml = signatureHtml,
                     gender = gender,
                     birthday = birthday,
+                    birthplace = birthplace,
+                    education = education,
+                    customTitle = customTitle,
+                    homepage = homepage,
                     onlineHours = onlineHours,
                     registerTime = registerTime?.let { TimeInfo.parse(it) },
                     lastVisit = lastVisit?.let { TimeInfo.parse(it) },

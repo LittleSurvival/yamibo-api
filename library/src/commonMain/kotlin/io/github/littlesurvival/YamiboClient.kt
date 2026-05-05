@@ -159,8 +159,8 @@ class YamiboClient(
     suspend fun fetchForumById(fId: ForumId, filterType: FilterType? = null, orderType: OrderType? = null,page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(fId, filterType, orderType, page).build(), forumPageParser)
 
-    suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, page: Int = 1): YamiboResult<ThreadPage> =
-        fetchAndParse(YamiboRoute.Thread(tId, authorId,page).build(), threadPageParser)
+    suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1): YamiboResult<ThreadPage> =
+        fetchAndParse(YamiboRoute.Thread(tId, authorId,reverse, page).build(), threadPageParser)
 
     suspend fun fetchTagPageById(tagId: TagId, page: Int = 1): YamiboResult<TagPage> =
         fetchAndParse(YamiboRoute.TagPage(tagId, page).build(), tagPageParser, true)

@@ -429,3 +429,10 @@ data class PageNav(
 )
 ```
 Parse page indexes from `prevUrl` / `nextUrl`, and infer `currentPage` from adjacent page links when Yamibo omits the current page marker.
+
+# v1.1.6
+Update fetch thread parameter "reverse" :
+```kotlin notebook
+suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1)
+```
+It would get the reverse posts list of the whole thread, instead of the root post(first floor) always on top.

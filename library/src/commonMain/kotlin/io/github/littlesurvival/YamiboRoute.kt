@@ -251,7 +251,7 @@ sealed class YamiboRoute {
         }
     }
 
-    data class Thread(val tid: ThreadId, val authorId: UserId? = null, val page: Int = 1) : YamiboRoute() {
+    data class Thread(val tid: ThreadId, val authorId: UserId? = null,val reverse: Boolean = false, val page: Int = 1) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
                 .apply {
@@ -261,6 +261,7 @@ sealed class YamiboRoute {
                     parameters.append("extra", "page=2")
                     parameters.append("page", page.toString())
                     parameters.append("authorid", authorId?.value?.toString() ?: "")
+                    if (reverse) parameters.append("ordertype", "1")
                     parameters.append("mobile", "2")
                 }
                 .buildString()

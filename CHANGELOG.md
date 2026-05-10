@@ -436,3 +436,29 @@ Update fetch thread parameter "reverse" :
 suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1)
 ```
 It would get the reverse posts list of the whole thread, instead of the root post(first floor) always on top.
+
+# v1.1.7
+
+Add daily sign-in page parsing and fetch APIs :
+```kotlin notebook
+data class SignPage(
+    val currentDateText: String? = null,
+    val monthLabel: String? = null,
+    val notice: String? = null,
+    val calendarDays: List<SignCalendarDay> = emptyList(),
+    val repairOptions: List<SignRepairOption> = emptyList(),
+    val myActivity: List<String> = emptyList(),
+    val statistics: List<String> = emptyList(),
+    val extraSections: List<SignInfoSection> = emptyList(),
+    val signActionUrl: String? = null,
+    val repairActionPrefix: String? = null,
+    val hasSignedToday: Boolean = false,
+    val lastSignDateKey: String? = null,
+)
+
+suspend fun fetchSignPage(cookie: String? = null): YamiboResult<SignPage>
+suspend fun fetchSignAction(actionUrl: String, cookie: String? = null): YamiboResult<SignActionResult>
+```
+`cookie` is an optional raw Cookie header override. Pass the merged login cookie string including
+`cf_clearance` when Cloudflare has been cleared by a WebView. If omitted, the previously configured
+`YamiboClient.setCookie(...)` value is used.

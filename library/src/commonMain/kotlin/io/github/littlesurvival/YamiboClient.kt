@@ -15,6 +15,8 @@ import io.github.littlesurvival.dto.page.PrivateMessagePage
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.RatePopoutPage
 import io.github.littlesurvival.dto.page.SearchPage
+import io.github.littlesurvival.dto.page.SignActionResult
+import io.github.littlesurvival.dto.page.SignPage
 import io.github.littlesurvival.dto.page.TagPage
 import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.page.UserSpaceBlogPage
@@ -42,6 +44,7 @@ import io.github.littlesurvival.fetch.post.PrivateMessageFactory
 import io.github.littlesurvival.fetch.post.RateFactory
 import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
+import io.github.littlesurvival.fetch.post.SignFactory
 import io.github.littlesurvival.fetch.post.VotePollFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.github.littlesurvival.parse.BlogPageParser
@@ -52,6 +55,7 @@ import io.github.littlesurvival.parse.PrivateMessagePageParser
 import io.github.littlesurvival.parse.ProfilePageParser
 import io.github.littlesurvival.parse.RatePopoutPageParser
 import io.github.littlesurvival.parse.SearchPageParser
+import io.github.littlesurvival.parse.SignPageParser
 import io.github.littlesurvival.parse.TagPagParser
 import io.github.littlesurvival.parse.ThreadPageParser
 import io.github.littlesurvival.parse.UserSpaceBlogPageParser
@@ -75,6 +79,7 @@ class YamiboClient(
     private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher as FetchFactory)
     private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher as FetchFactory)
     private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
+    private val signFactory: SignFactory = SignFactory(mobileFetcher as FetchFactory)
 
     /** Initialize Values */
     fun setCookie(cookie: String) {
@@ -100,89 +105,237 @@ class YamiboClient(
     private val userSpaceFriendPageParser = UserSpaceFriendPageParser()
     private val userSpacePrivateMessagePageParser = UserSpacePrivateMessagePageParser()
     private val userSpaceNoticePageParser = UserSpaceNoticePageParser()
+    private val signPageParser = SignPageParser()
 
-    /** Fetch Pages */
+    /**
+     * 抓首頁
+     *
+     * Fetch Yamibo home page.
+     */
     suspend fun fetchHomePage(): YamiboResult<HomePage> =
         fetchAndParse(YamiboRoute.Home.build(), homePageParser)
 
+    /**
+     * 每日簽到頁面
+     *
+     * Fetch the daily sign-in page.
+     *
+     * [cookie] is an optional raw Cookie header override. Pass a merged login cookie string
+     * including `cf_clearance` when the caller obtains Cloudflare cookies from WebView. If omitted,
+     * the cookie previously configured with [setCookie] is used.
+     */
+    suspend fun fetchSignPage(cookie: String? = null): YamiboResult<SignPage> {
+        cookie?.let(::setCookie)
+        return when (val fetched = signFactory.fetchSignPage()) {
+            is FetchResult.Success -> mapParseResult(signPageParser.parse(fetched.value), fetched.url, fetched.value)
+            is FetchResult.Failure -> mapFetchFailure(fetched, fetched.url)
+        }
+    }
+
+    /**
+     * 執行簽到或補簽
+     *
+     * Execute a sign-in or repair-sign action URL parsed from [SignPage].
+     *
+     * [cookie] follows the same rules as [fetchSignPage].
+     */
+    suspend fun fetchSignAction(actionUrl: String, cookie: String? = null): YamiboResult<SignActionResult> {
+        cookie?.let(::setCookie)
+        return when (val fetched = signFactory.fetchSignAction(actionUrl)) {
+            is FetchResult.Success -> mapParseResult(signPageParser.parseActionResult(fetched.value), fetched.url, fetched.value)
+            is FetchResult.Failure -> mapFetchFailure(fetched, fetched.url)
+        }
+    }
+
+    /**
+     * 用戶資料頁面
+     *
+     * Fetch a profile page. When [userId] is null, Yamibo returns the current user's profile.
+     */
     suspend fun fetchProfileInfo(userId: UserId? = null): YamiboResult<ProfilePage> =
         fetchAndParse(YamiboRoute.UserSpace.ProfileInfo(userId).build(), profilePageParser)
 
+    /**
+     * 用戶空間的主題頁面
+     *
+     * Fetch user-space thread list. When [userId] is null, Yamibo returns the current user's list.
+     */
     suspend fun fetchUserSpaceThreads(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadPage> =
         fetchAndParse(
             YamiboRoute.UserSpace.Thread(userId, YamiboRoute.UserSpace.ThreadType.Thread, page).build(),
             userSpaceThreadPageParser
         )
 
+    /**
+     * 用戶空間的回覆頁面
+     *
+     * Fetch user-space reply list. When [userId] is null, Yamibo returns the current user's list.
+     */
     suspend fun fetchUserSpaceThreadReplies(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadReplyPage> =
         fetchAndParse(
             YamiboRoute.UserSpace.Thread(userId, YamiboRoute.UserSpace.ThreadType.Reply, page).build(),
             userSpaceThreadReplyPageParser
         )
 
+    /**
+     * 用戶空間的我的日誌頁面
+     *
+     * Fetch user-space "my blogs" list. When [userId] is null, Yamibo returns the current user's list.
+     */
     suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage> =
         fetchAndParse(YamiboRoute.UserSpace.Blog.MyBlog(userId, page).build(), userSpaceBlogPageParser)
 
+    /**
+     * 用戶空間的好友日誌頁面
+     *
+     * Fetch the current user's friend-blog list.
+     */
     suspend fun fetchUserSpaceFriendBlogs(page: Int = 1): YamiboResult<UserSpaceBlogPage> =
         fetchAndParse(YamiboRoute.UserSpace.Blog.FriendBlog(page).build(), userSpaceBlogPageParser)
 
+    /**
+     * 用戶空間的隨便看看日誌頁面
+     *
+     * Fetch public user-space blogs, either latest or hot, depending on [type].
+     */
     suspend fun fetchUserSpaceViewAllBlogs(
         type: YamiboRoute.UserSpace.Blog.ViewAllType = YamiboRoute.UserSpace.Blog.ViewAllType.Latest,
         page: Int = 1
     ): YamiboResult<UserSpaceBlogPage> =
         fetchAndParse(YamiboRoute.UserSpace.Blog.ViewAll(type, page).build(), userSpaceBlogPageParser)
 
+    /**
+     * 日誌閱讀頁面
+     *
+     * Fetch a blog detail page and its comment page. [userId] may be omitted when the URL does not require it.
+     */
     suspend fun fetchBlogPage(blogId: BlogId, userId: UserId? = null, page: Int = 1): YamiboResult<BlogPage> =
         fetchAndParse(YamiboRoute.BlogPage(blogId, userId, page).build(), blogPageParser)
 
+    /**
+     * 用戶空間的好友相關頁面
+     *
+     * Fetch a user-space friend page selected by [type].
+     */
     suspend fun fetchUserSpaceFriends(
         type: YamiboRoute.UserSpace.FriendPageType,
         page: Int = 1
     ): YamiboResult<UserSpaceFriendPage> =
         fetchAndParse(YamiboRoute.UserSpace.MyFriend(type, page).build(), userSpaceFriendPageParser)
 
+    /**
+     * 我的消息頁面
+     *
+     * Fetch the current user's private-message notification list.
+     */
     suspend fun fetchUserSpacePrivateMessages(page: Int = 1): YamiboResult<UserSpacePrivateMessagePage> =
         fetchAndParse(
             YamiboRoute.UserSpace.Notification(YamiboRoute.UserSpace.NotificationType.MyMessage, page).build(),
             userSpacePrivateMessagePageParser
         )
 
+    /**
+     * 私信聊天頁面
+     *
+     * Fetch a private-message conversation with [toUser]. When [page] is null, Yamibo opens the latest page.
+     */
     suspend fun fetchPrivateMessagePage(toUser: UserId, page: Int? = null): YamiboResult<PrivateMessagePage> =
         fetchAndParse(YamiboRoute.PrivateMessagePage(toUser, page).build(), privateMessagePageParser)
 
+    /**
+     * 我的提醒頁面
+     *
+     * Fetch the current user's notice list.
+     */
     suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage> =
         fetchAndParse(
             YamiboRoute.UserSpace.Notification(YamiboRoute.UserSpace.NotificationType.MyNotice, page).build(),
             userSpaceNoticePageParser
         )
 
-    suspend fun fetchForumById(fId: ForumId, filterType: FilterType? = null, orderType: OrderType? = null,page: Int = 1): YamiboResult<ForumPage> =
+    /**
+     * 論壇版塊頁面
+     *
+     * Fetch a forum page with optional forum filter and order parameters.
+     */
+    suspend fun fetchForumById(
+        fId: ForumId,
+        filterType: FilterType? = null,
+        orderType: OrderType? = null,
+        page: Int = 1
+    ): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(fId, filterType, orderType, page).build(), forumPageParser)
 
-    suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1): YamiboResult<ThreadPage> =
-        fetchAndParse(YamiboRoute.Thread(tId, authorId,reverse, page).build(), threadPageParser)
+    /**
+     * 帖子閱讀頁面
+     *
+     * Fetch a thread page. [authorId] limits posts to one author, and [reverse] requests reverse order.
+     */
+    suspend fun fetchThreadById(
+        tId: ThreadId,
+        authorId: UserId? = null,
+        reverse: Boolean = false,
+        page: Int = 1
+    ): YamiboResult<ThreadPage> =
+        fetchAndParse(YamiboRoute.Thread(tId, authorId, reverse, page).build(), threadPageParser)
 
+    /**
+     * 標籤頁面
+     *
+     * Fetch a desktop tag page for thread results.
+     */
     suspend fun fetchTagPageById(tagId: TagId, page: Int = 1): YamiboResult<TagPage> =
         fetchAndParse(YamiboRoute.TagPage(tagId, page).build(), tagPageParser, true)
 
+    /**
+     * 帖子頁面並提取標籤
+     *
+     * Fetch a thread page and parse only its extracted tag data.
+     */
     suspend fun fetchExtractTagsInThreadById(tId: ThreadId): YamiboResult<Tags> =
         fetchAndParse(YamiboRoute.Thread(tId).build(), threadPageExtractTagParser, true)
 
+    /**
+     * findpost定位
+     *
+     * Fetch the thread page that contains [postId] in Yamibo's full-view findpost flow.
+     */
     suspend fun fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId): YamiboResult<ThreadPage> =
         fetchAndParse(YamiboRoute.FindPost(authorId, threadId, postId).build(), threadPageParser)
 
+    /**
+     * 固定常量論壇版塊頁面
+     *
+     * Fetch a forum page from a [YamiboForum] enum entry.
+     */
     suspend fun fetchConstantForum(forum: YamiboForum, page: Int = 1): YamiboResult<ForumPage> =
         fetchAndParse(YamiboRoute.Forum(forum.forumId, page = page).build(), forumPageParser)
 
+    /**
+     * 評分彈窗頁面
+     *
+     * Fetch the rating popout page for a post.
+     */
     suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage> =
         fetchAndParse(YamiboRoute.RatePopout(tId, pId).build(), ratePopoutPageParser)
 
+    /**
+     * 執行投票
+     *
+     * Vote in a thread poll with the selected option IDs and current session [formHash].
+     */
     suspend fun votePoll(fId: ForumId, tId: ThreadId, pollOptionIds: List<PollOptionId>, formHash: FormHash): YamiboResult<String> {
         return when (val pollResult = votePollFactory.votePoll(formHash, fId, tId, pollOptionIds)) {
             is FetchResult.Success -> YamiboResult.Success(pollResult.value)
             is FetchResult.Failure -> mapFetchFailure(pollResult, pollResult.url)
         }
     }
+
+    /**
+     * 收藏資料夾頁面
+     *
+     * Fetch a favorite folder page. When [userId] is null, Yamibo returns the current user's folder.
+     */
     suspend fun fetchFavoritePage(
         userId: UserId? = null,
         type: FavoriteType,
@@ -193,6 +346,11 @@ class YamiboClient(
             favoritePageParser
         )
 
+    /**
+     * 執行搜尋
+     *
+     * Submit a search request with [query], then fetch the redirected cached search-result page.
+     */
     suspend fun fetchSearch(query: String, forumId: ForumId? = null, formHash: FormHash): YamiboResult<SearchPage> {
         return when (val linkResult = searchFactory.getCacheLink(formHash, query, forumId)) {
             is FetchResult.Success -> fetchAndParse(linkResult.value, searchPageParser)
@@ -200,11 +358,21 @@ class YamiboClient(
         }
     }
 
+    /**
+     * 搜尋結果頁面
+     *
+     * Fetch a cached search-result page by [searchId].
+     */
     suspend fun fetchSearchById(query: String, searchId: SearchId, page: Int = 1): YamiboResult<SearchPage> =
         fetchAndParse(YamiboRoute.Search.BySearchId(query, searchId, page).build(), searchPageParser)
 
+    /**
+     * 新增收藏
+     *
+     * Add a thread or forum to favorites. [id] must be a supported favorite target ID.
+     */
     suspend fun fetchAddFavorite(id: Id, formHash: FormHash, description: String = "手机收藏"): YamiboResult<String> {
-        return when (val result = when(id) {
+        return when (val result = when (id) {
             is ThreadId -> favoriteFactory.addThread(formHash, id, description)
             is ForumId -> favoriteFactory.addForum(formHash, id)
             else -> throw IllegalArgumentException("Unknown id type: $id")
@@ -214,13 +382,23 @@ class YamiboClient(
         }
     }
 
+    /**
+     * 移除收藏
+     *
+     * Remove a favorite item by favorite ID.
+     */
     suspend fun fetchRemoveFavorite(id: FavoriteId, formHash: FormHash): YamiboResult<String> {
-        return when(val result = favoriteFactory.removeFavorite(formHash, id)) {
+        return when (val result = favoriteFactory.removeFavorite(formHash, id)) {
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }
     }
 
+    /**
+     * 帖子評分
+     *
+     * Rate a post with [score] and [reason].
+     */
     suspend fun fetchRatePost(
         tId: ThreadId,
         pId: PostId,
@@ -235,6 +413,11 @@ class YamiboClient(
         }
     }
 
+    /**
+     * 帖子點評
+     *
+     * Submit a comment to a specific post.
+     */
     suspend fun fetchCommentPost(
         tId: ThreadId,
         pId: PostId,
@@ -247,6 +430,11 @@ class YamiboClient(
         }
     }
 
+    /**
+     * 日誌評論
+     *
+     * Submit a root blog comment.
+     */
     suspend fun fetchBlogComment(
         blogId: BlogId,
         userId: UserId,
@@ -259,6 +447,11 @@ class YamiboClient(
         }
     }
 
+    /**
+     * 發送私信
+     *
+     * Send a private message in an existing private-message conversation.
+     */
     suspend fun fetchSendPrivateMessage(
         privateMessageId: PrivateMessageId,
         toUser: UserId,
@@ -297,6 +490,27 @@ class YamiboClient(
             }
 
             is FetchResult.Failure -> mapFetchFailure(fetched, url)
+        }
+    }
+
+    private fun <T> mapParseResult(parsed: ParseResult<T>, url: String, body: String?): YamiboResult<T> {
+        return when (parsed) {
+            is ParseResult.Success -> YamiboResult.Success(parsed.value)
+            is ParseResult.NotLoggedIn -> YamiboResult.NotLoggedIn
+            is ParseResult.Maintenance -> YamiboResult.Maintenance
+            is ParseResult.NoPermission -> YamiboResult.NoPermission(parsed.reason)
+            is ParseResult.Failure -> {
+                val errorLine = parsed.exception?.let { "\n  error : $it" } ?: ""
+                YamiboResult.Failure(
+                    """
+                    |[Parse] 閫??憭望?
+                    |  url   : $url
+                    |  reason: ${parsed.reason}$errorLine
+                    |  body  : ${bodyPreview(body)}
+                    """.trimMargin(),
+                    parsed.exception
+                )
+            }
         }
     }
 

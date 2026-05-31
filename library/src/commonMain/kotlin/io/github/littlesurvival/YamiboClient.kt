@@ -4,6 +4,7 @@ import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.model.Tags
+import io.github.littlesurvival.dto.page.AddFriendPopoutScreen
 import io.github.littlesurvival.dto.page.BlogPage
 import io.github.littlesurvival.dto.page.FavoritePage
 import io.github.littlesurvival.dto.page.FavoriteType
@@ -38,6 +39,7 @@ import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.post.AddFriendFactory
 import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.PrivateMessageFactory
@@ -47,6 +49,7 @@ import io.github.littlesurvival.fetch.post.SearchFactory
 import io.github.littlesurvival.fetch.post.SignFactory
 import io.github.littlesurvival.fetch.post.VotePollFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
+import io.github.littlesurvival.parse.AddFriendPopoutScreenParser
 import io.github.littlesurvival.parse.BlogPageParser
 import io.github.littlesurvival.parse.FavoritePageParser
 import io.github.littlesurvival.parse.ForumPageParser
@@ -78,6 +81,7 @@ class YamiboClient(
     private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher as FetchFactory)
     private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher as FetchFactory)
     private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher as FetchFactory)
+    private val addFriendFactory: AddFriendFactory = AddFriendFactory(mobileFetcher as FetchFactory)
     private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
     private val signFactory: SignFactory = SignFactory(mobileFetcher as FetchFactory)
 
@@ -96,6 +100,7 @@ class YamiboClient(
     private val tagPageParser = TagPagParser()
     private val searchPageParser = SearchPageParser()
     private val favoritePageParser = FavoritePageParser()
+    private val addFriendPopoutScreenParser = AddFriendPopoutScreenParser()
     private val blogPageParser = BlogPageParser()
     private val privateMessagePageParser = PrivateMessagePageParser()
     private val ratePopoutPageParser = RatePopoutPageParser()
@@ -222,6 +227,17 @@ class YamiboClient(
         page: Int = 1
     ): YamiboResult<UserSpaceFriendPage> =
         fetchAndParse(YamiboRoute.UserSpace.MyFriend(type, page).build(), userSpaceFriendPageParser)
+
+    /**
+     * 新增好友彈窗
+     *
+     * Fetch the add-friend popout form for [userId].
+     */
+    suspend fun fetchAddFriendPopoutScreen(userId: UserId): YamiboResult<AddFriendPopoutScreen> =
+        fetchAndParse(
+            YamiboRoute.UserSpace.AddFriend.AddFriendPopoutPage(userId).build(),
+            addFriendPopoutScreenParser
+        )
 
     /**
      * 我的消息頁面
@@ -395,6 +411,24 @@ class YamiboClient(
     }
 
     /**
+     * 新增好友
+     *
+     * Send an add-friend request to [userId]. [note] is optional and [groupId] comes from
+     * [AddFriendPopoutScreen.availableOption].
+     */
+    suspend fun fetchAddFriend(
+        userId: UserId,
+        formHash: FormHash,
+        note: String = "",
+        groupId: Int = 1
+    ): YamiboResult<String> {
+        return when (val result = addFriendFactory.addFriend(formHash, userId, note, groupId)) {
+            is FetchResult.Success -> YamiboResult.Success(result.value)
+            is FetchResult.Failure -> mapFetchFailure(result, result.url)
+        }
+    }
+
+    /**
      * 帖子評分
      *
      * Rate a post with [score] and [reason].
@@ -503,7 +537,7 @@ class YamiboClient(
                 val errorLine = parsed.exception?.let { "\n  error : $it" } ?: ""
                 YamiboResult.Failure(
                     """
-                    |[Parse] 閫??憭望?
+                    |[Parse] 解析失敗
                     |  url   : $url
                     |  reason: ${parsed.reason}$errorLine
                     |  body  : ${bodyPreview(body)}

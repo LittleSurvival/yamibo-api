@@ -215,6 +215,38 @@ sealed class YamiboRoute {
                 }.buildString()
             }
         }
+
+        sealed class AddFriend {
+            data class AddFriendPopoutPage(val userId: UserId): YamiboRoute() {
+                override fun build(): String {
+                    return URLBuilder(domain).apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "spacecp")
+                        parameters.append("ac", "friend")
+                        parameters.append("op", "add")
+                        parameters.append("uid", userId.value.toString())
+                        parameters.append("handlekey", "addfriendhk_${userId.value}")
+                        parameters.append("mobile", "2")
+                        parameters.append("inajax", "1")
+                    }.buildString()
+                }
+            }
+            
+            data class AddFriendPost(val userId: UserId): YamiboRoute() {
+                override fun build(): String {
+                    return URLBuilder(domain).apply {
+                        encodedPath = "home.php"
+                        parameters.append("mod", "spacecp")
+                        parameters.append("ac", "friend")
+                        parameters.append("op", "add")
+                        parameters.append("uid", userId.value.toString())
+                        parameters.append("handlekey", "addfriendhk_${userId.value}")
+                        parameters.append("mobile", "2")
+                        parameters.append("inajax", "1")
+                    }.buildString()
+                }
+            }
+        }
     }
 
     data object MaintainingImage : YamiboRoute() {

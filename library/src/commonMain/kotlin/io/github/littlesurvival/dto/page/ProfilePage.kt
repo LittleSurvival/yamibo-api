@@ -20,8 +20,11 @@ import kotlinx.serialization.Serializable
  * @property signatureHtml Personal signature raw HTML(個人簽名), null if not set.
  * @property gender Gender(性別, e.g. "保密").
  * @property birthday Birthday(生日, e.g. "2000-1-1"), null if not set.
+ * @property qq QQ account, null if not set.
  * @property birthplace Birthplace(出生地, e.g. "中国 广东省"), null if not set.
+ * @property interests Interests / hobbies(興趣愛好), null if not set.
  * @property education Education(學歷, e.g. "本科"), null if not set.
+ * @property graduateSchool Graduate school(畢業學校), null if not set.
  * @property customTitle Custom title(自定義頭銜), null if not set.
  * @property homepage Personal homepage URL(個人主頁), null if not set.
  * @property onlineHours Online hours(在線時間, e.g. 172).
@@ -43,8 +46,11 @@ data class ProfilePage(
     val signatureHtml: String? = null,
     val gender: String?,
     val birthday: String?,
+    val qq: String? = null,
     val birthplace: String? = null,
+    val interests: String? = null,
     val education: String? = null,
+    val graduateSchool: String? = null,
     val customTitle: String? = null,
     val homepage: String? = null,
     val onlineHours: Int,

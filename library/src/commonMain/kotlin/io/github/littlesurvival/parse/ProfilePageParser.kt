@@ -60,8 +60,11 @@ class ProfilePageParser : Parser<ProfilePage> {
             var adminGroup: String? = null
             var gender: String? = null
             var birthday: String? = null
+            var qq: String? = null
             var birthplace: String? = null
+            var interests: String? = null
             var education: String? = null
+            var graduateSchool: String? = null
             var customTitle: String? = null
             var homepage: String? = null
             var onlineHours = 0
@@ -88,10 +91,15 @@ class ProfilePageParser : Parser<ProfilePage> {
                         homepage = li.selectFirst("span a")?.attr("href")?.trim()
                             ?.takeIf { it.isNotEmpty() && it != "http://" }
 
+                    label == "QQ" -> qq = li.selectFirst("span a[href*='uin=']")?.attr("href")
+                        ?.let { QQ_UIN_RE.find(it)?.groupValues?.get(1) }
+                        ?: value.ifEmpty { null }
                     label.contains("性别") || label.contains("性別") -> gender = value.ifEmpty { null }
                     label.contains("生日") -> birthday = value.takeIf { it != "-" && it.isNotEmpty() }
                     label.contains("出生地") -> birthplace = value.ifEmpty { null }
+                    label.contains("兴趣爱好") || label.contains("興趣愛好") -> interests = value.ifEmpty { null }
                     label.contains("学历") || label.contains("學歷") -> education = value.ifEmpty { null }
+                    label.contains("毕业学校") || label.contains("畢業學校") -> graduateSchool = value.ifEmpty { null }
                     label.contains("自定义头衔") || label.contains("自定義頭銜") ->
                         customTitle = value.ifEmpty { null }
                     label.contains("在线时间") || label.contains("在線時間") ->
@@ -129,8 +137,11 @@ class ProfilePageParser : Parser<ProfilePage> {
                     signatureHtml = signatureHtml,
                     gender = gender,
                     birthday = birthday,
+                    qq = qq,
                     birthplace = birthplace,
+                    interests = interests,
                     education = education,
+                    graduateSchool = graduateSchool,
                     customTitle = customTitle,
                     homepage = homepage,
                     onlineHours = onlineHours,
@@ -147,5 +158,6 @@ class ProfilePageParser : Parser<ProfilePage> {
     companion object {
         private val FORMHASH_RE = Regex("formhash=([a-f0-9]+)")
         private val AVATAR_BACKGROUND_RE = Regex("""background-image\s*:\s*url\(([^)]+)\)""")
+        private val QQ_UIN_RE = Regex("[?&]uin=(\\d+)")
     }
 }

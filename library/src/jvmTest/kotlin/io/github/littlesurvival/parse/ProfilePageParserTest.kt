@@ -47,4 +47,24 @@ class ProfilePageParserTest {
         assertEquals(59653, page.totalPoints)
         assertEquals(9358, page.onlineHours)
     }
+
+    @Test
+    fun parseProfileDetailsFromOtherUserSpace(): Unit = runBlocking {
+        val html = loadAsset("user_space/space2.html")
+        val result = ProfilePageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<ProfilePage>>(result).value
+        assertEquals(UserId(630885), page.uid)
+        assertEquals("fluchtcn", page.username)
+        assertEquals("百合達人", page.userGroup)
+        assertEquals("3079384662", page.qq)
+        assertEquals("文学，游戏，音乐", page.interests)
+        assertEquals("某个院校的法学生", page.graduateSchool)
+        assertEquals("本科", page.education)
+        assertEquals("助理司书", page.customTitle)
+        assertEquals(3318, page.points)
+        assertEquals(580, page.partner)
+        assertEquals(3511, page.totalPoints)
+        assertEquals(457, page.onlineHours)
+    }
 }

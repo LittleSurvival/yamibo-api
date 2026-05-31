@@ -482,3 +482,43 @@ Parse home page swiper images, including thread IDs when the banner links to a
 thread page.
 
 Parse `hasNewMessage` from the message footer entry when it contains `ico_msg`.
+
+# v1.1.9
+
+Update ProfilePage DTO :
+```kotlin notebook
+data class ProfilePage(
+    ...
+    val qq: String? = null,
+    val interests: String? = null,
+    val graduateSchool: String? = null,
+    ...
+)
+```
+Parse additional user profile fields from mobile space pages.
+
+Add AddFriend popout parsing and fetch API :
+```kotlin notebook
+data class AddFriendPopoutScreen(
+    val user: User,
+    val availableOption: List<AddFriendOption>,
+)
+
+data class AddFriendOption(
+    val id: Int,
+    val reason: String,
+)
+
+suspend fun fetchAddFriendPopoutScreen(userId: UserId): YamiboResult<AddFriendPopoutScreen>
+```
+
+Add AddFriend post feature :
+```kotlin notebook
+suspend fun fetchAddFriend(
+    userId: UserId,
+    formHash: FormHash,
+    note: String = "",
+    groupId: Int = 1
+): YamiboResult<String>
+```
+Add `YamiboRoute.UserSpace.AddFriend.AddFriendPost` and `AddFriendFactory` for submitting add-friend requests.

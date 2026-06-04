@@ -522,3 +522,7 @@ suspend fun fetchAddFriend(
 ): YamiboResult<String>
 ```
 Add `YamiboRoute.UserSpace.AddFriend.AddFriendPost` and `AddFriendFactory` for submitting add-friend requests.
+
+# v1.1.10
+
+Adjust error message of 503 status code from fetch result 

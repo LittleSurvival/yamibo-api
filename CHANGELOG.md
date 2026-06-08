@@ -538,3 +538,7 @@ data class ProfilePage(
     ...
 )
 ```
+
+# v1.1.12
+
+Add YamiboLevels object as level util in YamiboConstant

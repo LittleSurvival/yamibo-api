@@ -64,3 +64,38 @@ enum class YamiboForum(val forumName: String, val forumId: ForumId) {
         fun isMangaForum(forumId: ForumId) = MANGA_THREADS.any { it.forumId == forumId }
     }
 }
+
+/**
+ * 百合會論壇用戶組列表
+ *
+ * All roles on bbs.yamibo.com.
+ */
+enum class YamiboLevels(val levelName: String, val lowestPoint: Int, val readPermission: Int) {
+    UNKNOWN("未播種的百合", -999999999, 0),
+    YURI_SEED("百合種子", 0, 10),
+    YURI_SEEDLING("百合幼苗", 10, 20),
+    YURI_BUD("百合花蕾", 100, 30),
+    YURI_BLOOM("百合花開", 400, 40),
+    BLOOM_YURI("綻放百合", 800, 50),
+    YURI_AMATEUR("百合素人", 1500, 60),
+    YURI_MASTER("百合達人", 3000, 70);
+
+    companion object {
+        /**
+         * 目前用戶組
+         */
+        fun getLevel(point: Int): YamiboLevels =
+            entries
+                .filter { point >= it.lowestPoint }
+                .maxByOrNull { it.lowestPoint }
+                ?: UNKNOWN
+        
+        fun nextLevel(point: Int): YamiboLevels? =
+            entries
+                .filter { it.lowestPoint > point }
+                .minByOrNull { it.lowestPoint }
+
+        fun pointToNextLevel(point: Int): Int? =
+            entries.firstOrNull { point < it.lowestPoint }?.lowestPoint?.minus(point)
+    }
+}

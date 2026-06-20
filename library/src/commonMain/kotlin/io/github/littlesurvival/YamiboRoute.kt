@@ -273,9 +273,8 @@ sealed class YamiboRoute {
                         if (orderType.orderBy != null) parameters.append("orderby", orderType.orderBy)
                     }
                     filterType?.let {
-                        orderType?.let { if (orderType.filter == null) parameters.append("filter", "typeid") }
+                        if (orderType?.filter == null) parameters.append("filter", "typeid")
                         if (it.id != null) parameters.append("typeid", it.id.value.toString())
-
                     }
                     parameters.append("page", page.toString())
                     parameters.append("mobile", "2")

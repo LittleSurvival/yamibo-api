@@ -574,3 +574,7 @@ data class VotersPopoutScreen(
 suspend fun fetchViewVoters(tId: ThreadId, pollOptionId: PollOptionId? = null): YamiboResult<VotersPopoutScreen>
 ```
 Parse the poll voter popup from `forum.php?mod=misc&action=viewvote`, including selectable poll options and the voters for the selected option.
+
+# v1.1.15
+
+Fix ForumPage URL Builder failed to build filter type link with not setting order type.

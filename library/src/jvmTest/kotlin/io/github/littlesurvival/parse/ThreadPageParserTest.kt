@@ -1,6 +1,7 @@
 package io.github.littlesurvival.parse
 
 import io.github.littlesurvival.core.ParseResult
+import io.github.littlesurvival.dto.page.ManageButton
 import io.github.littlesurvival.dto.page.ThreadPage
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
@@ -9,6 +10,7 @@ import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.UserId
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -90,6 +92,44 @@ class ThreadPageParserTest {
 
         val failure = assertIs<ParseResult.Failure>(result)
         assertEquals("本帖已经删除，错误权限代码50", failure.reason)
+    }
+
+    @Test
+    fun parsePinnedReplyAndManageButtons() = runBlocking {
+        val html = loadAsset("threads/百合會論壇App.html")
+        val result = ThreadPageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<ThreadPage>>(result).value
+        assertEquals(17, page.posts.size)
+
+        val rootPost = page.posts.first { it.pid == PostId(41560491) }
+        assertFalse(rootPost.isPinned)
+        assertEquals(
+            listOf(
+                ManageButton(
+                    name = "编辑",
+                    url = "forum.php?mod=post&action=edit&fid=16&tid=572407&pid=41560491&page=1&mobile=2"
+                )
+            ),
+            rootPost.manageButtons
+        )
+
+        val pinnedPost = page.posts.first { it.pid == PostId(41565117) }
+        assertEquals(16, pinnedPost.floor)
+        assertTrue(pinnedPost.isPinned)
+        assertEquals(
+            listOf(
+                ManageButton(
+                    name = "编辑",
+                    url = "forum.php?mod=post&action=edit&fid=16&tid=572407&pid=41565117&page=1&mobile=2"
+                ),
+                ManageButton(
+                    name = "置顶",
+                    url = "forum.php?mod=topicadmin&action=stickreply&fid=16&tid=572407&operation=&optgroup=&page=&topiclist[]=41565117&mobile=2"
+                )
+            ),
+            pinnedPost.manageButtons
+        )
     }
 
     @Test

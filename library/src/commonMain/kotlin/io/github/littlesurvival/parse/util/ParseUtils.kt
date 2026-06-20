@@ -179,6 +179,21 @@ object ParseUtils {
     }
 
     /**
+     * Parse the first Discuz prompt message from an HTTP error response body.
+     *
+     * @param bodyPreview Response body stored in [io.github.littlesurvival.core.FetchResult.Failure.HttpError].
+     * @return The first non-empty paragraph inside `.jump_c`, or null when unavailable.
+     */
+    fun parseJumpCMessage(bodyPreview: String?): String? {
+        if (bodyPreview.isNullOrBlank()) return null
+        return try {
+            parsePromptMessageOrNull(Ksoup.parse(bodyPreview))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
      * Detect whether the HTML is a maintenance page.
      *
      * In Yamibo, this page typically has:

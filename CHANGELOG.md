@@ -548,3 +548,29 @@ Add YamiboLevels object as level util in YamiboConstant
 Fix ThreadPage parser prompt handling :
 - Return `ParseResult.Failure` when a view-thread response is actually a Discuz prompt page without post nodes.
 - Deleted-thread responses such as `本帖已经删除，错误权限代码50` are no longer parsed as a successful empty thread page.
+
+# v1.1.14
+
+Add rate-result popout parsing and fetch API :
+```kotlin notebook
+data class RateResultPopoutPage(
+    val totalScore: Int? = null,
+    val rates: List<RateResultItem>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchRateResultPopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RateResultPopoutPage>
+```
+Parse the all-ratings popup from `forum.php?mod=misc&action=viewratings`, including the score list, optional total score, and popup pagination.
+
+Add voter popout parsing and fetch API :
+```kotlin notebook
+data class VotersPopoutScreen(
+    val pollOptions: List<VotersPollOption>,
+    val selectedPollOptionId: PollOptionId,
+    val voters: List<User>,
+)
+
+suspend fun fetchViewVoters(tId: ThreadId, pollOptionId: PollOptionId? = null): YamiboResult<VotersPopoutScreen>
+```
+Parse the poll voter popup from `forum.php?mod=misc&action=viewvote`, including selectable poll options and the voters for the selected option.

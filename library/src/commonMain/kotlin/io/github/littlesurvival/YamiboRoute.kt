@@ -8,6 +8,7 @@ import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
+import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.PrivateMessageId
 import io.github.littlesurvival.dto.value.SearchId
 import io.github.littlesurvival.dto.value.TagId
@@ -591,6 +592,50 @@ sealed class YamiboRoute {
                     parameters.append("mobile", "2")
                     parameters.append("infloat", "yes")
                     parameters.append("handlekey", "rate")
+                    parameters.append("inajax", "1")
+                }.buildString()
+        }
+    }
+
+    /**
+     * 查看全部評分的彈窗.
+     *
+     * This is a GET request.
+     */
+    data class RateResultPopout(val threadId: ThreadId, val postId: PostId) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "misc")
+                    parameters.append("action", "viewratings")
+                    parameters.append("tid", threadId.value.toString())
+                    parameters.append("pid", postId.value.toString())
+                    parameters.append("mobile", "2")
+                    parameters.append("inajax", "1")
+                }.buildString()
+        }
+    }
+
+    /**
+     * 參與指定投票選項的會員彈窗.
+     *
+     * When [pollOptionId] is null, Yamibo selects the first poll option.
+     * This is a GET request.
+     */
+    data class ViewVoters(
+        val threadId: ThreadId,
+        val pollOptionId: PollOptionId? = null,
+    ) : YamiboRoute() {
+        override fun build(): String {
+            return URLBuilder(domain)
+                .apply {
+                    encodedPath = "forum.php"
+                    parameters.append("mod", "misc")
+                    parameters.append("action", "viewvote")
+                    parameters.append("tid", threadId.value.toString())
+                    pollOptionId?.let { parameters.append("polloptionid", it.value.toString()) }
+                    parameters.append("mobile", "2")
                     parameters.append("inajax", "1")
                 }.buildString()
         }

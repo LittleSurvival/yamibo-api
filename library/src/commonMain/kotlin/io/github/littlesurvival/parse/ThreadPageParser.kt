@@ -81,10 +81,13 @@ class ThreadPageParser : Parser<ThreadPage> {
                 val pidStr = postEl.attr("id").removePrefix("pid")
                 val pid = PostId(pidStr.toIntOrNull() ?: continue)
 
-                val floorText = postEl.selectFirst(".authi .mtit .y")?.text()?.trim() ?: ""
+                val floorEl = postEl.selectFirst(".authi .mtit .y")
+                val floorText = floorEl?.text()?.trim() ?: ""
                 val floor =
-                    floorText.replace("#", "").replace(WHITESPACE_RE, "").toIntOrNull()
+                    FLOOR_NUMBER_RE.find(floorText)?.groupValues?.get(1)?.toIntOrNull()
                         ?: continue
+                val isPinned = floorEl?.selectFirst("img[src*=settop]") != null
+                val manageButtons = parseManageButtons(postEl)
 
                 val authorEl = postEl.selectFirst(".authi .z a")
                 val authorUid =
@@ -335,6 +338,8 @@ class ThreadPageParser : Parser<ThreadPage> {
                     Post(
                         pid = pid,
                         floor = floor,
+                        isPinned = isPinned,
+                        manageButtons = manageButtons,
                         title = postTitle,
                         author = author,
                         timeCreate = TimeInfo.parse(timeText),
@@ -362,6 +367,37 @@ class ThreadPageParser : Parser<ThreadPage> {
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse thread page", e)
         }
+    }
+
+    private fun parseManageButtons(postEl: Element): List<ManageButton> {
+        val mtimeEl = postEl.selectFirst(".mtime") ?: return emptyList()
+
+        val manageTrigger = mtimeEl.selectFirst(".mgl a.popup[href]")
+        if (manageTrigger != null) {
+            val popupHref = manageTrigger.attr("href").trim()
+            val popupEl =
+                if (popupHref.startsWith("#")) {
+                    postEl.selectFirst(popupHref)
+                } else {
+                    null
+                }
+            val managePopup = popupEl?.selectFirst(".manage_popup") ?: popupEl ?: return emptyList()
+            return managePopup.select("a[href], input[href]")
+                .mapNotNull { actionEl -> toManageButton(actionEl) }
+        }
+
+        return mtimeEl.select("a[href]")
+            .mapNotNull { actionEl -> toManageButton(actionEl) }
+    }
+
+    private fun toManageButton(actionEl: Element): ManageButton? {
+        val url = actionEl.attr("href").trim().ifEmpty { null } ?: return null
+        val name =
+            when (actionEl.tagName()) {
+                "input" -> actionEl.attr("value").trim()
+                else -> actionEl.text().trim()
+            }.ifEmpty { null } ?: return null
+        return ManageButton(name = name, url = url)
     }
 
     class ParseTag : Parser<Tags> {
@@ -431,7 +467,7 @@ class ThreadPageParser : Parser<ThreadPage> {
 
     companion object {
         // Pre-compiled regex — avoids recompilation per call.
-        private val WHITESPACE_RE = Regex("\\s")
+        private val FLOOR_NUMBER_RE = Regex("(\\d+)")
         private val NON_DIGIT_RE = Regex("\\D")
         private val NON_DIGIT_SIGN_RE = Regex("[^\\d\\-+]")
         private val NON_DIGIT_MINUS_RE = Regex("[^\\d\\-]")

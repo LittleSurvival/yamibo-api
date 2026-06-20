@@ -97,6 +97,18 @@ data class Post(
      */
     val floor: Int,
 
+    /** Whether this post is rendered as a pinned reply. */
+    val isPinned: Boolean = false,
+
+    /**
+     * Management actions shown for this post.
+     *
+     * Examples:
+     * - only `编辑`
+     * - `管理` popup containing `置顶` and `编辑`
+     */
+    val manageButtons: List<ManageButton> = emptyList(),
+
     /**
      * Post Title.
      *
@@ -160,6 +172,14 @@ data class Post(
 
     /** Rates (评分) attached to the post. */
     val rateBlock: RateBlock = RateBlock()
+)
+
+@Serializable
+data class ManageButton(
+    /** Display name of the management action. */
+    val name: String,
+    /** URL opened by the management action. */
+    val url: String,
 )
 
 /** An image referenced in a post. */

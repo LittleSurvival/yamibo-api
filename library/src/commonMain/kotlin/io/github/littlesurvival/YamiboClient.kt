@@ -15,6 +15,7 @@ import io.github.littlesurvival.dto.page.OrderType
 import io.github.littlesurvival.dto.page.PrivateMessagePage
 import io.github.littlesurvival.dto.page.ProfilePage
 import io.github.littlesurvival.dto.page.RatePopoutPage
+import io.github.littlesurvival.dto.page.RateResultPopoutPage
 import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.page.SignActionResult
 import io.github.littlesurvival.dto.page.SignPage
@@ -26,6 +27,7 @@ import io.github.littlesurvival.dto.page.UserSpaceNoticePage
 import io.github.littlesurvival.dto.page.UserSpacePrivateMessagePage
 import io.github.littlesurvival.dto.page.UserSpaceThreadPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadReplyPage
+import io.github.littlesurvival.dto.page.VotersPopoutScreen
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -44,6 +46,7 @@ import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.PrivateMessageFactory
 import io.github.littlesurvival.fetch.post.RateFactory
+import io.github.littlesurvival.parse.RateResultPopoutPageParser
 import io.github.littlesurvival.fetch.post.CommentPostFactory
 import io.github.littlesurvival.fetch.post.SearchFactory
 import io.github.littlesurvival.fetch.post.SignFactory
@@ -67,6 +70,7 @@ import io.github.littlesurvival.parse.UserSpaceNoticePageParser
 import io.github.littlesurvival.parse.UserSpacePrivateMessagePageParser
 import io.github.littlesurvival.parse.UserSpaceThreadPageParser
 import io.github.littlesurvival.parse.UserSpaceThreadReplyPageParser
+import io.github.littlesurvival.parse.VotersPopoutScreenParser
 import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
@@ -104,6 +108,8 @@ class YamiboClient(
     private val blogPageParser = BlogPageParser()
     private val privateMessagePageParser = PrivateMessagePageParser()
     private val ratePopoutPageParser = RatePopoutPageParser()
+    private val rateResultPopoutPageParser = RateResultPopoutPageParser()
+    private val votersPopoutScreenParser = VotersPopoutScreenParser()
     private val userSpaceThreadPageParser = UserSpaceThreadPageParser()
     private val userSpaceThreadReplyPageParser = UserSpaceThreadReplyPageParser()
     private val userSpaceBlogPageParser = UserSpaceBlogPageParser()
@@ -336,6 +342,28 @@ class YamiboClient(
         fetchAndParse(YamiboRoute.RatePopout(tId, pId).build(), ratePopoutPageParser)
 
     /**
+     * 查看全部評分清單.
+     *
+     * Fetch the all-ratings popup for a post.
+     */
+    suspend fun fetchRateResultPopoutPage(
+        tId: ThreadId,
+        pId: PostId
+    ): YamiboResult<RateResultPopoutPage> =
+        fetchAndParse(YamiboRoute.RateResultPopout(tId, pId).build(), rateResultPopoutPageParser)
+
+    /**
+     * 查看參與投票的會員.
+     *
+     * Fetch voters for [pollOptionId]. When omitted, Yamibo returns the first option.
+     */
+    suspend fun fetchViewVoters(
+        tId: ThreadId,
+        pollOptionId: PollOptionId? = null,
+    ): YamiboResult<VotersPopoutScreen> =
+        fetchAndParse(YamiboRoute.ViewVoters(tId, pollOptionId).build(), votersPopoutScreenParser)
+
+    /**
      * 執行投票
      *
      * Vote in a thread poll with the selected option IDs and current session [formHash].
@@ -557,6 +585,8 @@ class YamiboClient(
     private fun mapFetchFailure(failure: FetchResult.Failure, url: String): YamiboResult<Nothing> {
         return when (failure) {
             is FetchResult.Failure.HttpError -> {
+                val bodyMessage =
+                    ParseUtils.parseJumpCMessage(failure.bodyPreview) ?: failure.bodyPreview
                 /** HTTP 503 means the server is under maintenance. */
                 if (failure.statusCode == 503) {
                     if (ParseUtils.isMaintenance(failure.bodyPreview))
@@ -576,7 +606,7 @@ class YamiboClient(
                     """
                     |[HTTP ${failure.statusCode}] 請求失敗
                     |  url    : $url
-                    |  body   : ${(failure.bodyPreview)}
+                    |  body   : $bodyMessage
                     """.trimMargin()
                 )
             }

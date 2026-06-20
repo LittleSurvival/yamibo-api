@@ -77,7 +77,7 @@ class ThreadPageParser : Parser<ThreadPage> {
             // Posts
             val posts = mutableListOf<Post>()
             val postEls = doc.select(".plc")
-            for (postEl in postEls) {
+            loop@ for (postEl in postEls) {
                 val pidStr = postEl.attr("id").removePrefix("pid")
                 val pid = PostId(pidStr.toIntOrNull() ?: continue)
 
@@ -115,7 +115,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                 val pollEl = messageEl?.selectFirst(".poll")
                 if (pollEl != null && floor == 1) {
                     var pollType = PollType.SingleChoice
-                    var pollInfoStr = ""
+                    val pollInfoStr = mutableListOf<String>()
                     var endTimeStr = ""
 
                     pollEl.select(".poll_txt").forEach { pt ->
@@ -123,7 +123,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                         if (text.contains("距结束还有:")) {
                             endTimeStr = text
                         } else {
-                            pollInfoStr = text
+                            pollInfoStr.add(text)
                             if (text.contains("多选投票")) {
                                 pollType = PollType.MultipleChoice
                             }
@@ -172,7 +172,7 @@ class ThreadPageParser : Parser<ThreadPage> {
                         status = status,
                         type = pollType,
                         endTime = TimeInfo.parse(endTimeStr),
-                        pollInfo = pollInfoStr,
+                        pollInfo = pollInfoStr.firstOrNull() ?: "",
                         option = options
                     )
                 }

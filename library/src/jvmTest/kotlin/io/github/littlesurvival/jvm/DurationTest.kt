@@ -10,3 +10,11 @@ class DurationTest {
         print(time.inWholeMilliseconds)
     }
 }
+
+class ListTest {
+    @Test
+    fun test() {
+        val texts = mutableListOf<String>()
+        print(texts[0])
+    }
+}

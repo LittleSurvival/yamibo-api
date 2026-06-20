@@ -52,7 +52,8 @@ class VotersPopoutScreenParser : Parser<VotersPopoutScreen> {
                 VotersPopoutScreen(
                     pollOptions = pollOptions,
                     selectedPollOptionId = selectedPollOptionId,
-                    voters = voters
+                    voters = voters,
+                    pageNav = ParseUtils.parsePageNav(doc)
                 )
             )
         } catch (e: Exception) {

@@ -360,8 +360,9 @@ class YamiboClient(
     suspend fun fetchViewVoters(
         tId: ThreadId,
         pollOptionId: PollOptionId? = null,
+        page: Int = 1,
     ): YamiboResult<VotersPopoutScreen> =
-        fetchAndParse(YamiboRoute.ViewVoters(tId, pollOptionId).build(), votersPopoutScreenParser)
+        fetchAndParse(YamiboRoute.ViewVoters(tId, pollOptionId, page).build(), votersPopoutScreenParser)
 
     /**
      * 執行投票

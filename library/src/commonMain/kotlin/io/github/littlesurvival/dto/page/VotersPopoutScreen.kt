@@ -1,5 +1,6 @@
 package io.github.littlesurvival.dto.page
 
+import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.value.PollOptionId
 import kotlinx.serialization.Serializable
@@ -10,12 +11,14 @@ import kotlinx.serialization.Serializable
  * @property pollOptions All poll options available in the selector.
  * @property selectedPollOptionId Option whose voters are currently displayed.
  * @property voters Users who voted for the selected option.
+ * @property pageNav Popup pagination, when available.
  */
 @Serializable
 data class VotersPopoutScreen(
     val pollOptions: List<VotersPollOption>,
     val selectedPollOptionId: PollOptionId,
     val voters: List<User>,
+    val pageNav: PageNav? = null,
 )
 
 /**

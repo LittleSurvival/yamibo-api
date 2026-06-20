@@ -2,6 +2,7 @@ package io.github.littlesurvival.parse
 
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.ParseResult
+import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.page.VotersPopoutScreen
 import io.github.littlesurvival.dto.value.PollOptionId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -58,6 +59,14 @@ class VotersPopoutScreenParserTest {
     }
 
     @Test
+    fun parsePageNavWhenPopupHasMultiplePages(): Unit = runBlocking {
+        val result = VotersPopoutScreenParser().parse(loadAsset("vote/voters_popout_screen_pagenav.html"))
+
+        val screen = assertIs<ParseResult.Success<VotersPopoutScreen>>(result).value
+        assertEquals(PageNav(currentPage = 1, nextPageIndex = 2, totalPages = 3, nextUrl = "forum.php?mod=misc&action=viewvote&tid=572624&polloptionid=34713&page=2"), screen.pageNav)
+    }
+
+    @Test
     fun rejectResponseWithoutPollOptions(): Unit = runBlocking {
         val html = """<root><![CDATA[<div class="jump_c"><p>投票主題不存在</p></div>]]></root>"""
 
@@ -75,8 +84,13 @@ class VotersPopoutScreenParserTest {
         assertContains(defaultUrl, "mobile=2")
         assertContains(defaultUrl, "inajax=1")
         assertFalse(defaultUrl.contains("polloptionid="))
+        assertFalse(defaultUrl.contains("page="))
 
         val selectedUrl = YamiboRoute.ViewVoters(ThreadId(572567), PollOptionId(34678)).build()
         assertContains(selectedUrl, "polloptionid=34678")
+
+        val pagedUrl = YamiboRoute.ViewVoters(ThreadId(572567), PollOptionId(34678), 2).build()
+        assertContains(pagedUrl, "polloptionid=34678")
+        assertContains(pagedUrl, "page=2")
     }
 }

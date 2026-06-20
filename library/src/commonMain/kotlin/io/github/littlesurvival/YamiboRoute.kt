@@ -625,6 +625,7 @@ sealed class YamiboRoute {
     data class ViewVoters(
         val threadId: ThreadId,
         val pollOptionId: PollOptionId? = null,
+        val page: Int = 1,
     ) : YamiboRoute() {
         override fun build(): String {
             return URLBuilder(domain)
@@ -634,6 +635,7 @@ sealed class YamiboRoute {
                     parameters.append("action", "viewvote")
                     parameters.append("tid", threadId.value.toString())
                     pollOptionId?.let { parameters.append("polloptionid", it.value.toString()) }
+                    if (page != 1) parameters.append("page", page.toString())
                     parameters.append("mobile", "2")
                     parameters.append("inajax", "1")
                 }.buildString()

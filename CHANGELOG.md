@@ -578,3 +578,23 @@ Parse the poll voter popup from `forum.php?mod=misc&action=viewvote`, including 
 # v1.1.15
 
 Fix ForumPage URL Builder failed to build filter type link with not setting order type.
+
+# v1.1.16
+
+Update voter popout parsing and fetch API :
+```kotlin notebook
+data class VotersPopoutScreen(
+    val pollOptions: List<VotersPollOption>,
+    val selectedPollOptionId: PollOptionId,
+    val voters: List<User>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchViewVoters(
+    tId: ThreadId,
+    pollOptionId: PollOptionId? = null,
+    page: Int = 1,
+): YamiboResult<VotersPopoutScreen>
+```
+Parse `pageNav` from the voter popup when the poll option has multiple pages, and default the fetch page parameter to `1` so the first page remains implicit in the route.
+

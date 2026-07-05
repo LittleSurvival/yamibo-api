@@ -2,6 +2,7 @@ package io.github.littlesurvival.dto.page
 
 import io.github.littlesurvival.dto.model.PageNav
 import io.github.littlesurvival.dto.model.ThreadSummary
+import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.SearchId
 import kotlinx.serialization.Serializable
 
@@ -9,6 +10,7 @@ import kotlinx.serialization.Serializable
 data class SearchPage(
     val searchId: SearchId? = null,
     val query: String,
+    val forumId: ForumId? = null,
     val threads: List<ThreadSummary>,
     val totalCount: Int,
     val pageNav: PageNav? = null,

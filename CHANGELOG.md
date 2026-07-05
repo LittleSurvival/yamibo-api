@@ -598,3 +598,18 @@ suspend fun fetchViewVoters(
 ```
 Parse `pageNav` from the voter popup when the poll option has multiple pages, and default the fetch page parameter to `1` so the first page remains implicit in the route.
 
+# v1.1.17
+
+Update SearchPage DTO :
+```kotlin notebook
+data class SearchPage(
+    val searchId: SearchId? = null,
+    val query: String,
+    val forumId: ForumId? = null,
+    val threads: List<ThreadSummary>,
+    val totalCount: Int,
+    val pageNav: PageNav? = null,
+)
+```
+`fetchSearch(...)` now returns the input `forumId` in `SearchPage` so callers can know which forum-scoped search produced the result.
+

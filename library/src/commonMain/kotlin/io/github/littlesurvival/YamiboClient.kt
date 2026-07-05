@@ -398,7 +398,10 @@ class YamiboClient(
      */
     suspend fun fetchSearch(query: String, forumId: ForumId? = null, formHash: FormHash): YamiboResult<SearchPage> {
         return when (val linkResult = searchFactory.getCacheLink(formHash, query, forumId)) {
-            is FetchResult.Success -> fetchAndParse(linkResult.value, searchPageParser)
+            is FetchResult.Success -> when (val result = fetchAndParse(linkResult.value, searchPageParser)) {
+                is YamiboResult.Success -> YamiboResult.Success(result.value.copy(forumId = forumId))
+                else -> result
+            }
             is FetchResult.Failure -> mapFetchFailure(linkResult, linkResult.url)
         }
     }

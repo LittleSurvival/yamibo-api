@@ -45,7 +45,7 @@ class FetchTest {
 
     @Test
     fun testAddForum() : Unit = runBlocking {
-        val favoriteResult = client.fetchAddFavorite(ForumId(55), formHash)
+        val favoriteResult = client.fetchAddFavorite(ForumId(16), formHash)
         debugLog("fetchAddFavorite", favoriteResult)
     }
 
@@ -63,6 +63,13 @@ class FetchTest {
             }
             println("isSort : $isSort")
         }
+    }
+
+    @Test
+    fun testAddFavorite(): Unit = runBlocking {
+        val addFavoriteResult = client.fetchAddFavorite(ThreadId(562654), formHash)
+
+        debugLog("fetchAddFavorite", addFavoriteResult)
     }
 
     @Test

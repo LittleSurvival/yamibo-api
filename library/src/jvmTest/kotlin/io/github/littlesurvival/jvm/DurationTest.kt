@@ -18,3 +18,16 @@ class ListTest {
         print(texts[0])
     }
 }
+
+class Division {
+    @Test
+    fun test() {
+        val x = 24L
+        val y = 5
+
+        val z = 60L
+
+
+        println((x / y.toFloat() * z).toLong())
+    }
+}

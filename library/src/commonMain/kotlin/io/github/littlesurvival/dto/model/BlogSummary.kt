@@ -1,6 +1,7 @@
 package io.github.littlesurvival.dto.model
 
 import io.github.littlesurvival.dto.value.BlogId
+import io.github.littlesurvival.dto.page.ManageButton
 import kotlinx.serialization.Serializable
 
 /**
@@ -12,6 +13,7 @@ import kotlinx.serialization.Serializable
  * @property description Blog preview text.
  * @property author Blog author info.
  * @property timeInfo Blog publish/update time.
+ * @property manageButtons Management/action buttons shown for this blog.
  */
 @Serializable
 data class BlogSummary(
@@ -21,4 +23,5 @@ data class BlogSummary(
     val description: String,
     val author: User,
     val timeInfo: TimeInfo,
+    val manageButtons: List<ManageButton> = emptyList(),
 )

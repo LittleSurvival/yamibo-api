@@ -41,13 +41,16 @@ class BlogPageParserTest {
         assertEquals("hjfun", page.rootBlog.author.name)
         assertEquals("2026-2-12 17:00", page.rootBlog.timeInfo.text)
         assertTrue(page.rootBlog.contentHtml.contains("首先，我原本是打算发帖的"))
+        assertEquals(listOf("收藏", "分享", "邀请"), page.rootBlog.manageButtons.map { it.name })
 
         val firstComment = page.blogComments.first()
         assertEquals(BlogCommentId(645992), firstComment.bcId)
         assertEquals(UserId(594846), firstComment.author.uid)
         assertEquals("key913", firstComment.author.name)
         assertEquals("2026-2-12 18:26", firstComment.timeInfo.text)
-        assertNotNull(firstComment.replyUrl)
+        assertEquals(listOf("回复"), firstComment.manageButtons.map { it.name })
+        assertTrue(firstComment.manageButtons.first().url.contains("op=reply"))
+        assertTrue(firstComment.manageButtons.first().url.contains("cid=645992"))
         assertTrue(firstComment.contentHtml.contains("肯定是读者的问题啦"))
         assertEquals(1, page.pageNav?.currentPage)
         assertEquals(3, page.pageNav?.totalPages)
@@ -68,5 +71,17 @@ class BlogPageParserTest {
         assertTrue(page2.blogComments.first().contentHtml.contains("好像确实是这样"))
         assertEquals(2, page2.pageNav?.currentPage)
         assertEquals(3, page2.pageNav?.totalPages)
+    }
+
+    @Test
+    fun parseBlogPageOwnerButtons(): Unit = runBlocking {
+        val page = assertIs<ParseResult.Success<BlogPage>>(
+            BlogPageParser().parse(loadAsset("blog/blog_page3.html"))
+        ).value
+
+        assertEquals(BlogId(117662), page.blogInfo.blogId)
+        assertEquals(listOf("收藏", "分享", "邀请", "编辑", "删除"), page.rootBlog.manageButtons.map { it.name })
+        assertTrue(page.rootBlog.manageButtons[3].url.contains("op=edit"))
+        assertTrue(page.rootBlog.manageButtons[4].url.contains("op=delete"))
     }
 }

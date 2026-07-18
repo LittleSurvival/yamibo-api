@@ -1,11 +1,13 @@
 package io.github.littlesurvival.parse
 
 import com.fleeksoft.ksoup.Ksoup
+import com.fleeksoft.ksoup.nodes.Element
 import io.github.littlesurvival.Parser
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.BlogSummary
 import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.model.User
+import io.github.littlesurvival.dto.page.ManageButton
 import io.github.littlesurvival.dto.page.UserSpaceBlogPage
 import io.github.littlesurvival.parse.util.ParseUtils
 
@@ -45,7 +47,8 @@ class UserSpaceBlogPageParser : Parser<UserSpaceBlogPage> {
                         url = url,
                         description = description,
                         author = author,
-                        timeInfo = TimeInfo.parse(timeText)
+                        timeInfo = TimeInfo.parse(timeText),
+                        manageButtons = parseManageButtons(item)
                     )
                 )
             }
@@ -54,5 +57,14 @@ class UserSpaceBlogPageParser : Parser<UserSpaceBlogPage> {
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse user space blog page", e)
         }
+    }
+
+    private fun parseManageButtons(item: Element): List<ManageButton> {
+        return item.select(".doing_listgl a[href]")
+            .mapNotNull { actionEl ->
+                val name = actionEl.text().trim().ifEmpty { null } ?: return@mapNotNull null
+                val url = actionEl.attr("href").trim().ifEmpty { null } ?: return@mapNotNull null
+                ManageButton(name = name, url = url)
+            }
     }
 }

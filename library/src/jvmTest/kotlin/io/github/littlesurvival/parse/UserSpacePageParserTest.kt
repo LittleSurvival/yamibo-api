@@ -95,6 +95,7 @@ class UserSpacePageParserTest {
         assertEquals(UserId(631114), first.author.uid)
         assertEquals("tifei", first.author.name)
         assertEquals("2026-4-28 23:31", first.timeInfo.text)
+        assertTrue(first.manageButtons.isEmpty())
         assertEquals(1, page.pageNav?.currentPage)
         assertEquals(13, page.pageNav?.totalPages)
     }
@@ -110,6 +111,22 @@ class UserSpacePageParserTest {
         assertTrue(page.blogs.isNotEmpty())
         assertEquals(BlogId(117358), page.blogs.first().bId)
         assertEquals(UserId(631114), page.blogs.first().author.uid)
+        assertTrue(page.blogs.first().manageButtons.isEmpty())
         assertEquals(6402, page.pageNav?.totalPages)
+    }
+
+    @Test
+    fun parseUserSpaceOwnBlogsManageButtons(): Unit = runBlocking {
+        val html = loadAsset("user_space/日誌/我的日志/我的日志.html")
+        val result = UserSpaceBlogPageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<UserSpaceBlogPage>>(result).value
+        val first = page.blogs.first()
+
+        assertEquals(BlogId(117662), first.bId)
+        assertEquals(listOf("删除", "置顶", "编辑"), first.manageButtons.map { it.name })
+        assertTrue(first.manageButtons[0].url.contains("op=delete"))
+        assertTrue(first.manageButtons[1].url.contains("op=stick"))
+        assertTrue(first.manageButtons[2].url.contains("op=edit"))
     }
 }

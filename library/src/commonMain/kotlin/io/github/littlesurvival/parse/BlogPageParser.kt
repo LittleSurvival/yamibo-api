@@ -9,6 +9,7 @@ import io.github.littlesurvival.dto.model.User
 import io.github.littlesurvival.dto.page.BlogComment
 import io.github.littlesurvival.dto.page.BlogInfo
 import io.github.littlesurvival.dto.page.BlogPage
+import io.github.littlesurvival.dto.page.ManageButton
 import io.github.littlesurvival.dto.value.BlogCommentId
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.UserId
@@ -50,7 +51,7 @@ class BlogPageParser : Parser<BlogPage> {
                 bcId = null,
                 author = parseRootAuthor(rootEl),
                 contentHtml = rootEl.selectFirst(".message")?.html()?.trim().orEmpty(),
-                replyUrl = null,
+                manageButtons = parseManageButtons(rootEl.selectFirst(".threadlist_foot")),
                 timeInfo = TimeInfo.parse(rootEl.selectFirst(".mtime")?.ownText()?.trim().orEmpty())
             )
 
@@ -99,14 +100,13 @@ class BlogPageParser : Parser<BlogPage> {
         val uid = authorLink?.attr("href")?.let { ParseUtils.extractUid(it) } ?: UserId(0)
         val name = authorLink?.text()?.trim().orEmpty()
         val avatarUrl = item.selectFirst(".avatar img, .user_avatar")?.attr("src")?.ifEmpty { null }
-        val replyUrl = item.selectFirst("a[id^=c_][id$=_reply]")?.attr("href")?.ifEmpty { null }
         val timeText = item.selectFirst(".mtime span")?.text()?.trim().orEmpty()
 
         return BlogComment(
             bcId = bcId,
             author = User(uid = uid, name = name, avatarUrl = avatarUrl),
             contentHtml = commentEl.html().trim(),
-            replyUrl = replyUrl,
+            manageButtons = parseManageButtons(item.selectFirst(".doing_listgl")),
             timeInfo = TimeInfo.parse(timeText)
         )
     }
@@ -115,5 +115,15 @@ class BlogPageParser : Parser<BlogPage> {
         ParseUtils.extractBlogCommentId(commentEl.attr("id"))?.let { return it }
         ParseUtils.extractBlogCommentId(item.attr("id"))?.let { return it }
         return item.selectFirst("a[href*=cid=]")?.attr("href")?.let { ParseUtils.extractBlogCommentId(it) }
+    }
+
+    private fun parseManageButtons(container: Element?): List<ManageButton> {
+        return container?.select("a[href]")
+            ?.mapNotNull { actionEl ->
+                val name = actionEl.text().trim().ifEmpty { null } ?: return@mapNotNull null
+                val url = actionEl.attr("href").trim().ifEmpty { null } ?: return@mapNotNull null
+                ManageButton(name = name, url = url)
+            }
+            .orEmpty()
     }
 }

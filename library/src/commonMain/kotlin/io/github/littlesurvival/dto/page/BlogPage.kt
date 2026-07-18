@@ -55,7 +55,7 @@ data class BlogInfo(
  * @property bcId Blog comment ID. Null when this item is the root blog post.
  * @property author Author info.
  * @property contentHtml Raw HTML content.
- * @property replyUrl URL used to reply to this comment, if present.
+ * @property manageButtons Management/action buttons shown for this item.
  * @property timeInfo Create time.
  */
 @Serializable
@@ -63,6 +63,6 @@ data class BlogComment(
     val bcId: BlogCommentId? = null,
     val author: User,
     val contentHtml: String,
-    val replyUrl: String?,
+    val manageButtons: List<ManageButton> = emptyList(),
     val timeInfo: TimeInfo,
 )

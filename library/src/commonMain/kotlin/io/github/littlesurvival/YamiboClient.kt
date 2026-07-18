@@ -4,6 +4,7 @@ import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.model.Tags
+import io.github.littlesurvival.dto.page.AddFavoriteResult
 import io.github.littlesurvival.dto.page.AddFriendPopoutScreen
 import io.github.littlesurvival.dto.page.BlogPage
 import io.github.littlesurvival.dto.page.FavoritePage
@@ -419,7 +420,7 @@ class YamiboClient(
      *
      * Add a thread or forum to favorites. [id] must be a supported favorite target ID.
      */
-    suspend fun fetchAddFavorite(id: Id, formHash: FormHash, description: String = "手机收藏"): YamiboResult<String> {
+    suspend fun fetchAddFavorite(id: Id, formHash: FormHash, description: String = "手机收藏"): YamiboResult<AddFavoriteResult> {
         return when (val result = when (id) {
             is ThreadId -> favoriteFactory.addThread(formHash, id, description)
             is ForumId -> favoriteFactory.addForum(formHash, id)

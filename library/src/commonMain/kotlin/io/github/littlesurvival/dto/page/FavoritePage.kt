@@ -23,6 +23,13 @@ data class FavoriteItem(
         return ParseUtils.extractTid(this@FavoriteItem.url)
     }
 }
+
+@Serializable
+data class AddFavoriteResult(
+    val message: String,
+    val favId: FavoriteId? = null,
+)
+
 @Serializable
 enum class FavoriteType(val typeName: String, val typeId: String) {
     Thread("帖子", "thread"),

@@ -613,3 +613,20 @@ data class SearchPage(
 ```
 `fetchSearch(...)` now returns the input `forumId` in `SearchPage` so callers can know which forum-scoped search produced the result.
 
+# v1.1.18
+
+Update Add Favorite response :
+```kotlin notebook
+data class AddFavoriteResult(
+    val message: String,
+    val favId: FavoriteId? = null,
+)
+
+suspend fun fetchAddFavorite(
+    id: Id,
+    formHash: FormHash,
+    description: String = "手机收藏"
+): YamiboResult<AddFavoriteResult>
+```
+Parse `favid` from Discuz favorite post responses such as `succeedhandle_favoriteform_...(..., {'id':'573762','favid':'2675784'})`.
+

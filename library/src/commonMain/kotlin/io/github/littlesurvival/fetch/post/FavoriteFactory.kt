@@ -2,6 +2,7 @@ package io.github.littlesurvival.fetch.post
 
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.FetchResult
+import io.github.littlesurvival.dto.page.AddFavoriteResult
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.ThreadId
@@ -33,7 +34,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
      * @return [FetchResult.Success] containing the response body, or a [FetchResult.Failure] if the
      * request fails.
      */
-    suspend fun addThread(formHash: FormHash, threadId: ThreadId, description: String): FetchResult<String> {
+    suspend fun addThread(formHash: FormHash, threadId: ThreadId, description: String): FetchResult<AddFavoriteResult> {
         val url = YamiboRoute.Favorite.AddThread(threadId).build()
         val referer = YamiboRoute.Thread(threadId).build()
         return try {
@@ -56,7 +57,14 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
             val message = PostResponseUtils.parseMessageText(body) ?: body
 
             if (response.status.isSuccess() && PostResponseUtils.isSuccess(body)) {
-                FetchResult.Success(value = message, statusCode = response.status.value, url = url)
+                FetchResult.Success(
+                    value = AddFavoriteResult(
+                        message = message,
+                        favId = PostResponseUtils.parseFavoriteId(body),
+                    ),
+                    statusCode = response.status.value,
+                    url = url,
+                )
             } else {
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
@@ -83,7 +91,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
      * @return [FetchResult.Success] containing the response message, or a [FetchResult.Failure] if the
      * request fails.
      */
-    suspend fun addForum(formHash: FormHash, forumId: ForumId): FetchResult<String> {
+    suspend fun addForum(formHash: FormHash, forumId: ForumId): FetchResult<AddFavoriteResult> {
         val url = YamiboRoute.Favorite.AddForum(forumId, formHash).build()
         return try {
             val response = fetcher.perform(HttpMethod.Get, url)
@@ -94,7 +102,11 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
             val message = doc.selectFirst(".jump_c p")?.text()?.trim() ?: body
 
             if (response.status.isSuccess() && !PostResponseUtils.isIllegal(body)) {
-                FetchResult.Success(value = message, statusCode = response.status.value, url = url)
+                FetchResult.Success(
+                    value = AddFavoriteResult(message = message),
+                    statusCode = response.status.value,
+                    url = url,
+                )
             } else {
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,

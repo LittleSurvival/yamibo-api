@@ -1,6 +1,7 @@
 package io.github.littlesurvival.fetch.post.util
 
 import com.fleeksoft.ksoup.Ksoup
+import io.github.littlesurvival.dto.value.FavoriteId
 
 /**
  * Utility for parsing Discuz POST response bodies.
@@ -27,6 +28,7 @@ import com.fleeksoft.ksoup.Ksoup
  * `errorhandle` in the script tag.
  */
 object PostResponseUtils {
+    private val FAVORITE_ID_RE = Regex("""['"]favid['"]\s*:\s*['"](\d+)['"]""")
 
     /**
      * Parse the message text from a Discuz POST response body.
@@ -44,6 +46,14 @@ object PostResponseUtils {
         // Remove script tags to get just the message text
         messageEl.select("script").remove()
         return messageEl.text().trim().ifEmpty { null }
+    }
+
+    fun parseFavoriteId(body: String): FavoriteId? {
+        return FAVORITE_ID_RE.find(body)
+            ?.groupValues
+            ?.get(1)
+            ?.toIntOrNull()
+            ?.let(::FavoriteId)
     }
 
     /**

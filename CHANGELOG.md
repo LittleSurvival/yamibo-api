@@ -648,3 +648,7 @@ data class BlogComment(
 Parse blog summary action buttons such as `删除`, `置顶`, and `编辑` from user-space blog lists.
 Parse blog root/comment action buttons such as `收藏`, `分享`, `邀请`, `编辑`, `删除`, and `回复` from blog pages.
 
+# v1.1.20
+
+Add `YamiboResult.mapSuccess(transform)` for mapping successful values while preserving all existing failure result variants.
+

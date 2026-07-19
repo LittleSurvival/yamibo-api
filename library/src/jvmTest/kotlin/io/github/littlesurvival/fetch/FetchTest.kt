@@ -74,7 +74,8 @@ class FetchTest {
 
     @Test
     fun testRemoveFavorite(): Unit = runBlocking {
-        val removeFavorite = client.fetchRemoveFavorite(FavoriteId(2549313), formHash)
+        //2549313
+        val removeFavorite = client.fetchRemoveFavorite(FavoriteId(123456), formHash)
         debugLog("fetchRemoveFavorite", removeFavorite)
     }
 

@@ -25,3 +25,11 @@ sealed class YamiboResult<out T> {
         override fun message(): String = reason
     }
 }
+
+fun <T, R> YamiboResult<T>.mapSuccess(transform: (T) -> R): YamiboResult<R> = when (this) {
+    is YamiboResult.Success -> YamiboResult.Success(transform(value))
+    is YamiboResult.Failure -> this
+    is YamiboResult.NotLoggedIn -> this
+    is YamiboResult.NoPermission -> this
+    is YamiboResult.Maintenance -> this
+}

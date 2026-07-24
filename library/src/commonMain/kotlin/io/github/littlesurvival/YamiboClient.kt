@@ -29,6 +29,7 @@ import io.github.littlesurvival.dto.page.UserSpacePrivateMessagePage
 import io.github.littlesurvival.dto.page.UserSpaceThreadPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadReplyPage
 import io.github.littlesurvival.dto.page.VotersPopoutScreen
+import io.github.littlesurvival.dto.value.BlogClassId
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -194,8 +195,12 @@ class YamiboClient(
      *
      * Fetch user-space "my blogs" list. When [userId] is null, Yamibo returns the current user's list.
      */
-    suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage> =
-        fetchAndParse(YamiboRoute.UserSpace.Blog.MyBlog(userId, page).build(), userSpaceBlogPageParser)
+    suspend fun fetchUserSpaceMyBlogs(
+        userId: UserId? = null,
+        blogClassId: BlogClassId? = null,
+        page: Int = 1
+    ): YamiboResult<UserSpaceBlogPage> =
+        fetchAndParse(YamiboRoute.UserSpace.Blog.MyBlog(userId, blogClassId, page).build(), userSpaceBlogPageParser)
 
     /**
      * 用戶空間的好友日誌頁面

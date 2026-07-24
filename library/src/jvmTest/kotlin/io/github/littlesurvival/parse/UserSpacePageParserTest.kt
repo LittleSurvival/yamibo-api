@@ -1,9 +1,11 @@
 package io.github.littlesurvival.parse
 
+import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.page.UserSpaceBlogPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadPage
 import io.github.littlesurvival.dto.page.UserSpaceThreadReplyPage
+import io.github.littlesurvival.dto.value.BlogClassId
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.dto.value.PostId
@@ -12,6 +14,7 @@ import io.github.littlesurvival.dto.value.UserId
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -96,6 +99,7 @@ class UserSpacePageParserTest {
         assertEquals("tifei", first.author.name)
         assertEquals("2026-4-28 23:31", first.timeInfo.text)
         assertTrue(first.manageButtons.isEmpty())
+        assertTrue(page.blogClasses.isEmpty())
         assertEquals(1, page.pageNav?.currentPage)
         assertEquals(13, page.pageNav?.totalPages)
     }
@@ -112,6 +116,7 @@ class UserSpacePageParserTest {
         assertEquals(BlogId(117358), page.blogs.first().bId)
         assertEquals(UserId(631114), page.blogs.first().author.uid)
         assertTrue(page.blogs.first().manageButtons.isEmpty())
+        assertTrue(page.blogClasses.isEmpty())
         assertEquals(6402, page.pageNav?.totalPages)
     }
 
@@ -128,5 +133,30 @@ class UserSpacePageParserTest {
         assertTrue(first.manageButtons[0].url.contains("op=delete"))
         assertTrue(first.manageButtons[1].url.contains("op=stick"))
         assertTrue(first.manageButtons[2].url.contains("op=edit"))
+    }
+
+    @Test
+    fun parseUserSpaceBlogsWithClassIds(): Unit = runBlocking {
+        val html = loadAsset("blog/blogpage_person_with_tag.html")
+        val result = UserSpaceBlogPageParser().parse(html)
+
+        val page = assertIs<ParseResult.Success<UserSpaceBlogPage>>(result).value
+        val first = page.blogs.first()
+
+        assertEquals(listOf("config", "newconfig1"), page.blogClasses.map { it.name })
+        assertEquals(listOf(BlogClassId(4568), BlogClassId(4569)), page.blogClasses.map { it.id })
+        assertEquals(BlogId(117698), first.bId)
+        assertEquals(listOf("删除", "置顶", "编辑"), first.manageButtons.map { it.name })
+    }
+
+    @Test
+    fun buildUserSpaceMyBlogClassRoutes() {
+        val classUrl = YamiboRoute.UserSpace.Blog.MyBlog(UserId(656626), BlogClassId(4568), 2).build()
+        assertTrue(classUrl.contains("uid=656626"))
+        assertTrue(classUrl.contains("classid=4568"))
+        assertTrue(classUrl.contains("page=2"))
+
+        val defaultUrl = YamiboRoute.UserSpace.Blog.MyBlog(UserId(656626), null, 2).build()
+        assertFalse(defaultUrl.contains("classid="))
     }
 }

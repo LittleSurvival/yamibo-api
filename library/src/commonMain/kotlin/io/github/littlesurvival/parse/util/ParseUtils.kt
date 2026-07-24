@@ -3,6 +3,7 @@ package io.github.littlesurvival.parse.util
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
 import io.github.littlesurvival.dto.model.PageNav
+import io.github.littlesurvival.dto.value.BlogClassId
 import io.github.littlesurvival.dto.value.BlogCommentId
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.ForumId
@@ -24,6 +25,7 @@ object ParseUtils {
     private val UID_PATH_RE = Regex("uid-(\\d+)")
     private val UID_SCRIPT_RE = Regex("discuz_uid\\s*=\\s*'(\\d+)'")
     private val BLOG_ID_RE = Regex("[?&]id=(\\d+)")
+    private val BLOG_CLASS_ID_RE = Regex("[?&]classid=(\\d+)")
     private val BLOG_COMMENT_ID_RE = Regex("(?:[?&]cid=|comment_)(\\d+)")
     private val PAGE_QUERY_RE = Regex("[?&]page=(\\d+)")
     private val PAGE_NUMBER_RE = Regex("(\\d+)")
@@ -67,6 +69,11 @@ object ParseUtils {
     /** Extract blog id (id) from a blog URL. */
     fun extractBid(url: String): BlogId? {
         return BLOG_ID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { BlogId(it) }
+    }
+
+    /** Extract blog class id (classid) from a URL. */
+    fun extractBlogClassId(url: String): BlogClassId? {
+        return BLOG_CLASS_ID_RE.find(url)?.groupValues?.get(1)?.toIntOrNull()?.let { BlogClassId(it) }
     }
 
     /** Extract blog comment id (cid) from a URL or comment element id. */

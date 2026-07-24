@@ -652,3 +652,26 @@ Parse blog root/comment action buttons such as `收藏`, `分享`, `邀请`, `�
 
 Add `YamiboResult.mapSuccess(transform)` for mapping successful values while preserving all existing failure result variants.
 
+# v1.1.21
+
+Update user-space blog class support :
+```kotlin notebook
+data class UserSpaceBlogPage(
+    val blogs: List<BlogSummary>,
+    val pageNav: PageNav? = null,
+    val blogClasses: List<BlogPageClassInfo> = emptyList(),
+)
+
+data class BlogPageClassInfo(
+    val name: String,
+    val id: BlogClassId,
+)
+
+suspend fun fetchUserSpaceMyBlogs(
+    userId: UserId? = null,
+    blogClassId: BlogClassId? = null,
+    page: Int = 1
+): YamiboResult<UserSpaceBlogPage>
+```
+Parse user-space blog class links from the horizontal class list and support `classid` filtering in my-blog routes.
+

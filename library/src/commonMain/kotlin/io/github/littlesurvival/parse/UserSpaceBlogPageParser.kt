@@ -7,6 +7,7 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.dto.model.BlogSummary
 import io.github.littlesurvival.dto.model.TimeInfo
 import io.github.littlesurvival.dto.model.User
+import io.github.littlesurvival.dto.page.BlogPageClassInfo
 import io.github.littlesurvival.dto.page.ManageButton
 import io.github.littlesurvival.dto.page.UserSpaceBlogPage
 import io.github.littlesurvival.parse.util.ParseUtils
@@ -53,10 +54,25 @@ class UserSpaceBlogPageParser : Parser<UserSpaceBlogPage> {
                 )
             }
 
-            ParseResult.Success(UserSpaceBlogPage(blogs = blogs, pageNav = ParseUtils.parsePageNav(doc)))
+            ParseResult.Success(
+                UserSpaceBlogPage(
+                    blogs = blogs,
+                    pageNav = ParseUtils.parsePageNav(doc),
+                    blogClasses = parseBlogClasses(doc)
+                )
+            )
         } catch (e: Exception) {
             ParseResult.Failure("Failed to parse user space blog page", e)
         }
+    }
+
+    private fun parseBlogClasses(doc: Element): List<BlogPageClassInfo> {
+        return doc.select(".dhnavs_box .swiper-wrapper a[href*=classid=]")
+            .mapNotNull { classEl ->
+                val id = ParseUtils.extractBlogClassId(classEl.attr("href")) ?: return@mapNotNull null
+                val name = classEl.text().trim().ifEmpty { null } ?: return@mapNotNull null
+                BlogPageClassInfo(name = name, id = id)
+            }
     }
 
     private fun parseManageButtons(item: Element): List<ManageButton> {

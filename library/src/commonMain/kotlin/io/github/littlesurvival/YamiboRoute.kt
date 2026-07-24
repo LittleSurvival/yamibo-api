@@ -3,6 +3,7 @@ package io.github.littlesurvival
 import io.github.littlesurvival.dto.page.FavoriteType
 import io.github.littlesurvival.dto.page.FilterType
 import io.github.littlesurvival.dto.page.OrderType
+import io.github.littlesurvival.dto.value.BlogClassId
 import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
@@ -106,7 +107,7 @@ sealed class YamiboRoute {
             /**
              * 我的日志
              */
-            data class MyBlog(val userId: UserId?, val page: Int = 1) : YamiboRoute() {
+            data class MyBlog(val userId: UserId?, val classId: BlogClassId? = null, val page: Int = 1) : YamiboRoute() {
                 override fun build(): String {
                     return URLBuilder(domain)
                         .apply {
@@ -115,6 +116,7 @@ sealed class YamiboRoute {
                             parameters.append("do", "blog")
                             parameters.append("view", "me")
                             if (userId != null) parameters.append("uid", userId.value.toString())
+                            if (classId != null) parameters.append("classid", classId.value.toString())
                             parameters.append("page", page.toString())
                             parameters.append("mobile", "2")
                         }.buildString()

@@ -43,6 +43,12 @@ interface Id
 @JvmInline value class BlogId(val value: Int) : Id
 
 /**
+ * Type-safe blog class id
+ */
+@Serializable
+@JvmInline value class BlogClassId(val value: Int) : Id
+
+/**
  * Type-safe blog comment id (cid)
  */
 @Serializable

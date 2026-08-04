@@ -675,3 +675,10 @@ suspend fun fetchUserSpaceMyBlogs(
 ```
 Parse user-space blog class links from the horizontal class list and support `classid` filtering in my-blog routes.
 
+# v1.1.22
+
+Improve HTTP error handling:
+
+- Return a clear permission/login-expiration message for HTTP 405 responses.
+- Preserve maintenance and illegal-request detection for HTTP 503 responses.
+

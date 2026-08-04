@@ -597,20 +597,35 @@ class YamiboClient(
             is FetchResult.Failure.HttpError -> {
                 val bodyMessage =
                     ParseUtils.parseJumpCMessage(failure.bodyPreview) ?: failure.bodyPreview
-                /** HTTP 503 means the server is under maintenance. */
-                if (failure.statusCode == 503) {
-                    if (ParseUtils.isMaintenance(failure.bodyPreview))
-                        return YamiboResult.Maintenance
-                    if (PostResponseUtils.isIllegal(failure.bodyPreview))
+                when (failure.statusCode) {
+                    /** HTTP 503 means the server is under maintenance. */
+                    503 -> {
+                        if (ParseUtils.isMaintenance(failure.bodyPreview)) {
+                            return YamiboResult.Maintenance
+                        } else if (PostResponseUtils.isIllegal(failure.bodyPreview)) {
+                            return YamiboResult.Failure(
+                                """
+                                |[HTTP ${failure.statusCode}] 請求失敗
+                                |  url    : $url
+                                |  body   :
+                                |  系統信息(您当前的访问请求当中含有非法字符，已经被系统拒绝，這很可能是登入過期/未登入導致的，請嘗試重新登入/刷新登入狀態。)
+                                |  若確認登入成功/刷新登入狀態後仍無法解決，請嘗試在Github上聯繫開發者
+                                """.trimMargin()
+                            )
+                        }
+                    }
+
+                    405 -> {
                         return YamiboResult.Failure(
                             """
                             |[HTTP ${failure.statusCode}] 請求失敗
                             |  url    : $url
-                            |  body   : 
-                            |  系統信息(您当前的访问请求当中含有非法字符，已经被系统拒绝，這很可能是登入過期/未登入導致的，請嘗試重新登入/刷新登入狀態。)
+                            |  body   :
+                            |  權限錯誤，這很可能是登入過期/未登入導致的，請嘗試重新登入/刷新登入狀態。
                             |  若確認登入成功/刷新登入狀態後仍無法解決，請嘗試在Github上聯繫開發者
                             """.trimMargin()
                         )
+                    }
                 }
                 YamiboResult.Failure(
                     """

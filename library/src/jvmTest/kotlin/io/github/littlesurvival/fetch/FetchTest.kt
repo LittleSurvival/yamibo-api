@@ -5,6 +5,8 @@ import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.YamiboForum
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.dto.page.FavoriteType
+import io.github.littlesurvival.dto.value.BlogClassId
+import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.FavoriteId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
@@ -181,5 +183,19 @@ class FetchTest {
         )
 
         debugLog("SendPrivateMessage", result)
+    }
+
+    @Test
+    fun testUserSpaceMyBlogPage() = runBlocking {
+        val result = client.fetchUserSpaceMyBlogs(blogClassId =  BlogClassId(4571))
+
+        debugLog("fetchUserSpaceMyBlogs", result)
+    }
+
+    @Test
+    fun testBlogPage() = runBlocking {
+        val result = client.fetchBlogPage(BlogId(117698))
+
+        debugLog("fetchBlogPage", result)
     }
 }

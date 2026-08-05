@@ -16,7 +16,8 @@ sealed class FetchResult<out T> {
         data class HttpError(
             val statusCode: Int,
             override val url: String,
-            val bodyPreview: String?
+            val bodyPreview: String?,
+            val responseHeaders: Map<String, List<String>> = emptyMap(),
         ) : Failure(url)
 
 //        data class PostError(

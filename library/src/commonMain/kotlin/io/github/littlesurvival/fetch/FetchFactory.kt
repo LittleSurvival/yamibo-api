@@ -88,7 +88,8 @@ class FetchFactory(
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = text
+                    bodyPreview = text,
+                    responseHeaders = response.wafDiagnosticHeaders(),
                 )
             }
         } catch (e: HttpRequestTimeoutException) {
@@ -96,5 +97,10 @@ class FetchFactory(
         } catch (e: Exception) {
             FetchResult.Failure.NetworkError(url, e)
         }
+    }
+
+    private fun HttpResponse.wafDiagnosticHeaders(): Map<String, List<String>> = buildMap {
+        headers.getAll(HttpHeaders.Server)?.let { put(HttpHeaders.Server, it) }
+        headers.getAll("BDWAF-Request-ID")?.let { put("BDWAF-Request-ID", it) }
     }
 }

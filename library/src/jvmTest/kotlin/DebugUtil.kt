@@ -26,6 +26,12 @@ internal fun <T> debugLog(label: String, result: YamiboResult<T>) {
                 println("   Exception: ${ex::class.simpleName} - ${ex.message}")
             }
         }
+        is YamiboResult.WafChallenge -> {
+            println("🛡️ [WafChallenge]")
+            println("   Provider : ${result.provider}")
+            println("   Status   : ${result.statusCode}")
+            println("   URL      : ${result.url}")
+        }
         is YamiboResult.Maintenance -> {
             println("🔧 [Maintenance]")
             println("   ${result.message()}")

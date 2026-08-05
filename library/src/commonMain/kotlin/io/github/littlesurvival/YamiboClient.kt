@@ -3,6 +3,7 @@ package io.github.littlesurvival
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
+import io.github.littlesurvival.fetch.network.WafChallengeDetector
 import io.github.littlesurvival.dto.model.Tags
 import io.github.littlesurvival.dto.page.AddFavoriteResult
 import io.github.littlesurvival.dto.page.AddFriendPopoutScreen
@@ -587,16 +588,40 @@ class YamiboClient(
     }
 
     /**
-     * Convert a [FetchResult.Failure] into a [YamiboResult.Failure].
+     * Convert a [FetchResult.Failure] into the corresponding [YamiboResult].
+     *
+     * WAF detection must run before the existing status-specific mappings. The affected Baidu WAF
+     * uses HTTP 405, but Yamibo can also produce an ordinary HTTP 405 that should keep the existing
+     * permission-error behavior. [WafChallengeDetector] distinguishes those cases by requiring
+     * response evidence in addition to the status code.
+     *
+     * A detected challenge is returned as structured data instead of a formatted failure string so
+     * callers can suspend the operation, complete browser verification, synchronize the new cookie,
+     * and then apply their own retry policy. This method deliberately performs no automatic retry:
+     * some callers execute non-idempotent POST operations that must not be replayed blindly.
      *
      * @param failure The fetch failure to convert.
      * @param url URL or operation name.
      */
-    private fun mapFetchFailure(failure: FetchResult.Failure, url: String): YamiboResult<Nothing> {
+    internal fun mapFetchFailure(failure: FetchResult.Failure, url: String): YamiboResult<Nothing> {
         return when (failure) {
             is FetchResult.Failure.HttpError -> {
+                // Preserve the original URL and status so the app can verify the same route and
+                // make a request-aware replay decision after its WebView has produced a new cookie.
+                WafChallengeDetector.detect(failure)?.let { provider ->
+                    return YamiboResult.WafChallenge(
+                        provider = provider,
+                        statusCode = failure.statusCode,
+                        url = url,
+                    )
+                }
+
+                // Challenge detection needs the unmodified response body, so user-facing Discuz
+                // message extraction happens only after the response has been ruled out as WAF.
                 val bodyMessage =
-                    ParseUtils.parseJumpCMessage(failure.bodyPreview) ?: failure.bodyPreview
+                    ParseUtils.parseJumpCMessage(failure.bodyPreview)
+                        ?: PostResponseUtils.parseMessageText(failure.bodyPreview.orEmpty())
+                        ?: failure.bodyPreview
                 when (failure.statusCode) {
                     /** HTTP 503 means the server is under maintenance. */
                     503 -> {

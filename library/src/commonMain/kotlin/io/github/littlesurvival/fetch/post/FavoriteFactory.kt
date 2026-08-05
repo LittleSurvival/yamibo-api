@@ -69,7 +69,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = message
+                    bodyPreview = body
                 )
             }
         } catch (e: HttpRequestTimeoutException) {
@@ -111,7 +111,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = message
+                    bodyPreview = body
                 )
             }
         } catch (e: HttpRequestTimeoutException) {
@@ -148,7 +148,7 @@ class FavoriteFactory(override val fetcher: FetchFactory) : PostFactory(fetcher)
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = message
+                    bodyPreview = body
                 )
             }
         } catch (e: HttpRequestTimeoutException) {

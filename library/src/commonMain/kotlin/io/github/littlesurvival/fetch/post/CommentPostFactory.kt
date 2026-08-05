@@ -71,7 +71,7 @@ class CommentPostFactory(
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = parsedMessage
+                    bodyPreview = body
                 )
             }
         } catch (e: HttpRequestTimeoutException) {

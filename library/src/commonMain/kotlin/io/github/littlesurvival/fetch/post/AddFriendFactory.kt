@@ -65,7 +65,7 @@ class AddFriendFactory(
                 FetchResult.Failure.HttpError(
                     statusCode = response.status.value,
                     url = url,
-                    bodyPreview = message
+                    bodyPreview = body
                 )
             }
         } catch (e: HttpRequestTimeoutException) {

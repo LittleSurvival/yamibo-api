@@ -11,6 +11,15 @@ sealed class YamiboResult<out T> {
         override fun message(): String = reason
     }
 
+    /** The request was intercepted by an edge WAF and requires browser verification. */
+    data class WafChallenge(
+        val provider: WafProvider,
+        val statusCode: Int,
+        val url: String,
+    ) : YamiboResult<Nothing>() {
+        override fun message(): String = "網站要求完成瀏覽器驗證"
+    }
+
     /** The website is currently under maintenance (HTTP 503 or maintenance HTML detected). */
     data object Maintenance : YamiboResult<Nothing>() {
         override fun message(): String = "又到了論壇備份的時間了，大家來杯紅茶休息三十分鐘吧"
@@ -29,7 +38,12 @@ sealed class YamiboResult<out T> {
 fun <T, R> YamiboResult<T>.mapSuccess(transform: (T) -> R): YamiboResult<R> = when (this) {
     is YamiboResult.Success -> YamiboResult.Success(transform(value))
     is YamiboResult.Failure -> this
+    is YamiboResult.WafChallenge -> this
     is YamiboResult.NotLoggedIn -> this
     is YamiboResult.NoPermission -> this
     is YamiboResult.Maintenance -> this
+}
+
+enum class WafProvider {
+    BAIDU_NOX,
 }

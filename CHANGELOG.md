@@ -682,3 +682,13 @@ Improve HTTP error handling:
 - Return a clear permission/login-expiration message for HTTP 405 responses.
 - Preserve maintenance and illegal-request detection for HTTP 503 responses.
 
+# v1.1.23
+
+Add structured Baidu WAF browser-challenge detection:
+
+- Return `YamiboResult.WafChallenge` with the provider, HTTP status, and intercepted URL when a
+  403/405 response contains verified Baidu NOX body markers or WAF headers.
+- Keep ordinary HTTP 405 responses on the existing permission-error path to avoid false positives.
+- Preserve raw POST error bodies until WAF detection completes, then retain the existing friendly
+  Discuz error-message parsing.
+

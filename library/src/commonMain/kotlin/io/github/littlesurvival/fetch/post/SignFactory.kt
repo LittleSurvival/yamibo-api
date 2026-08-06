@@ -3,6 +3,7 @@ package io.github.littlesurvival.fetch.post
 import io.github.littlesurvival.YamiboRoute
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.ReplayPolicy
 import io.github.littlesurvival.fetch.PostFactory
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.headers
@@ -34,7 +35,12 @@ class SignFactory(
 
     private suspend fun performSignGet(url: String): FetchResult<String> {
         return try {
-            val response = fetcher.perform(HttpMethod.Get, url) {
+            val response = fetcher.performBuffered(
+                method = HttpMethod.Get,
+                url = url,
+                replayPolicy = ReplayPolicy.AFTER_CONFIRMED_EDGE_REJECTION,
+                userAgent = SIGN_USER_AGENT,
+            ) {
                 headers {
                     set(HttpHeaders.UserAgent, SIGN_USER_AGENT)
                     set("Referer", YamiboRoute.Sign.build())
@@ -46,11 +52,7 @@ class SignFactory(
             if (response.status.value in 200..299) {
                 FetchResult.Success(value = body, statusCode = response.status.value, url = url)
             } else {
-                FetchResult.Failure.HttpError(
-                    statusCode = response.status.value,
-                    url = url,
-                    bodyPreview = body
-                )
+                response.toHttpError(url)
             }
         } catch (e: HttpRequestTimeoutException) {
             FetchResult.Failure.Timeout(url, e)

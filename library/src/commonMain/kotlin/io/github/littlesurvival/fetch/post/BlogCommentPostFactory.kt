@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.value.BlogId
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.ReplayPolicy
 import io.github.littlesurvival.fetch.PostFactory
 import io.github.littlesurvival.fetch.post.util.PostResponseUtils
 import io.ktor.client.plugins.*
@@ -42,7 +43,7 @@ class BlogCommentPostFactory(
         val url = YamiboRoute.BlogComment.build()
         return try {
             val response =
-                fetcher.perform(HttpMethod.Post, url) {
+                fetcher.performBuffered(HttpMethod.Post, url, ReplayPolicy.NEVER) {
                     contentType(ContentType.Application.FormUrlEncoded.withCharset(Charsets.UTF_8))
                     setBody(
                         FormDataContent(
@@ -71,11 +72,7 @@ class BlogCommentPostFactory(
                     url = url
                 )
             } else {
-                FetchResult.Failure.HttpError(
-                    statusCode = response.status.value,
-                    url = url,
-                    bodyPreview = body
-                )
+                response.toHttpError(url)
             }
         } catch (e: HttpRequestTimeoutException) {
             FetchResult.Failure.Timeout(url, e)

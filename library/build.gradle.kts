@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "io.github.littlesurvival"
-version = "1.1.23"
+version = "1.1.24"
 
 kotlin {
     jvm()
@@ -26,7 +26,6 @@ kotlin {
 
         compilations.configureEach { compilerOptions.configure { jvmTarget.set(JvmTarget.JVM_11) } }
     }
-    iosX64()
     iosArm64()
     iosSimulatorArm64()
     // linuxX64 removed — Compose Multiplatform does not support Linux native targets.
@@ -37,12 +36,17 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ksoup)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.coroutines.core)
 
             // Compose Multiplatform
             implementation(compose.runtime)
+            implementation(compose.foundation)
+            implementation(compose.ui)
         }
 
         commonTest.dependencies { implementation(libs.kotlin.test) }
+
+        jvmTest.dependencies { implementation(libs.ktor.client.mock) }
 
         androidMain.dependencies { implementation(libs.ktor.client.android) }
 
@@ -54,7 +58,9 @@ kotlin {
 
 mavenPublishing {
     publishToMavenCentral()
-    signAllPublications()
+    if (!project.providers.gradleProperty("skipSigning").isPresent) {
+        signAllPublications()
+    }
 
     coordinates(group.toString(), "yamibo-api", version.toString())
 

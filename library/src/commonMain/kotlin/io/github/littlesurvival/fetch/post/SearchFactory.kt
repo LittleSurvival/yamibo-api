@@ -6,6 +6,7 @@ import io.github.littlesurvival.dto.page.SearchPage
 import io.github.littlesurvival.dto.value.FormHash
 import io.github.littlesurvival.dto.value.ForumId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.fetch.ReplayPolicy
 import io.github.littlesurvival.fetch.PostFactory
 import io.ktor.client.plugins.*
 import io.ktor.client.request.*
@@ -32,7 +33,12 @@ class SearchFactory(
         val url = YamiboRoute.Search.SearchPhp(fId).build()
         return try {
             val response =
-                fetcher.perform(method = HttpMethod.Post, url = url, noRedirect = true) {
+                fetcher.performBuffered(
+                    method = HttpMethod.Post,
+                    url = url,
+                    replayPolicy = ReplayPolicy.AFTER_CONFIRMED_EDGE_REJECTION,
+                    noRedirect = true,
+                ) {
                     contentType(ContentType.Application.FormUrlEncoded.withCharset(Charsets.UTF_8))
                     setBody(
                         FormDataContent(
@@ -47,7 +53,7 @@ class SearchFactory(
                 }
 
             if (response.status == HttpStatusCode.Found) {
-                val location = response.headers[HttpHeaders.Location]
+                val location = response.location
                 if (location != null) {
                     FetchResult.Success(
                         value = YamiboRoute.Search.ByLocation(location).build(),
@@ -55,18 +61,10 @@ class SearchFactory(
                         url = url
                     )
                 } else {
-                    FetchResult.Failure.HttpError(
-                        statusCode = response.status.value,
-                        url = url,
-                        bodyPreview = response.bodyAsText()
-                    )
+                    response.toHttpError(url)
                 }
             } else {
-                FetchResult.Failure.HttpError(
-                    statusCode = response.status.value,
-                    url = url,
-                    bodyPreview = response.bodyAsText()
-                )
+                response.toHttpError(url)
             }
         } catch (e: HttpRequestTimeoutException) {
             FetchResult.Failure.Timeout(url, e)

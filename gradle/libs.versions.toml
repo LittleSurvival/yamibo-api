@@ -1,13 +1,14 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.3.20"
+kotlin = "2.4.10"
 android-minSdk = "24"
 android-compileSdk = "36"
 vanniktechMavenPublish = "0.36.0"
-ktor = "3.4.0"
+ktor = "3.5.2"
 ksoup = "0.2.6"
-compose-multiplatform = "1.10.3"
+compose-multiplatform = "1.11.1"
 kotlinx-datetime = "0.6.1"
+kotlinx-coroutines = "1.11.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -15,8 +16,10 @@ ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ksoup = { module = "com.fleeksoft.ksoup:ksoup", version.ref = "ksoup" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 
 [plugins]
 android-kotlin-multiplatform-library = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }

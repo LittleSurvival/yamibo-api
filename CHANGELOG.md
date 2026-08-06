@@ -1,3 +1,26 @@
+# v1.1.24
+
+### Added
+
+- Add transparent Baidu NOX WAF recovery for foreground Android and iOS Compose applications.
+- Add `YamiboWafChallengeHost`, a silent API-owned host backed by the operating system's Android `WebView` or iOS `WKWebView`; no browser engine is bundled with the library.
+- Add typed `WafChallenge` recovery outcomes for foreground-required, cancelled, timed-out, verification-failed, and replay-not-allowed cases.
+- Add `WafRecoveryConfig` with an `enabled` rollback switch and bounded verification timeouts.
+- Add `YamiboClient.clearCookies()` to clear both the Discuz authentication cookie and API-managed NOX state during logout.
+
+### Changed
+
+- Make `YamiboClient` the sole owner of HTTP state, WAF coordination, and browser recovery state. The same client instance must be shared by repositories and `YamiboWafChallengeHost`.
+- Detect the observed HTTP 405 Baidu NOX HTML conservatively, resolve concurrent challenges through one client-scoped verification flight, verify the resulting `nox_jst_v1` cookie with a safe Yamibo probe, and replay eligible requests at most once.
+- Keep recovery completely silent: attach a normal-viewport platform WebView behind existing app content, poll cookies without waiting for page completion, and return `WafChallenge` for the app's existing refresh flow when recovery fails.
+- Require every write route to declare an explicit replay policy. Non-replayable writes return `WafChallenge(REPLAY_NOT_ALLOWED)` after verification so the caller can safely repeat the user action.
+- Keep `nox_jst_v1` isolated from Discuz authentication cookies and avoid persisting it as application-owned login state.
+- Keep headless and background use deterministic: when no foreground host is available, return `YamiboResult.WafChallenge` instead of attempting to create platform UI.
+
+### Publishing
+
+- Bump Maven coordinates to `1.1.24`. The optional `-PskipSigning` flag is intended only for local publication; Maven Central publication remains signed unless that flag is explicitly supplied.
+
 # v1.0.3
 
 Remove the hashTag"#" from SearchResult Param Tag(e.g. "#動漫區" → "動漫區")

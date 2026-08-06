@@ -44,6 +44,11 @@ import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
+import io.github.littlesurvival.waf.NoxCookieStore
+import io.github.littlesurvival.waf.WafChallengeCoordinator
+import io.github.littlesurvival.waf.WafRecoveryConfig
+import io.github.littlesurvival.waf.WafRecoveryDisposition
+import io.github.littlesurvival.waf.clearPlatformNoxCookie
 import io.github.littlesurvival.fetch.post.AddFriendFactory
 import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
@@ -78,24 +83,52 @@ import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
     val timeoutMillis: Long = 30_000L,
+    val wafRecoveryConfig: WafRecoveryConfig = WafRecoveryConfig(),
 ) {
+    internal val cookieStore = NoxCookieStore()
+    internal val wafCoordinator = WafChallengeCoordinator(wafRecoveryConfig, cookieStore)
+
     /** Fetcher */
-    private val mobileFetcher: Fetcher<String> = FetchFactory(FetchFactory.Device.MOBILE, timeoutMillis)
-    private val desktopFetcher: Fetcher<String> = FetchFactory(FetchFactory.Device.DESKTOP, timeoutMillis)
-    private val searchFactory: SearchFactory = SearchFactory(mobileFetcher as FetchFactory)
-    private val favoriteFactory: FavoriteFactory = FavoriteFactory(mobileFetcher as FetchFactory)
-    private val rateFactory: RateFactory = RateFactory(mobileFetcher as FetchFactory)
-    private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher as FetchFactory)
-    private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher as FetchFactory)
-    private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher as FetchFactory)
-    private val addFriendFactory: AddFriendFactory = AddFriendFactory(mobileFetcher as FetchFactory)
-    private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher as FetchFactory)
-    private val signFactory: SignFactory = SignFactory(mobileFetcher as FetchFactory)
+    private val mobileFetcher = FetchFactory(
+        FetchFactory.Device.MOBILE,
+        timeoutMillis,
+        cookieStore,
+        wafCoordinator,
+        wafRecoveryConfig,
+    )
+    private val desktopFetcher = FetchFactory(
+        FetchFactory.Device.DESKTOP,
+        timeoutMillis,
+        cookieStore,
+        wafCoordinator,
+        wafRecoveryConfig,
+    )
+    private val searchFactory: SearchFactory = SearchFactory(mobileFetcher)
+    private val favoriteFactory: FavoriteFactory = FavoriteFactory(mobileFetcher)
+    private val rateFactory: RateFactory = RateFactory(mobileFetcher)
+    private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher)
+    private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher)
+    private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher)
+    private val addFriendFactory: AddFriendFactory = AddFriendFactory(mobileFetcher)
+    private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher)
+    private val signFactory: SignFactory = SignFactory(mobileFetcher)
 
     /** Initialize Values */
     fun setCookie(cookie: String) {
-        mobileFetcher.setCookies(cookie)
-        desktopFetcher.setCookies(cookie)
+        cookieStore.setAuthenticationCookies(cookie)
+    }
+
+    /** Clears caller authentication cookies and API-managed WAF clearance state on logout. */
+    fun clearCookies() {
+        cookieStore.clearAll()
+        clearPlatformNoxCookie()
+    }
+
+    /** Cancels active WAF recovery and releases client-owned runtime work. */
+    fun close() {
+        wafCoordinator.close()
+        mobileFetcher.close()
+        desktopFetcher.close()
     }
 
     /** Parser */
@@ -613,6 +646,8 @@ class YamiboClient(
                         provider = provider,
                         statusCode = failure.statusCode,
                         url = url,
+                        recoveryDisposition = failure.wafRecoveryDisposition
+                            ?: WafRecoveryDisposition.UNRESOLVED,
                     )
                 }
 

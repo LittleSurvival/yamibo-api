@@ -1,7 +1,7 @@
 # yamibo-api
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
-[![Version](https://img.shields.io/badge/version-1.0.3-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.1.24-green.svg)]()
 
 [English](#english-version) | [中文](#traditional-chinese-version)
 ---
@@ -17,7 +17,7 @@ A purely functional, highly asynchronous Kotlin Multiplatform (KMP) client libra
 ### 🧰 Compatibility
 | Dependency | Supported Version |
 |---|---|
-| **Kotlin** | 2.3.10+ |
+| **Kotlin** | 2.4.10+ |
 | **Gradle** | 8.14.3+ |
 | **Java JVM Target** | 11+ |
 
@@ -50,12 +50,10 @@ The entry point of the library is the `YamiboClient`. Most Yamibo routes require
 
 ```kotlin notebook
 import io.github.littlesurvival.YamiboClient
-import io.github.littlesurvival.fetch.FetchFactory
 
 // 1. Create a client instance
 val client = YamiboClient(
-    device = FetchFactory.Companion.Device.MOBILE, // Simulates mobile requests
-    timeoutMillis = 30_000L                        // 30 seconds timeout
+    timeoutMillis = 30_000L // 30 seconds timeout
 )
 
 // 2. Set the user authentication cookie
@@ -80,8 +78,14 @@ suspend fun fetchYamiboHome() {
         is YamiboResult.Maintenance -> {
             println("Yamibo is currently under maintenance.")
         }
+        is YamiboResult.NoPermission -> {
+            println("Permission denied: ${result.message()}")
+        }
+        is YamiboResult.WafChallenge -> {
+            println("Connection verification failed; refresh to retry: ${result.message()}")
+        }
         is YamiboResult.Failure -> {
-            println("Network or parsing failed: ${result.message}")
+            println("Network or parsing failed: ${result.message()}")
         }
     }
 }
@@ -146,6 +150,37 @@ suspend fun interact() {
 }
 ```
 
+#### Silent Compose WAF recovery (Android/iOS)
+
+Use one shared `YamiboClient` for API calls and mount one host behind the app content. The host creates a platform WebView only while recovering an observed Baidu NOX challenge; it never presents WAF-specific UI.
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import io.github.littlesurvival.YamiboClient
+import io.github.littlesurvival.waf.YamiboWafChallengeHost
+
+@Composable
+fun YamiboApp(isForeground: Boolean) {
+    val client = remember { YamiboClient(timeoutMillis = 60_000L) }
+    DisposableEffect(client) { onDispose { client.close() } }
+
+    Box(Modifier.fillMaxSize()) {
+        // Keep the normal-size recovery WebView behind the visible application.
+        YamiboWafChallengeHost(client, isForeground, Modifier.fillMaxSize())
+
+        // Repositories and screens must use this exact client instance.
+        AppContent(client)
+    }
+}
+```
+
+Successful recovery only makes the current load take longer: the host polls the platform cookie store without waiting for the destination page to finish, verifies `nox_jst_v1`, and replays an eligible request at most once. If silent recovery fails, the API returns `YamiboResult.WafChallenge`; keep the existing failure UI and let the user refresh to fetch again. Headless/background clients never create a WebView. Call `client.clearCookies()` during logout. `WafRecoveryConfig(enabled = false)` disables automatic recovery.
+
 ---
 
 <h2 id="traditional-chinese-version"> </h2>
@@ -161,7 +196,7 @@ suspend fun interact() {
 ### 🧰 系統兼容性
 | 依賴項目 | 支援版本 |
 |---|---|
-| **Kotlin** | 2.3.10+ |
+| **Kotlin** | 2.4.10+ |
 | **Gradle** | 8.14.3+ |
 | **Java JVM 目標** | 11+ |
 
@@ -194,12 +229,10 @@ dependencies {
 
 ```kotlin notebook
 import io.github.littlesurvival.YamiboClient
-import io.github.littlesurvival.fetch.FetchFactory
 
 // 1. 建立 Client 實體物件
 val client = YamiboClient(
-    device = FetchFactory.Companion.Device.MOBILE, // 模擬手機端請求 (此為預設值)
-    timeoutMillis = 30_000L                        // 設定超時時間為 30 秒鐘
+    timeoutMillis = 30_000L // 設定超時時間為 30 秒鐘
 )
 
 // 2. 寫入使用者的認證 Cookie
@@ -224,8 +257,14 @@ suspend fun fetchYamiboHome() {
         is YamiboResult.Maintenance -> {
             println("當前 Yamibo 正在進行系統維護中。")
         }
+        is YamiboResult.NoPermission -> {
+            println("權限不足：${result.message()}")
+        }
+        is YamiboResult.WafChallenge -> {
+            println("連線驗證失敗，請 refresh 後重試：${result.message()}")
+        }
         is YamiboResult.Failure -> {
-            println("網路連線錯誤或是資料解析異常：${result.message}")
+            println("網路連線錯誤或是資料解析異常：${result.message()}")
         }
     }
 }
@@ -289,3 +328,34 @@ suspend fun interact() {
     client.fetchRatePost(ThreadId(12345), PostId(9876), score = 1, reason = "感謝分享", FormHash("你的_form_hash"))
 }
 ```
+
+#### Silent Compose WAF 自動處理（Android/iOS）
+
+API 呼叫與 Host 必須共用同一個 `YamiboClient`，並把 Host 排在 App 內容後方。Host 只在處理已觀察到的百度 NOX challenge 時建立系統 WebView，全程不顯示 WAF 專用 UI。
+
+```kotlin
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import io.github.littlesurvival.YamiboClient
+import io.github.littlesurvival.waf.YamiboWafChallengeHost
+
+@Composable
+fun YamiboApp(isForeground: Boolean) {
+    val client = remember { YamiboClient(timeoutMillis = 60_000L) }
+    DisposableEffect(client) { onDispose { client.close() } }
+
+    Box(Modifier.fillMaxSize()) {
+        // 正常尺寸的 recovery WebView 位於可見 App 內容後方。
+        YamiboWafChallengeHost(client, isForeground, Modifier.fillMaxSize())
+
+        // Repository 與畫面必須使用這個完全相同的 client。
+        AppContent(client)
+    }
+}
+```
+
+恢復成功時，使用者只會感覺本次載入比較久：Host 不等待目的頁面載入完成，會持續讀取平台 Cookie store，驗證 `nox_jst_v1` 後最多重送一次符合政策的請求。若 silent recovery 失敗，API 回傳 `YamiboResult.WafChallenge`；前端維持原本的失敗畫面，讓使用者 refresh 後重新 fetch 即可。背景或無 UI client 不會建立 WebView。登出時呼叫 `client.clearCookies()`；`WafRecoveryConfig(enabled = false)` 可停用自動恢復。

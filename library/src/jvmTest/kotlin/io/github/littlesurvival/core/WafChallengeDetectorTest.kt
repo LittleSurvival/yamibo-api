@@ -26,9 +26,9 @@ class WafChallengeDetectorTest {
     }
 
     @Test
-    fun detectsBaiduWafHeadersWhenChallengeBodyIsUnavailable() {
+    fun doesNotRecoverFromBaiduHeadersWithoutObservedChallengeBody() {
         val error = httpError(
-            statusCode = 403,
+            statusCode = 405,
             body = null,
             headers = mapOf(
                 "Server" to listOf("BAIDU_WAF"),
@@ -36,7 +36,7 @@ class WafChallengeDetectorTest {
             ),
         )
 
-        assertEquals(WafProvider.BAIDU_NOX, WafChallengeDetector.detect(error))
+        assertNull(WafChallengeDetector.detect(error))
     }
 
     @Test
@@ -54,6 +54,17 @@ class WafChallengeDetectorTest {
         val error = httpError(
             statusCode = 503,
             body = "<script src=\"/static/wb/2.1/nox_20260413.js\"></script>",
+        )
+
+        assertNull(WafChallengeDetector.detect(error))
+    }
+
+    @Test
+    fun doesNotTreatUnobserved403AsRecoverableChallenge() {
+        val error = httpError(
+            statusCode = 403,
+            body = "<script>window.__noxExpire=30</script>",
+            headers = mapOf("Server" to listOf("BAIDU_WAF")),
         )
 
         assertNull(WafChallengeDetector.detect(error))

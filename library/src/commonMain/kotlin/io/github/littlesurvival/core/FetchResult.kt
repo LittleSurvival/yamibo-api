@@ -1,5 +1,7 @@
 package io.github.littlesurvival.core
 
+import io.github.littlesurvival.waf.WafRecoveryDisposition
+
 sealed class FetchResult<out T> {
 
     data class Success<T>(
@@ -18,6 +20,7 @@ sealed class FetchResult<out T> {
             override val url: String,
             val bodyPreview: String?,
             val responseHeaders: Map<String, List<String>> = emptyMap(),
+            val wafRecoveryDisposition: WafRecoveryDisposition? = null,
         ) : Failure(url)
 
 //        data class PostError(

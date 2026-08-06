@@ -1,5 +1,7 @@
 package io.github.littlesurvival.core
 
+import io.github.littlesurvival.waf.WafRecoveryDisposition
+
 sealed class YamiboResult<out T> {
     abstract fun message(): String
 
@@ -16,8 +18,16 @@ sealed class YamiboResult<out T> {
         val provider: WafProvider,
         val statusCode: Int,
         val url: String,
+        val recoveryDisposition: WafRecoveryDisposition = WafRecoveryDisposition.UNRESOLVED,
     ) : YamiboResult<Nothing>() {
-        override fun message(): String = "網站要求完成瀏覽器驗證"
+        override fun message(): String = when (recoveryDisposition) {
+            WafRecoveryDisposition.FOREGROUND_REQUIRED -> "需要回到應用程式完成網站驗證"
+            WafRecoveryDisposition.CANCELLED -> "網站驗證已取消"
+            WafRecoveryDisposition.TIMED_OUT -> "網站驗證逾時"
+            WafRecoveryDisposition.VERIFICATION_FAILED -> "網站驗證失敗"
+            WafRecoveryDisposition.REPLAY_NOT_ALLOWED -> "網站驗證完成，請重新執行此操作"
+            WafRecoveryDisposition.UNRESOLVED -> "網站要求完成瀏覽器驗證"
+        }
     }
 
     /** The website is currently under maintenance (HTTP 503 or maintenance HTML detected). */

@@ -36,7 +36,7 @@ internal actual fun clearPlatformNoxCookie() {
     store.getAllCookies { cookies ->
         cookies.orEmpty()
             .filterIsInstance<NSHTTPCookie>()
-            .filter { it.name.equals(NoxCookieStore.NOX_COOKIE_NAME, ignoreCase = true) }
+            .filter { it.name.equals(ClientCookieStore.NOX_COOKIE_NAME, ignoreCase = true) }
             .forEach { store.deleteCookie(it, completionHandler = null) }
     }
 }
@@ -97,7 +97,7 @@ internal actual fun PlatformNoxWebView(
             val webView = webViewState.value
             if (webView != null) {
                 val header = readCookieHeader(webView)
-                val nox = NoxCookieStore.extractNoxValue(header)
+                val nox = ClientCookieStore.extractNoxValue(header)
                 if (nox != null && nox != lastSubmittedNox) {
                     lastSubmittedNox = nox
                     webView.stopLoading()
@@ -155,7 +155,7 @@ private fun seedCookies(webView: WKWebView, rawHeader: String, onComplete: () ->
     store.getAllCookies { existingCookies ->
         val staleNoxCookies = existingCookies.orEmpty()
             .filterIsInstance<NSHTTPCookie>()
-            .filter { it.name.equals(NoxCookieStore.NOX_COOKIE_NAME, ignoreCase = true) }
+            .filter { it.name.equals(ClientCookieStore.NOX_COOKIE_NAME, ignoreCase = true) }
         if (staleNoxCookies.isEmpty()) {
             seedAuthenticationCookies(store, rawHeader, onComplete)
             return@getAllCookies
@@ -176,7 +176,7 @@ private fun seedAuthenticationCookies(
     rawHeader: String,
     onComplete: () -> Unit,
 ) {
-    val cookies = NoxCookieStore.withoutNox(rawHeader).split(';').mapNotNull { segment ->
+    val cookies = ClientCookieStore.withoutNox(rawHeader).split(';').mapNotNull { segment ->
         val separator = segment.indexOf('=')
         if (separator <= 0) return@mapNotNull null
         val name = segment.substring(0, separator).trim()

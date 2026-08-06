@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 internal class WafChallengeCoordinator(
     private val config: WafRecoveryConfig,
-    private val cookieStore: NoxCookieStore,
+    private val cookieStore: ClientCookieStore,
 ) {
     private data class ActiveFlight(
         val request: WafBrowserRequest,
@@ -75,7 +75,7 @@ internal class WafChallengeCoordinator(
     }
 
     fun submitCookie(flightId: Long, rawCookieHeader: String) {
-        val value = NoxCookieStore.extractNoxValue(rawCookieHeader) ?: return
+        val value = ClientCookieStore.extractNoxValue(rawCookieHeader) ?: return
         scope.launch {
             mutex.withLock {
                 activeFlight

@@ -1,7 +1,7 @@
 package io.github.littlesurvival.fetch
 
 import io.github.littlesurvival.core.FetchResult
-import io.github.littlesurvival.waf.NoxCookieStore
+import io.github.littlesurvival.waf.ClientCookieStore
 import io.github.littlesurvival.waf.WafChallengeCoordinator
 import io.github.littlesurvival.waf.WafHostState
 import io.github.littlesurvival.waf.WafRecoveryConfig
@@ -139,7 +139,7 @@ class WafRecoveryTransportTest {
     private fun fixture(
         handler: suspend io.ktor.client.engine.mock.MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.request.HttpResponseData,
     ): Fixture {
-        val store = NoxCookieStore().also { it.setAuthenticationCookies("auth=synthetic") }
+        val store = ClientCookieStore().also { it.setAuthenticationCookies("auth=synthetic") }
         val config = WafRecoveryConfig(challengeTimeoutMillis = 2_000L)
         val coordinator = WafChallengeCoordinator(config, store).also {
             it.setHostAvailability(mounted = true, isForeground = true)

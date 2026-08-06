@@ -3,7 +3,7 @@ package io.github.littlesurvival.fetch
 import io.github.littlesurvival.Fetcher
 import io.github.littlesurvival.core.FetchResult
 import io.github.littlesurvival.fetch.network.WafChallengeDetector
-import io.github.littlesurvival.waf.NoxCookieStore
+import io.github.littlesurvival.waf.ClientCookieStore
 import io.github.littlesurvival.waf.WafChallengeCoordinator
 import io.github.littlesurvival.waf.WafRecoveryConfig
 import io.github.littlesurvival.waf.WafRecoveryDisposition
@@ -33,6 +33,7 @@ internal enum class ReplayPolicy {
 internal data class BufferedHttpResponse(
     val status: HttpStatusCode,
     val body: String,
+    val finalUrl: String,
     val diagnosticHeaders: Map<String, List<String>>,
     val location: String?,
     val recoveryDisposition: WafRecoveryDisposition? = null,
@@ -52,7 +53,7 @@ internal data class BufferedHttpResponse(
 class FetchFactory internal constructor(
     var device: Device,
     var timeoutMillis: Long,
-    private val cookieStore: NoxCookieStore,
+    private val cookieStore: ClientCookieStore,
     private val recoveryCoordinator: WafChallengeCoordinator?,
     private val recoveryConfig: WafRecoveryConfig,
     private val client: HttpClient = createPlatformHttpClient(),
@@ -61,7 +62,7 @@ class FetchFactory internal constructor(
     constructor(device: Device, timeoutMillis: Long) : this(
         device = device,
         timeoutMillis = timeoutMillis,
-        cookieStore = NoxCookieStore(),
+        cookieStore = ClientCookieStore(),
         recoveryCoordinator = null,
         recoveryConfig = WafRecoveryConfig(enabled = false),
     )
@@ -174,6 +175,7 @@ class FetchFactory internal constructor(
         return BufferedHttpResponse(
             status = response.status,
             body = response.bodyAsText(),
+            finalUrl = response.call.request.url.toString(),
             diagnosticHeaders = response.wafDiagnosticHeaders(),
             location = response.headers[HttpHeaders.Location],
         )

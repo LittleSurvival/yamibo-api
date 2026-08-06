@@ -549,6 +549,32 @@ sealed class YamiboRoute {
         }
     }
 
+    /** Add, update, or delete a user-space blog through Discuz spacecp. */
+    sealed class BlogManage : YamiboRoute() {
+        data class Submit(val blogId: BlogId? = null) : BlogManage() {
+            override fun build(): String = URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "blog")
+                    parameters.append("blogid", blogId?.value?.toString().orEmpty())
+                }
+                .buildString()
+        }
+
+        data class Delete(val blogId: BlogId) : BlogManage() {
+            override fun build(): String = URLBuilder(domain)
+                .apply {
+                    encodedPath = "home.php"
+                    parameters.append("mod", "spacecp")
+                    parameters.append("ac", "blog")
+                    parameters.append("op", "delete")
+                    parameters.append("blogid", blogId.value.toString())
+                }
+                .buildString()
+        }
+    }
+
     /**
      * 評分帖子.
      *

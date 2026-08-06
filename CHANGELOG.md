@@ -7,6 +7,8 @@
 - Add typed `WafChallenge` recovery outcomes for foreground-required, cancelled, timed-out, verification-failed, and replay-not-allowed cases.
 - Add `WafRecoveryConfig` with an `enabled` rollback switch and bounded verification timeouts.
 - Add `YamiboClient.clearCookies()` to clear both the Discuz authentication cookie and API-managed NOX state during logout.
+- Add the optional `importNox` parameter to `YamiboClient.setCookie()` for explicitly importing a newer NOX entry from an app-owned trusted login or sign-in WebView.
+- Add `YamiboClient.addBlog`, `updateBlog`, and `deleteBlog` with repeatable Discuz request bodies and typed buffered response metadata.
 
 ### Changed
 
@@ -14,7 +16,9 @@
 - Detect the observed HTTP 405 Baidu NOX HTML conservatively, resolve concurrent challenges through one client-scoped verification flight, verify the resulting `nox_jst_v1` cookie with a safe Yamibo probe, and replay eligible requests at most once.
 - Keep recovery completely silent: attach a normal-viewport platform WebView behind existing app content, poll cookies without waiting for page completion, and return `WafChallenge` for the app's existing refresh flow when recovery fails.
 - Require every write route to declare an explicit replay policy. Non-replayable writes return `WafChallenge(REPLAY_NOT_ALLOWED)` after verification so the caller can safely repeat the user action.
-- Keep `nox_jst_v1` isolated from Discuz authentication cookies and avoid persisting it as application-owned login state.
+- Keep one composed client Cookie header, replace only its `nox_jst_v1` entry during recovery, preserve that entry when authentication cookies are refreshed, and avoid persisting it as application-owned login state.
+- Let routine `setCookie()` calls preserve client-managed NOX while `setCookie(cookie, importNox = true)` replaces it only when a trusted snapshot contains a valid NOX value.
+- Replay add, update, and delete blog writes once only after the precise NOX response proves that the original request was rejected at the edge.
 - Keep headless and background use deterministic: when no foreground host is available, return `YamiboResult.WafChallenge` instead of attempting to create platform UI.
 
 ### Publishing

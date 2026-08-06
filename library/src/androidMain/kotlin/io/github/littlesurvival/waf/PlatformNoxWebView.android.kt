@@ -22,7 +22,7 @@ internal actual val platformNoxWebViewSupported: Boolean = true
 
 internal actual fun clearPlatformNoxCookie() {
     CookieManager.getInstance().apply {
-        setCookie(YAMIBO_ORIGIN, "${NoxCookieStore.NOX_COOKIE_NAME}=; Max-Age=0; Path=/; Secure")
+        setCookie(YAMIBO_ORIGIN, "${ClientCookieStore.NOX_COOKIE_NAME}=; Max-Age=0; Path=/; Secure")
         flush()
     }
 }
@@ -78,10 +78,10 @@ internal actual fun PlatformNoxWebView(
                     setAcceptThirdPartyCookies(this@webView, false)
                     setCookie(
                         YAMIBO_ORIGIN,
-                        "${NoxCookieStore.NOX_COOKIE_NAME}=; Max-Age=0; Path=/; Secure",
+                        "${ClientCookieStore.NOX_COOKIE_NAME}=; Max-Age=0; Path=/; Secure",
                     )
                 }
-                NoxCookieStore.withoutNox(request.cookieHeader)
+                ClientCookieStore.withoutNox(request.cookieHeader)
                     .split(';')
                     .map(String::trim)
                     .filter(String::isNotEmpty)
@@ -93,7 +93,7 @@ internal actual fun PlatformNoxWebView(
 
                     override fun run() {
                         val header = cookies.getCookie(YAMIBO_ORIGIN).orEmpty()
-                        val nox = NoxCookieStore.extractNoxValue(header)
+                        val nox = ClientCookieStore.extractNoxValue(header)
                         if (nox != null && nox != lastSubmittedNox) {
                             lastSubmittedNox = nox
                             stopLoading()

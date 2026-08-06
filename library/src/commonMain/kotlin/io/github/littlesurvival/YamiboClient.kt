@@ -5,6 +5,8 @@ import io.github.littlesurvival.core.ParseResult
 import io.github.littlesurvival.core.YamiboResult
 import io.github.littlesurvival.fetch.network.WafChallengeDetector
 import io.github.littlesurvival.dto.model.Tags
+import io.github.littlesurvival.dto.model.BlogClassSelection
+import io.github.littlesurvival.dto.model.BlogMutationResponse
 import io.github.littlesurvival.dto.page.AddFavoriteResult
 import io.github.littlesurvival.dto.page.AddFriendPopoutScreen
 import io.github.littlesurvival.dto.page.BlogPage
@@ -44,13 +46,15 @@ import io.github.littlesurvival.dto.value.TagId
 import io.github.littlesurvival.dto.value.ThreadId
 import io.github.littlesurvival.dto.value.UserId
 import io.github.littlesurvival.fetch.FetchFactory
-import io.github.littlesurvival.waf.NoxCookieStore
+import io.github.littlesurvival.waf.ClientCookieStore
 import io.github.littlesurvival.waf.WafChallengeCoordinator
 import io.github.littlesurvival.waf.WafRecoveryConfig
 import io.github.littlesurvival.waf.WafRecoveryDisposition
 import io.github.littlesurvival.waf.clearPlatformNoxCookie
+import io.github.littlesurvival.waf.currentEpochMillis
 import io.github.littlesurvival.fetch.post.AddFriendFactory
 import io.github.littlesurvival.fetch.post.BlogCommentPostFactory
+import io.github.littlesurvival.fetch.post.BlogMutationFactory
 import io.github.littlesurvival.fetch.post.FavoriteFactory
 import io.github.littlesurvival.fetch.post.PrivateMessageFactory
 import io.github.littlesurvival.fetch.post.RateFactory
@@ -85,7 +89,7 @@ class YamiboClient(
     val timeoutMillis: Long = 30_000L,
     val wafRecoveryConfig: WafRecoveryConfig = WafRecoveryConfig(),
 ) {
-    internal val cookieStore = NoxCookieStore()
+    internal val cookieStore = ClientCookieStore()
     internal val wafCoordinator = WafChallengeCoordinator(wafRecoveryConfig, cookieStore)
 
     /** Fetcher */
@@ -108,14 +112,24 @@ class YamiboClient(
     private val rateFactory: RateFactory = RateFactory(mobileFetcher)
     private val commentPostFactory: CommentPostFactory = CommentPostFactory(mobileFetcher)
     private val blogCommentPostFactory: BlogCommentPostFactory = BlogCommentPostFactory(mobileFetcher)
+    private val blogMutationFactory: BlogMutationFactory = BlogMutationFactory(desktopFetcher)
     private val privateMessageFactory: PrivateMessageFactory = PrivateMessageFactory(mobileFetcher)
     private val addFriendFactory: AddFriendFactory = AddFriendFactory(mobileFetcher)
     private val votePollFactory: VotePollFactory = VotePollFactory(mobileFetcher)
     private val signFactory: SignFactory = SignFactory(mobileFetcher)
 
     /** Initialize Values */
-    fun setCookie(cookie: String) {
-        cookieStore.setAuthenticationCookies(cookie)
+    /**
+     * Updates the client's cookie header. Routine calls preserve the client-managed NOX entry.
+     * Set [importNox] only for a complete snapshot from a trusted app-owned platform WebView; a
+     * valid `nox_jst_v1` in that snapshot replaces the current entry.
+     */
+    fun setCookie(cookie: String, importNox: Boolean = false) {
+        if (importNox) {
+            cookieStore.importCookies(cookie, currentEpochMillis())
+        } else {
+            cookieStore.setAuthenticationCookies(cookie)
+        }
     }
 
     /** Clears caller authentication cookies and API-managed WAF clearance state on logout. */
@@ -551,6 +565,39 @@ class YamiboClient(
             is FetchResult.Success -> YamiboResult.Success(result.value)
             is FetchResult.Failure -> mapFetchFailure(result, result.url)
         }
+    }
+
+    /** Add a private user-space blog through Discuz. */
+    suspend fun addBlog(
+        title: String,
+        message: String,
+        classSelection: BlogClassSelection,
+        formHash: FormHash,
+    ): YamiboResult<BlogMutationResponse> =
+        mapBlogMutation(blogMutationFactory.addBlog(title, message, classSelection, formHash))
+
+    /** Update an existing user-space blog through Discuz. */
+    suspend fun updateBlog(
+        blogId: BlogId,
+        title: String,
+        message: String,
+        classSelection: BlogClassSelection,
+        formHash: FormHash,
+    ): YamiboResult<BlogMutationResponse> =
+        mapBlogMutation(blogMutationFactory.updateBlog(blogId, title, message, classSelection, formHash))
+
+    /** Delete an existing user-space blog through Discuz. */
+    suspend fun deleteBlog(
+        blogId: BlogId,
+        formHash: FormHash,
+    ): YamiboResult<BlogMutationResponse> =
+        mapBlogMutation(blogMutationFactory.deleteBlog(blogId, formHash))
+
+    private fun mapBlogMutation(
+        result: FetchResult<BlogMutationResponse>,
+    ): YamiboResult<BlogMutationResponse> = when (result) {
+        is FetchResult.Success -> YamiboResult.Success(result.value)
+        is FetchResult.Failure -> mapFetchFailure(result, result.url)
     }
 
     /**

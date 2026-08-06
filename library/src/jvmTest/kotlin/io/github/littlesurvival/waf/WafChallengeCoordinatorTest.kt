@@ -114,7 +114,7 @@ class WafChallengeCoordinatorTest {
 
     @Test
     fun rejectedCandidateClearsOnlyNoxAndReportsVerificationFailure() = runBlocking {
-        val store = NoxCookieStore().also { it.setAuthenticationCookies("auth=kept") }
+        val store = ClientCookieStore().also { it.setAuthenticationCookies("auth=kept") }
         val coordinator = WafChallengeCoordinator(
             config = WafRecoveryConfig(challengeTimeoutMillis = 2_000L),
             cookieStore = store,
@@ -151,7 +151,7 @@ class WafChallengeCoordinatorTest {
         config = WafRecoveryConfig(
             challengeTimeoutMillis = timeoutMillis,
         ),
-        cookieStore = NoxCookieStore(),
+        cookieStore = ClientCookieStore(),
     )
 
     private suspend fun WafChallengeCoordinator.resolveRequest(

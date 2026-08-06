@@ -56,8 +56,6 @@ Add, update, and delete blog requests use repeatable request bodies and replay o
 - Add `WafRecoveryConfig` with an `enabled` rollback switch and bounded verification timeouts.
 - Add `YamiboClient.clearCookies()` to clear both the Discuz authentication cookie and API-managed NOX state during logout.
 
-### Changed
-
 - Make `YamiboClient` the sole owner of HTTP state, WAF coordination, and browser recovery state. The same client instance must be shared by repositories and `YamiboWafChallengeHost`.
 - Detect the observed HTTP 405 Baidu NOX HTML conservatively, resolve concurrent challenges through one client-scoped verification flight, verify the resulting `nox_jst_v1` cookie with a safe Yamibo probe, and replay eligible requests at most once.
 - Keep recovery completely silent: attach a normal-viewport platform WebView behind existing app content, poll cookies without waiting for page completion, and return `WafChallenge` for the app's existing refresh flow when recovery fails.
@@ -65,289 +63,375 @@ Add, update, and delete blog requests use repeatable request bodies and replay o
 - Keep `nox_jst_v1` isolated from Discuz authentication cookies and avoid persisting it as application-owned login state.
 - Keep headless and background use deterministic: when no foreground host is available, return `YamiboResult.WafChallenge` instead of attempting to create platform UI.
 
-### Publishing
-
 - Bump Maven coordinates to `1.1.24`. The optional `-PskipSigning` flag is intended only for local publication; Maven Central publication remains signed unless that flag is explicitly supplied.
 
-# v1.0.3
+# v1.1.23
 
-Remove the hashTag"#" from SearchResult Param Tag(e.g. "#動漫區" → "動漫區")
+Add structured Baidu WAF browser-challenge detection:
 
-# v1.0.4
+- Return `YamiboResult.WafChallenge` with the provider, HTTP status, and intercepted URL when a
+  403/405 response contains verified Baidu NOX body markers or WAF headers.
+- Keep ordinary HTTP 405 responses on the existing permission-error path to avoid false positives.
+- Preserve raw POST error bodies until WAF detection completes, then retain the existing friendly
+  Discuz error-message parsing.
 
-Add new feature :
+# v1.1.22
+
+Improve HTTP error handling:
+
+- Return a clear permission/login-expiration message for HTTP 405 responses.
+- Preserve maintenance and illegal-request detection for HTTP 503 responses.
+
+# v1.1.21
+
+Update user-space blog class support :
 ```kotlin notebook
-fetchSearchById(query: String, searchId: SearchId, page: Int = 1)
+data class UserSpaceBlogPage(
+    val blogs: List<BlogSummary>,
+    val pageNav: PageNav? = null,
+    val blogClasses: List<BlogPageClassInfo> = emptyList(),
+)
+
+data class BlogPageClassInfo(
+    val name: String,
+    val id: BlogClassId,
+)
+
+suspend fun fetchUserSpaceMyBlogs(
+    userId: UserId? = null,
+    blogClassId: BlogClassId? = null,
+    page: Int = 1
+): YamiboResult<UserSpaceBlogPage>
 ```
-Update SearchPage Dto :
+Parse user-space blog class links from the horizontal class list and support `classid` filtering in my-blog routes.
+
+# v1.1.20
+
+Add `YamiboResult.mapSuccess(transform)` for mapping successful values while preserving all existing failure result variants.
+
+# v1.1.19
+
+Update blog action buttons :
+```kotlin notebook
+data class BlogSummary(
+    ...
+    val manageButtons: List<ManageButton> = emptyList(),
+)
+
+data class BlogComment(
+    ...
+    val manageButtons: List<ManageButton> = emptyList(),
+    ...
+)
+```
+Parse blog summary action buttons such as `删除`, `置顶`, and `编辑` from user-space blog lists.
+Parse blog root/comment action buttons such as `收藏`, `分享`, `邀请`, `编辑`, `删除`, and `回复` from blog pages.
+
+# v1.1.18
+
+Update Add Favorite response :
+```kotlin notebook
+data class AddFavoriteResult(
+    val message: String,
+    val favId: FavoriteId? = null,
+)
+
+suspend fun fetchAddFavorite(
+    id: Id,
+    formHash: FormHash,
+    description: String = "手机收藏"
+): YamiboResult<AddFavoriteResult>
+```
+Parse `favid` from Discuz favorite post responses such as `succeedhandle_favoriteform_...(..., {'id':'573762','favid':'2675784'})`.
+
+# v1.1.17
+
+Update SearchPage DTO :
 ```kotlin notebook
 data class SearchPage(
     val searchId: SearchId? = null,
     val query: String,
+    val forumId: ForumId? = null,
     val threads: List<ThreadSummary>,
     val totalCount: Int,
     val pageNav: PageNav? = null,
 )
 ```
+`fetchSearch(...)` now returns the input `forumId` in `SearchPage` so callers can know which forum-scoped search produced the result.
 
-# v1.0.5
+# v1.1.16
+
+Update voter popout parsing and fetch API :
 ```kotlin notebook
-fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId)
+data class VotersPopoutScreen(
+    val pollOptions: List<VotersPollOption>,
+    val selectedPollOptionId: PollOptionId,
+    val voters: List<User>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchViewVoters(
+    tId: ThreadId,
+    pollOptionId: PollOptionId? = null,
+    page: Int = 1,
+): YamiboResult<VotersPopoutScreen>
 ```
-Find the location of thread page where the post id locate.
-Return type is ThreadPage.
+Parse `pageNav` from the voter popup when the poll option has multiple pages, and default the fetch page parameter to `1` so the first page remains implicit in the route.
 
-# v1.0.6
-Update Parser System :
-Clean up code, and rewrite the algorithm of parser, enhance the performance by 2x more efficiency and less memory cost.
+# v1.1.15
 
-Update Post DTO :
+Fix ForumPage URL Builder failed to build filter type link with not setting order type.
+
+# v1.1.14
+
+Add rate-result popout parsing and fetch API :
 ```kotlin notebook
-data class Post(
-    ...
-    val title: String,
+data class RateResultPopoutPage(
+    val totalScore: Int? = null,
+    val rates: List<RateResultItem>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchRateResultPopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RateResultPopoutPage>
+```
+Parse the all-ratings popup from `forum.php?mod=misc&action=viewratings`, including the score list, optional total score, and popup pagination.
+
+Add voter popout parsing and fetch API :
+```kotlin notebook
+data class VotersPopoutScreen(
+    val pollOptions: List<VotersPollOption>,
+    val selectedPollOptionId: PollOptionId,
+    val voters: List<User>,
+)
+
+suspend fun fetchViewVoters(tId: ThreadId, pollOptionId: PollOptionId? = null): YamiboResult<VotersPopoutScreen>
+```
+Parse the poll voter popup from `forum.php?mod=misc&action=viewvote`, including selectable poll options and the voters for the selected option.
+
+# v1.1.13
+
+Fix ThreadPage parser prompt handling :
+- Return `ParseResult.Failure` when a view-thread response is actually a Discuz prompt page without post nodes.
+- Deleted-thread responses such as `本帖已经删除，错误权限代码50` are no longer parsed as a successful empty thread page.
+
+# v1.1.12
+
+Add YamiboLevels object as level util in YamiboConstant
+
+# v1.1.11
+
+Add new lastRecord property in ProfilePage.
+```kotlin notebook
+@Serializable
+data class ProfilePage(
+    ....
+    val lastRecord? = null,
     ...
 )
 ```
-Add Title value for Post DTO, it parses the possibly title from the start of post content.
-This feature is design for forum "文學區".
 
-# v1.0.7
-Update FavoriteItem DTO :
-```kotlin notebook
-data class FavoriteItem(
-    val name: String,
-    val url: String,
-    val favId: FavoriteId
-)
-```
-Change delete url param to favoriteId.
+# v1.1.10
 
-Add Delete and AddForum to YamiboRoute.Favorite : 
-```kotlin notebook
-data class Delete(val favoriteId: FavoriteId) : YamiboRoute()
- data class AddForum(val forumId: ForumId, val formHash: FormHash) : YamiboRoute()
-```
+Adjust error message of 503 status code from fetch result 
 
-Make fetchFavorite can accept forum id and thread id.
-The Id type is the interface that all type-safe id implements.
-```kotlin notebook
-suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String>
-```
-
-# v1.0.8
-Update Post DTO :
-```kotlin notebook
-data class Post(
-    ...
-    val poll: Poll?,
-    ...
-)
-```
-Add `poll` to `Post` to represent the poll information located at the top of the thread page. Note that polls are unique in a thread and forced to be at the first floor.
-
-Add VotePoll feature:
-```kotlin notebook
-suspend fun votePoll(formHash: FormHash, forumId: ForumId, threadId: ThreadId, options: List<PollOptionId>): FetchResult<String>
-```
-Perform a POST request to vote in a poll. It supports selecting multiple options since `options` is a `List`.
-
-Update ThreadSummary DTO :
-```kotlin notebook
-data class ThreadSummary(
-    ...
-    val hasPoll: Boolean,
-    ...
-)
-```
-Add `hasPoll` to `ThreadSummary` to identify if a thread contains a poll when displayed in a thread list like forum or search pages.
-
-# v1.0.9
-Old :
-```html
-<div id="postmessage_{id}" class="postmessage">
-    {content}
-</div>
-```
-New :
-```html
-{content}
-```
-Fix the issue that poll thread HTML content is not parsed correctly.
-
-# 1.0.10
-Add two link builder in YamiboRoute :
-```kotlin notebook
-//Reply a specific post(mention a post)
-data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int = 1)
-//Reply the thread : 
-data class ThreadReply(val threadId: ThreadId, val page: Int = 1)
-```
-
-# 1.0.12
-Fix PostReply build the wrong url issue.
-
-# v1.0.13
-Update Post DTO :
-```kotlin notebook
-data class Post(
-    ...
-    val tags: Tags,
-    ...
-)
-```
-Add `tags` to `Post` to represent the tag information associated with a thread. Tags are typically extracted from the first floor of a thread and are commonly used in forums like manga for cataloging.
-
-Add Tag Search Result Parsing :
-Implemented `TagPagParser` and `TagPage` DTO to support parsing for tag search result pages (e.g., `misc.php?mod=tag`).
-
-Update ThreadSummary DTO :
-```kotlin notebook
-data class ThreadSummary(
-    ...
-    /** 
-     * Forum Id (fid). 
-     * @see TagPage only 
-     */
-    val fid: ForumId? = null,
-
-    /** 
-     * Attachment type. 
-     * @see TagPage only 
-     */
-    val attachmentType: AttachmentType? = null,
-    ...
-)
-```
-Added `fid` and `attachmentType` to `ThreadSummary` specifically for tag search result pages, mapping common attachment icons to `Image` or `Other`.
-
-# v1.0.14
-Add Forum Type classify function in YamiboForum
-```kotlin notebook
-fun isNovelForum(name: String)
-fun isNovelForum(forumId: ForumId)
-fun isMangaForum(name: String)
-fun isMangaForum(forumId: ForumId)
-```
-
-# v1.0.15
-Fix the issue of cannot get image from some type of thread
-
-# v1.0.16
-Add two function in YamiboForum
-```kotlin notebook
-fun toForumName(forumId: ForumId): String?
-fun toForumId(forumName: String): ForumId?
-```
-
-# v1.0.17
-Add tagName param to TagPage.
-```kotlin notebook
-data class TagPage(
-    val tagName: String,
-    val threadSummaries : List<ThreadSummary>,
-    val pageNav: PageNav? = null
-)
-```
-
-# v1.0.18
-Fix TagPage Link did not load page param issue.
-
-# v1.0.19
-Make all data classes @Serializable.
-
-# v1.0.20
-Fix/Add kotlin serialization plugin compilation.
-
-# v1.0.21
-Add removeFavorite feature
-```kotlin notebook
-suspend fun removeFavorite(favoriteId: FavoriteId): YamiboResult<String>
-```
-The FavoriteId can only get from FavoritePage.
-
-# v1.0.22
-Add official `kotlinx-datetime` dependency for robust date-time conversions in KMP (`commonMain`).
-
-Introduce `TimeInfo` Model :
-```kotlin notebook
-data class TimeInfo(
-    val text: String,
-    val specialText: String? = null,
-    val epoch: Long
-)
-```
-Store time data with its computed UTC+8 epoch timestamp, raw date text, and explicit contextual text if exists (e.g., "本帖最后由...").
-
-Update Post DTO :
-```kotlin notebook
-data class Post(
-    ...
-    val timeCreate: TimeInfo,
-    val lastEditedTime: TimeInfo?,
-    ...
-)
-```
-Renamed `timeText` to `timeCreate` and `editedText` to `lastEditedTime`.
-
-Refactor time string properties to `TimeInfo` across DTOs :
-- `ThreadPage.PostComment` : `time`
-- `ThreadPage.Attachment` : `timeUpload`
-- `ThreadPage.Poll` : `endTime`
-- `ThreadSummary` : Renamed `lastUpdateText` to `lastUpdate`
-- `ProfilePage` : `registerTime`, `lastVisit`
-# v1.0.23
-
-Stop getting all /static/image URLs as images in ThreadPage
-
-# v1.0.24
-
-- Change NotLoggedIn Result's message to "登入狀態已失效或尚未登入，請重新登入"
-- Add New URL builder "PostThread".
-```kotlin notebook
-data class PostThread(val forumId: ForumId)
-```
-
-# v1.1.0
-
-Add UserSpace page parsing and fetch APIs :
-```kotlin notebook
-suspend fun fetchUserSpaceThreads(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadPage>
-suspend fun fetchUserSpaceThreadReplies(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadReplyPage>
-suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage>
-suspend fun fetchUserSpaceFriendBlogs(page: Int = 1): YamiboResult<UserSpaceBlogPage>
-suspend fun fetchUserSpaceViewAllBlogs(type: YamiboRoute.UserSpace.Blog.ViewAllType, page: Int = 1): YamiboResult<UserSpaceBlogPage>
-suspend fun fetchUserSpaceFriends(type: YamiboRoute.UserSpace.FriendPageType, page: Int = 1): YamiboResult<UserSpaceFriendPage>
-suspend fun fetchUserSpacePrivateMessages(page: Int = 1): YamiboResult<UserSpacePrivateMessagePage>
-suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage>
-```
-
-Add RatePopout page parsing and fetch API :
-```kotlin notebook
-data class RatePopoutPage(
-    val availableScores: List<Int>,
-    val defaultReasons: List<String>,
-)
-
-suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage>
-```
-When RatePopout returns a Discuz post response instead of form data, it now parses the message text as a parse failure.
+# v1.1.9
 
 Update ProfilePage DTO :
 ```kotlin notebook
 data class ProfilePage(
     ...
-    val avatarBackgroundUrl: String?,
+    val qq: String? = null,
+    val interests: String? = null,
+    val graduateSchool: String? = null,
     ...
 )
 ```
-Add `avatarBackgroundUrl` for profile avatar background image.
+Parse additional user profile fields from mobile space pages.
 
-Add new typed ID and parse utilities for UserSpace pages :
+Add AddFriend popout parsing and fetch API :
 ```kotlin notebook
-data class NoticeId(override val value: Long) : Id
+data class AddFriendPopoutScreen(
+    val user: User,
+    val availableOption: List<AddFriendOption>,
+)
+
+data class AddFriendOption(
+    val id: Int,
+    val reason: String,
+)
+
+suspend fun fetchAddFriendPopoutScreen(userId: UserId): YamiboResult<AddFriendPopoutScreen>
 ```
-Move shared thread, post, blog, notice, and user id extraction into ParseUtils.
+
+Add AddFriend post feature :
+```kotlin notebook
+suspend fun fetchAddFriend(
+    userId: UserId,
+    formHash: FormHash,
+    note: String = "",
+    groupId: Int = 1
+): YamiboResult<String>
+```
+Add `YamiboRoute.UserSpace.AddFriend.AddFriendPost` and `AddFriendFactory` for submitting add-friend requests.
+
+# v1.1.8
+
+Update HomePage DTO parsing :
+```kotlin notebook
+data class HomePage(
+    val swiperImages: List<SwiperImages>,
+    ...
+    val hasNewMessage: Boolean = false,
+)
+
+data class SwiperImages(
+    val imageUrl: String,
+    val tId: ThreadId? = null,
+)
+```
+Parse home page swiper images, including thread IDs when the banner links to a
+thread page.
+
+Parse `hasNewMessage` from the message footer entry when it contains `ico_msg`.
+
+# v1.1.7
+
+Add daily sign-in page parsing and fetch APIs :
+```kotlin notebook
+data class SignPage(
+    val currentDateText: String? = null,
+    val monthLabel: String? = null,
+    val notice: String? = null,
+    val calendarDays: List<SignCalendarDay> = emptyList(),
+    val repairOptions: List<SignRepairOption> = emptyList(),
+    val myActivity: List<String> = emptyList(),
+    val statistics: List<String> = emptyList(),
+    val extraSections: List<SignInfoSection> = emptyList(),
+    val signActionUrl: String? = null,
+    val repairActionPrefix: String? = null,
+    val hasSignedToday: Boolean = false,
+    val lastSignDateKey: String? = null,
+)
+
+suspend fun fetchSignPage(cookie: String? = null): YamiboResult<SignPage>
+suspend fun fetchSignAction(actionUrl: String, cookie: String? = null): YamiboResult<SignActionResult>
+```
+`cookie` is an optional raw Cookie header override. Pass the merged login cookie string including
+`cf_clearance` when Cloudflare has been cleared by a WebView. If omitted, the previously configured
+`YamiboClient.setCookie(...)` value is used.
+
+# v1.1.6
+Update fetch thread parameter "reverse" :
+```kotlin notebook
+suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1)
+```
+It would get the reverse posts list of the whole thread, instead of the root post(first floor) always on top.
+
+# v1.1.5
+
+Add PrivateMessagePage parsing and fetch API :
+```kotlin notebook
+data class PrivateMessagePage(
+    val toUser: UserId,
+    val title: String,
+    val pmId: PrivateMessageId,
+    val messages: List<PrivateMessage>,
+    val pageNav: PageNav? = null,
+)
+
+suspend fun fetchPrivateMessagePage(toUser: UserId, page: Int? = null): YamiboResult<PrivateMessagePage>
+```
+The private-message page URL omits `page` by default so Yamibo can jump to the latest page.
+
+Add Private Message send feature :
+```kotlin notebook
+suspend fun fetchSendPrivateMessage(
+    privateMessageId: PrivateMessageId,
+    toUser: UserId,
+    message: String,
+    formHash: FormHash
+): YamiboResult<String>
+```
+Add `YamiboRoute.SendPrivateMessage` and `PrivateMessageFactory` for PM form submission.
+
+Update PageNav :
+```kotlin notebook
+data class PageNav(
+    val nextUrl: String? = null,
+    val nextPageIndex: Int? = null,
+    val prevUrl: String? = null,
+    val prevPageIndex: Int? = null,
+    ...
+)
+```
+Parse page indexes from `prevUrl` / `nextUrl`, and infer `currentPage` from adjacent page links when Yamibo omits the current page marker.
+
+# v1.1.4
+
+Update ProfilePage DTO :
+```kotlin notebook
+data class ProfilePage(
+    ...
+    val adminGroup: String? = null,
+    val signatureHtml: String? = null,
+    val birthplace: String? = null,
+    val education: String? = null,
+    val customTitle: String? = null,
+    val homepage: String? = null,
+    ...
+)
+```
+Add 6 new optional fields to `ProfilePage` parsed from the Discuz profile page :
+- `signatureHtml` — Personal signature raw HTML(個人簽名).
+- `adminGroup` — Admin group name(管理組), parsed from `管理组` / `管理組` label.
+- `homepage` — Personal homepage URL(個人主頁), filters out bare `http://` placeholders.
+- `birthplace` — Birthplace(出生地).
+- `education` — Education level(學歷).
+- `customTitle` — Custom title(自定義頭銜).
+
+# v1.1.3
+
+Fix PageNav previous page parsing :
+- Support Discuz mobile pagination where the previous page link is rendered as `.pgb a`.
+- Fix `pageNav.prevUrl` being `null` on UserSpace thread pages such as `home.php?mod=space&do=thread&page=2`.
+
+# v1.1.2
+
+Update ForumPage DTO and parser :
+```kotlin notebook
+data class ForumPage(
+    ...
+    val filterTypes: List<FilterType>? = null,
+    val orderType: List<OrderType>? = null,
+    ...
+)
+
+data class FilterType(
+    val name: String,
+    val id: ForumFilterTypeId? = null,
+)
+
+data class OrderType(
+    val name: String,
+    val filter: String? = null,
+    val orderBy: String? = null,
+)
+```
+Parse forum filter tabs from `#dhnavs_li` and order tabs from `#dhnav_li`. `FilterType` uses `name` and `typeid`; `OrderType` uses `filter` and `orderby`.
+
+Update Forum route filtering :
+```kotlin notebook
+suspend fun fetchForumById(
+    fId: ForumId,
+    filterType: FilterType? = null,
+    orderType: OrderType? = null,
+    page: Int = 1
+): YamiboResult<ForumPage>
+```
+Forum route now appends `filter=typeid&typeid=...` for filter types and appends `filter` / `orderby` independently for order types.
+
+Update UserSpace notice parsing :
+`NoticeItem.contentHtml` now only uses `.mbody.html()` and no longer merges sibling `.quote` HTML into `contentHtml`. `quote` remains available as its own parsed field.
 
 # v1.1.1
 
@@ -395,371 +479,283 @@ Add BlogCommentId and shared parse utility :
 ```
 Add `ParseUtils.extractBlogCommentId(...)`.
 
-# v1.1.2
+# v1.1.0
 
-Update ForumPage DTO and parser :
+Add UserSpace page parsing and fetch APIs :
 ```kotlin notebook
-data class ForumPage(
-    ...
-    val filterTypes: List<FilterType>? = null,
-    val orderType: List<OrderType>? = null,
-    ...
-)
-
-data class FilterType(
-    val name: String,
-    val id: ForumFilterTypeId? = null,
-)
-
-data class OrderType(
-    val name: String,
-    val filter: String? = null,
-    val orderBy: String? = null,
-)
+suspend fun fetchUserSpaceThreads(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadPage>
+suspend fun fetchUserSpaceThreadReplies(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceThreadReplyPage>
+suspend fun fetchUserSpaceMyBlogs(userId: UserId? = null, page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceFriendBlogs(page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceViewAllBlogs(type: YamiboRoute.UserSpace.Blog.ViewAllType, page: Int = 1): YamiboResult<UserSpaceBlogPage>
+suspend fun fetchUserSpaceFriends(type: YamiboRoute.UserSpace.FriendPageType, page: Int = 1): YamiboResult<UserSpaceFriendPage>
+suspend fun fetchUserSpacePrivateMessages(page: Int = 1): YamiboResult<UserSpacePrivateMessagePage>
+suspend fun fetchUserSpaceNotices(page: Int = 1): YamiboResult<UserSpaceNoticePage>
 ```
-Parse forum filter tabs from `#dhnavs_li` and order tabs from `#dhnav_li`. `FilterType` uses `name` and `typeid`; `OrderType` uses `filter` and `orderby`.
 
-Update Forum route filtering :
+Add RatePopout page parsing and fetch API :
 ```kotlin notebook
-suspend fun fetchForumById(
-    fId: ForumId,
-    filterType: FilterType? = null,
-    orderType: OrderType? = null,
-    page: Int = 1
-): YamiboResult<ForumPage>
+data class RatePopoutPage(
+    val availableScores: List<Int>,
+    val defaultReasons: List<String>,
+)
+
+suspend fun fetchRatePopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RatePopoutPage>
 ```
-Forum route now appends `filter=typeid&typeid=...` for filter types and appends `filter` / `orderby` independently for order types.
-
-Update UserSpace notice parsing :
-`NoticeItem.contentHtml` now only uses `.mbody.html()` and no longer merges sibling `.quote` HTML into `contentHtml`. `quote` remains available as its own parsed field.
-
-# v1.1.3
-
-Fix PageNav previous page parsing :
-- Support Discuz mobile pagination where the previous page link is rendered as `.pgb a`.
-- Fix `pageNav.prevUrl` being `null` on UserSpace thread pages such as `home.php?mod=space&do=thread&page=2`.
-
-# v1.1.4
+When RatePopout returns a Discuz post response instead of form data, it now parses the message text as a parse failure.
 
 Update ProfilePage DTO :
 ```kotlin notebook
 data class ProfilePage(
     ...
-    val adminGroup: String? = null,
-    val signatureHtml: String? = null,
-    val birthplace: String? = null,
-    val education: String? = null,
-    val customTitle: String? = null,
-    val homepage: String? = null,
+    val avatarBackgroundUrl: String?,
     ...
 )
 ```
-Add 6 new optional fields to `ProfilePage` parsed from the Discuz profile page :
-- `signatureHtml` — Personal signature raw HTML(個人簽名).
-- `adminGroup` — Admin group name(管理組), parsed from `管理组` / `管理組` label.
-- `homepage` — Personal homepage URL(個人主頁), filters out bare `http://` placeholders.
-- `birthplace` — Birthplace(出生地).
-- `education` — Education level(學歷).
-- `customTitle` — Custom title(自定義頭銜).
+Add `avatarBackgroundUrl` for profile avatar background image.
 
-# v1.1.5
-
-Add PrivateMessagePage parsing and fetch API :
+Add new typed ID and parse utilities for UserSpace pages :
 ```kotlin notebook
-data class PrivateMessagePage(
-    val toUser: UserId,
+data class NoticeId(override val value: Long) : Id
+```
+Move shared thread, post, blog, notice, and user id extraction into ParseUtils.
+
+# v1.0.24
+
+- Change NotLoggedIn Result's message to "登入狀態已失效或尚未登入，請重新登入"
+- Add New URL builder "PostThread".
+```kotlin notebook
+data class PostThread(val forumId: ForumId)
+```
+
+# v1.0.23
+
+Stop getting all /static/image URLs as images in ThreadPage
+
+# v1.0.22
+Add official `kotlinx-datetime` dependency for robust date-time conversions in KMP (`commonMain`).
+
+Introduce `TimeInfo` Model :
+```kotlin notebook
+data class TimeInfo(
+    val text: String,
+    val specialText: String? = null,
+    val epoch: Long
+)
+```
+Store time data with its computed UTC+8 epoch timestamp, raw date text, and explicit contextual text if exists (e.g., "本帖最后由...").
+
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val timeCreate: TimeInfo,
+    val lastEditedTime: TimeInfo?,
+    ...
+)
+```
+Renamed `timeText` to `timeCreate` and `editedText` to `lastEditedTime`.
+
+Refactor time string properties to `TimeInfo` across DTOs :
+- `ThreadPage.PostComment` : `time`
+- `ThreadPage.Attachment` : `timeUpload`
+- `ThreadPage.Poll` : `endTime`
+- `ThreadSummary` : Renamed `lastUpdateText` to `lastUpdate`
+- `ProfilePage` : `registerTime`, `lastVisit`
+# v1.0.21
+Add removeFavorite feature
+```kotlin notebook
+suspend fun removeFavorite(favoriteId: FavoriteId): YamiboResult<String>
+```
+The FavoriteId can only get from FavoritePage.
+
+# v1.0.20
+Fix/Add kotlin serialization plugin compilation.
+
+# v1.0.19
+Make all data classes @Serializable.
+
+# v1.0.18
+Fix TagPage Link did not load page param issue.
+
+# v1.0.17
+Add tagName param to TagPage.
+```kotlin notebook
+data class TagPage(
+    val tagName: String,
+    val threadSummaries : List<ThreadSummary>,
+    val pageNav: PageNav? = null
+)
+```
+
+# v1.0.16
+Add two function in YamiboForum
+```kotlin notebook
+fun toForumName(forumId: ForumId): String?
+fun toForumId(forumName: String): ForumId?
+```
+
+# v1.0.15
+Fix the issue of cannot get image from some type of thread
+
+# v1.0.14
+Add Forum Type classify function in YamiboForum
+```kotlin notebook
+fun isNovelForum(name: String)
+fun isNovelForum(forumId: ForumId)
+fun isMangaForum(name: String)
+fun isMangaForum(forumId: ForumId)
+```
+
+# v1.0.13
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val tags: Tags,
+    ...
+)
+```
+Add `tags` to `Post` to represent the tag information associated with a thread. Tags are typically extracted from the first floor of a thread and are commonly used in forums like manga for cataloging.
+
+Add Tag Search Result Parsing :
+Implemented `TagPagParser` and `TagPage` DTO to support parsing for tag search result pages (e.g., `misc.php?mod=tag`).
+
+Update ThreadSummary DTO :
+```kotlin notebook
+data class ThreadSummary(
+    ...
+    /** 
+     * Forum Id (fid). 
+     * @see TagPage only 
+     */
+    val fid: ForumId? = null,
+
+    /** 
+     * Attachment type. 
+     * @see TagPage only 
+     */
+    val attachmentType: AttachmentType? = null,
+    ...
+)
+```
+Added `fid` and `attachmentType` to `ThreadSummary` specifically for tag search result pages, mapping common attachment icons to `Image` or `Other`.
+
+# 1.0.12
+Fix PostReply build the wrong url issue.
+
+# 1.0.10
+Add two link builder in YamiboRoute :
+```kotlin notebook
+//Reply a specific post(mention a post)
+data class PostReply(val threadId: ThreadId, val postId: PostId, val page: Int = 1)
+//Reply the thread : 
+data class ThreadReply(val threadId: ThreadId, val page: Int = 1)
+```
+
+# v1.0.9
+Old :
+```html
+<div id="postmessage_{id}" class="postmessage">
+    {content}
+</div>
+```
+New :
+```html
+{content}
+```
+Fix the issue that poll thread HTML content is not parsed correctly.
+
+# v1.0.8
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
+    val poll: Poll?,
+    ...
+)
+```
+Add `poll` to `Post` to represent the poll information located at the top of the thread page. Note that polls are unique in a thread and forced to be at the first floor.
+
+Add VotePoll feature:
+```kotlin notebook
+suspend fun votePoll(formHash: FormHash, forumId: ForumId, threadId: ThreadId, options: List<PollOptionId>): FetchResult<String>
+```
+Perform a POST request to vote in a poll. It supports selecting multiple options since `options` is a `List`.
+
+Update ThreadSummary DTO :
+```kotlin notebook
+data class ThreadSummary(
+    ...
+    val hasPoll: Boolean,
+    ...
+)
+```
+Add `hasPoll` to `ThreadSummary` to identify if a thread contains a poll when displayed in a thread list like forum or search pages.
+
+# v1.0.7
+Update FavoriteItem DTO :
+```kotlin notebook
+data class FavoriteItem(
+    val name: String,
+    val url: String,
+    val favId: FavoriteId
+)
+```
+Change delete url param to favoriteId.
+
+Add Delete and AddForum to YamiboRoute.Favorite : 
+```kotlin notebook
+data class Delete(val favoriteId: FavoriteId) : YamiboRoute()
+ data class AddForum(val forumId: ForumId, val formHash: FormHash) : YamiboRoute()
+```
+
+Make fetchFavorite can accept forum id and thread id.
+The Id type is the interface that all type-safe id implements.
+```kotlin notebook
+suspend fun fetchAddFavorite(id: Id, formHash: FormHash): YamiboResult<String>
+```
+
+# v1.0.6
+Update Parser System :
+Clean up code, and rewrite the algorithm of parser, enhance the performance by 2x more efficiency and less memory cost.
+
+Update Post DTO :
+```kotlin notebook
+data class Post(
+    ...
     val title: String,
-    val pmId: PrivateMessageId,
-    val messages: List<PrivateMessage>,
-    val pageNav: PageNav? = null,
-)
-
-suspend fun fetchPrivateMessagePage(toUser: UserId, page: Int? = null): YamiboResult<PrivateMessagePage>
-```
-The private-message page URL omits `page` by default so Yamibo can jump to the latest page.
-
-Add Private Message send feature :
-```kotlin notebook
-suspend fun fetchSendPrivateMessage(
-    privateMessageId: PrivateMessageId,
-    toUser: UserId,
-    message: String,
-    formHash: FormHash
-): YamiboResult<String>
-```
-Add `YamiboRoute.SendPrivateMessage` and `PrivateMessageFactory` for PM form submission.
-
-Update PageNav :
-```kotlin notebook
-data class PageNav(
-    val nextUrl: String? = null,
-    val nextPageIndex: Int? = null,
-    val prevUrl: String? = null,
-    val prevPageIndex: Int? = null,
     ...
 )
 ```
-Parse page indexes from `prevUrl` / `nextUrl`, and infer `currentPage` from adjacent page links when Yamibo omits the current page marker.
+Add Title value for Post DTO, it parses the possibly title from the start of post content.
+This feature is design for forum "文學區".
 
-# v1.1.6
-Update fetch thread parameter "reverse" :
+# v1.0.5
 ```kotlin notebook
-suspend fun fetchThreadById(tId: ThreadId, authorId: UserId? = null, reverse: Boolean = false, page: Int = 1)
+fetchFindPost(threadId: ThreadId? = null, authorId: UserId? = null, postId: PostId)
 ```
-It would get the reverse posts list of the whole thread, instead of the root post(first floor) always on top.
+Find the location of thread page where the post id locate.
+Return type is ThreadPage.
 
-# v1.1.7
+# v1.0.4
 
-Add daily sign-in page parsing and fetch APIs :
+Add new feature :
 ```kotlin notebook
-data class SignPage(
-    val currentDateText: String? = null,
-    val monthLabel: String? = null,
-    val notice: String? = null,
-    val calendarDays: List<SignCalendarDay> = emptyList(),
-    val repairOptions: List<SignRepairOption> = emptyList(),
-    val myActivity: List<String> = emptyList(),
-    val statistics: List<String> = emptyList(),
-    val extraSections: List<SignInfoSection> = emptyList(),
-    val signActionUrl: String? = null,
-    val repairActionPrefix: String? = null,
-    val hasSignedToday: Boolean = false,
-    val lastSignDateKey: String? = null,
-)
-
-suspend fun fetchSignPage(cookie: String? = null): YamiboResult<SignPage>
-suspend fun fetchSignAction(actionUrl: String, cookie: String? = null): YamiboResult<SignActionResult>
+fetchSearchById(query: String, searchId: SearchId, page: Int = 1)
 ```
-`cookie` is an optional raw Cookie header override. Pass the merged login cookie string including
-`cf_clearance` when Cloudflare has been cleared by a WebView. If omitted, the previously configured
-`YamiboClient.setCookie(...)` value is used.
-
-# v1.1.8
-
-Update HomePage DTO parsing :
-```kotlin notebook
-data class HomePage(
-    val swiperImages: List<SwiperImages>,
-    ...
-    val hasNewMessage: Boolean = false,
-)
-
-data class SwiperImages(
-    val imageUrl: String,
-    val tId: ThreadId? = null,
-)
-```
-Parse home page swiper images, including thread IDs when the banner links to a
-thread page.
-
-Parse `hasNewMessage` from the message footer entry when it contains `ico_msg`.
-
-# v1.1.9
-
-Update ProfilePage DTO :
-```kotlin notebook
-data class ProfilePage(
-    ...
-    val qq: String? = null,
-    val interests: String? = null,
-    val graduateSchool: String? = null,
-    ...
-)
-```
-Parse additional user profile fields from mobile space pages.
-
-Add AddFriend popout parsing and fetch API :
-```kotlin notebook
-data class AddFriendPopoutScreen(
-    val user: User,
-    val availableOption: List<AddFriendOption>,
-)
-
-data class AddFriendOption(
-    val id: Int,
-    val reason: String,
-)
-
-suspend fun fetchAddFriendPopoutScreen(userId: UserId): YamiboResult<AddFriendPopoutScreen>
-```
-
-Add AddFriend post feature :
-```kotlin notebook
-suspend fun fetchAddFriend(
-    userId: UserId,
-    formHash: FormHash,
-    note: String = "",
-    groupId: Int = 1
-): YamiboResult<String>
-```
-Add `YamiboRoute.UserSpace.AddFriend.AddFriendPost` and `AddFriendFactory` for submitting add-friend requests.
-
-# v1.1.10
-
-Adjust error message of 503 status code from fetch result 
-
-# v1.1.11
-
-Add new lastRecord property in ProfilePage.
-```kotlin notebook
-@Serializable
-data class ProfilePage(
-    ....
-    val lastRecord? = null,
-    ...
-)
-```
-
-# v1.1.12
-
-Add YamiboLevels object as level util in YamiboConstant
-
-# v1.1.13
-
-Fix ThreadPage parser prompt handling :
-- Return `ParseResult.Failure` when a view-thread response is actually a Discuz prompt page without post nodes.
-- Deleted-thread responses such as `本帖已经删除，错误权限代码50` are no longer parsed as a successful empty thread page.
-
-# v1.1.14
-
-Add rate-result popout parsing and fetch API :
-```kotlin notebook
-data class RateResultPopoutPage(
-    val totalScore: Int? = null,
-    val rates: List<RateResultItem>,
-    val pageNav: PageNav? = null,
-)
-
-suspend fun fetchRateResultPopoutPage(tId: ThreadId, pId: PostId): YamiboResult<RateResultPopoutPage>
-```
-Parse the all-ratings popup from `forum.php?mod=misc&action=viewratings`, including the score list, optional total score, and popup pagination.
-
-Add voter popout parsing and fetch API :
-```kotlin notebook
-data class VotersPopoutScreen(
-    val pollOptions: List<VotersPollOption>,
-    val selectedPollOptionId: PollOptionId,
-    val voters: List<User>,
-)
-
-suspend fun fetchViewVoters(tId: ThreadId, pollOptionId: PollOptionId? = null): YamiboResult<VotersPopoutScreen>
-```
-Parse the poll voter popup from `forum.php?mod=misc&action=viewvote`, including selectable poll options and the voters for the selected option.
-
-# v1.1.15
-
-Fix ForumPage URL Builder failed to build filter type link with not setting order type.
-
-# v1.1.16
-
-Update voter popout parsing and fetch API :
-```kotlin notebook
-data class VotersPopoutScreen(
-    val pollOptions: List<VotersPollOption>,
-    val selectedPollOptionId: PollOptionId,
-    val voters: List<User>,
-    val pageNav: PageNav? = null,
-)
-
-suspend fun fetchViewVoters(
-    tId: ThreadId,
-    pollOptionId: PollOptionId? = null,
-    page: Int = 1,
-): YamiboResult<VotersPopoutScreen>
-```
-Parse `pageNav` from the voter popup when the poll option has multiple pages, and default the fetch page parameter to `1` so the first page remains implicit in the route.
-
-# v1.1.17
-
-Update SearchPage DTO :
+Update SearchPage Dto :
 ```kotlin notebook
 data class SearchPage(
     val searchId: SearchId? = null,
     val query: String,
-    val forumId: ForumId? = null,
     val threads: List<ThreadSummary>,
     val totalCount: Int,
     val pageNav: PageNav? = null,
 )
 ```
-`fetchSearch(...)` now returns the input `forumId` in `SearchPage` so callers can know which forum-scoped search produced the result.
 
-# v1.1.18
+# v1.0.3
 
-Update Add Favorite response :
-```kotlin notebook
-data class AddFavoriteResult(
-    val message: String,
-    val favId: FavoriteId? = null,
-)
-
-suspend fun fetchAddFavorite(
-    id: Id,
-    formHash: FormHash,
-    description: String = "手机收藏"
-): YamiboResult<AddFavoriteResult>
-```
-Parse `favid` from Discuz favorite post responses such as `succeedhandle_favoriteform_...(..., {'id':'573762','favid':'2675784'})`.
-
-# v1.1.19
-
-Update blog action buttons :
-```kotlin notebook
-data class BlogSummary(
-    ...
-    val manageButtons: List<ManageButton> = emptyList(),
-)
-
-data class BlogComment(
-    ...
-    val manageButtons: List<ManageButton> = emptyList(),
-    ...
-)
-```
-Parse blog summary action buttons such as `删除`, `置顶`, and `编辑` from user-space blog lists.
-Parse blog root/comment action buttons such as `收藏`, `分享`, `邀请`, `编辑`, `删除`, and `回复` from blog pages.
-
-# v1.1.20
-
-Add `YamiboResult.mapSuccess(transform)` for mapping successful values while preserving all existing failure result variants.
-
-# v1.1.21
-
-Update user-space blog class support :
-```kotlin notebook
-data class UserSpaceBlogPage(
-    val blogs: List<BlogSummary>,
-    val pageNav: PageNav? = null,
-    val blogClasses: List<BlogPageClassInfo> = emptyList(),
-)
-
-data class BlogPageClassInfo(
-    val name: String,
-    val id: BlogClassId,
-)
-
-suspend fun fetchUserSpaceMyBlogs(
-    userId: UserId? = null,
-    blogClassId: BlogClassId? = null,
-    page: Int = 1
-): YamiboResult<UserSpaceBlogPage>
-```
-Parse user-space blog class links from the horizontal class list and support `classid` filtering in my-blog routes.
-
-# v1.1.22
-
-Improve HTTP error handling:
-
-- Return a clear permission/login-expiration message for HTTP 405 responses.
-- Preserve maintenance and illegal-request detection for HTTP 503 responses.
-
-# v1.1.23
-
-Add structured Baidu WAF browser-challenge detection:
-
-- Return `YamiboResult.WafChallenge` with the provider, HTTP status, and intercepted URL when a
-  403/405 response contains verified Baidu NOX body markers or WAF headers.
-- Keep ordinary HTTP 405 responses on the existing permission-error path to avoid false positives.
-- Preserve raw POST error bodies until WAF detection completes, then retain the existing friendly
-  Discuz error-message parsing.
+Remove the hashTag"#" from SearchResult Param Tag(e.g. "#動漫區" → "動漫區")
 

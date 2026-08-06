@@ -1,3 +1,51 @@
+# v1.1.25
+
+Update Yamibo client cookie management :
+```kotlin notebook
+fun setCookie(
+    cookie: String,
+    importNox: Boolean = false
+)
+```
+Keep one composed client Cookie header. Routine cookie updates preserve the current `nox_jst_v1`; a complete cookie snapshot from a trusted app-owned WebView can explicitly replace it with `importNox = true`.
+
+Add blog management API :
+```kotlin notebook
+sealed interface BlogClassSelection {
+    data class Existing(val classId: BlogClassId) : BlogClassSelection
+    data class Create(val className: String) : BlogClassSelection
+}
+
+data class BlogMutationResponse(
+    val body: String,
+    val statusCode: Int,
+    val requestUrl: String,
+    val finalUrl: String,
+    val location: String?,
+)
+
+suspend fun addBlog(
+    title: String,
+    message: String,
+    classSelection: BlogClassSelection,
+    formHash: FormHash,
+): YamiboResult<BlogMutationResponse>
+
+suspend fun updateBlog(
+    blogId: BlogId,
+    title: String,
+    message: String,
+    classSelection: BlogClassSelection,
+    formHash: FormHash,
+): YamiboResult<BlogMutationResponse>
+
+suspend fun deleteBlog(
+    blogId: BlogId,
+    formHash: FormHash,
+): YamiboResult<BlogMutationResponse>
+```
+Add, update, and delete blog requests use repeatable request bodies and replay once only when the precise Baidu NOX response proves that the original write was rejected at the edge.
+
 # v1.1.24
 
 ### Added
@@ -7,8 +55,6 @@
 - Add typed `WafChallenge` recovery outcomes for foreground-required, cancelled, timed-out, verification-failed, and replay-not-allowed cases.
 - Add `WafRecoveryConfig` with an `enabled` rollback switch and bounded verification timeouts.
 - Add `YamiboClient.clearCookies()` to clear both the Discuz authentication cookie and API-managed NOX state during logout.
-- Add the optional `importNox` parameter to `YamiboClient.setCookie()` for explicitly importing a newer NOX entry from an app-owned trusted login or sign-in WebView.
-- Add `YamiboClient.addBlog`, `updateBlog`, and `deleteBlog` with repeatable Discuz request bodies and typed buffered response metadata.
 
 ### Changed
 
@@ -16,9 +62,7 @@
 - Detect the observed HTTP 405 Baidu NOX HTML conservatively, resolve concurrent challenges through one client-scoped verification flight, verify the resulting `nox_jst_v1` cookie with a safe Yamibo probe, and replay eligible requests at most once.
 - Keep recovery completely silent: attach a normal-viewport platform WebView behind existing app content, poll cookies without waiting for page completion, and return `WafChallenge` for the app's existing refresh flow when recovery fails.
 - Require every write route to declare an explicit replay policy. Non-replayable writes return `WafChallenge(REPLAY_NOT_ALLOWED)` after verification so the caller can safely repeat the user action.
-- Keep one composed client Cookie header, replace only its `nox_jst_v1` entry during recovery, preserve that entry when authentication cookies are refreshed, and avoid persisting it as application-owned login state.
-- Let routine `setCookie()` calls preserve client-managed NOX while `setCookie(cookie, importNox = true)` replaces it only when a trusted snapshot contains a valid NOX value.
-- Replay add, update, and delete blog writes once only after the precise NOX response proves that the original request was rejected at the edge.
+- Keep `nox_jst_v1` isolated from Discuz authentication cookies and avoid persisting it as application-owned login state.
 - Keep headless and background use deterministic: when no foreground host is available, return `YamiboResult.WafChallenge` instead of attempting to create platform UI.
 
 ### Publishing

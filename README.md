@@ -1,7 +1,7 @@
 # yamibo-api
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
-[![Version](https://img.shields.io/badge/version-1.1.24-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.1.25-green.svg)]()
 
 [English](#english-version) | [中文](#traditional-chinese-version)
 ---

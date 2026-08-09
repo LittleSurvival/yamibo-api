@@ -1,3 +1,11 @@
+# v1.1.26
+
+Fix iOS Kotlin/Native datetime linkage :
+
+- Upgrade `kotlinx-datetime` from `0.6.1` to `0.7.1`.
+- Rebuild the library against the `kotlin.time.Instant`-backed datetime ABI used by newer Compose Multiplatform iOS dependency graphs.
+- Fix iOS `IrLinkageError` crashes while parsing `TimeInfo` when consumers resolve `kotlinx-datetime` `0.7.x`.
+
 # v1.1.25
 
 Update Yamibo client cookie management :

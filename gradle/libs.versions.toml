@@ -7,7 +7,7 @@ vanniktechMavenPublish = "0.36.0"
 ktor = "3.5.2"
 ksoup = "0.2.6"
 compose-multiplatform = "1.11.1"
-kotlinx-datetime = "0.6.1"
+kotlinx-datetime = "0.7.1"
 kotlinx-coroutines = "1.11.0"
 
 [libraries]

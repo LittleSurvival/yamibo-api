@@ -1,3 +1,18 @@
+# v1.1.27
+
+Clarify cookie management and WAF API boundaries :
+
+- Update `YamiboClient.clearCookies(clearNox = false)` so logout clears authentication cookies while preserving the API-managed `nox_jst_v1` clearance cookie by default. Pass `clearNox = true` only for a complete network-cookie reset.
+- Apply the same explicit `clearNox` behavior to the public fetcher cookie APIs.
+- Keep WAF coordination, detection, and provider details internal while retaining the public recovery configuration, challenge host, and typed result APIs.
+- Remove the internal WAF provider from the public `YamiboResult.WafChallenge` payload.
+
+Rename user-space blog mutation APIs :
+
+- `addBlog` → `fetchAddPrivtaeBlog`
+- `updateBlog` → `fetchUpdateBlog`
+- `deleteBlog` → `fetchDeleteBlog`
+
 # v1.1.26
 
 Fix iOS Kotlin/Native datetime linkage :

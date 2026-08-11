@@ -575,8 +575,12 @@ class YamiboClient(
         }
     }
 
-    /** Add a private user-space blog through Discuz. */
-    suspend fun addBlog(
+    /**
+     * 發布私人日誌
+     *
+     * Add a private user-space blog.
+     * */
+    suspend fun fetchAddPrivtaeBlog(
         title: String,
         message: String,
         classSelection: BlogClassSelection,
@@ -584,8 +588,12 @@ class YamiboClient(
     ): YamiboResult<BlogMutationResponse> =
         mapBlogMutation(blogMutationFactory.addBlog(title, message, classSelection, formHash))
 
-    /** Update an existing user-space blog through Discuz. */
-    suspend fun updateBlog(
+    /**
+     * 更新日誌
+     *
+     * Update an existing user-space blog .
+     * */
+    suspend fun fetchUpdateBlog(
         blogId: BlogId,
         title: String,
         message: String,
@@ -594,8 +602,12 @@ class YamiboClient(
     ): YamiboResult<BlogMutationResponse> =
         mapBlogMutation(blogMutationFactory.updateBlog(blogId, title, message, classSelection, formHash))
 
-    /** Delete an existing user-space blog through Discuz. */
-    suspend fun deleteBlog(
+    /**
+     * 刪除日誌
+     *
+     * Delete an existing user-space blog through Discuz.
+     * */
+    suspend fun fetchDeleteBlog(
         blogId: BlogId,
         formHash: FormHash,
     ): YamiboResult<BlogMutationResponse> =

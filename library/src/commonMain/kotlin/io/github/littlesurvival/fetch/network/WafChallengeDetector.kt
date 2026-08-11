@@ -1,7 +1,7 @@
 package io.github.littlesurvival.fetch.network
 
 import io.github.littlesurvival.core.FetchResult
-import io.github.littlesurvival.core.WafProvider
+import io.github.littlesurvival.waf.WafProvider
 
 /**
  * Recognizes HTTP responses produced by Yamibo's edge WAF browser challenge.
@@ -45,7 +45,7 @@ internal object WafChallengeDetector {
      * The supplied evidence contains the full 395-character body for every intercepted request,
      * so header-only responses deliberately remain ordinary HTTP failures.
      */
-    fun detect(error: FetchResult.Failure.HttpError): WafProvider? {
+    internal fun detect(error: FetchResult.Failure.HttpError): WafProvider? {
         // Requiring a challenge-related status keeps marker-like text in ordinary pages harmless.
         if (error.statusCode != CHALLENGE_STATUS_CODE) return null
 

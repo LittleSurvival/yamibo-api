@@ -28,7 +28,6 @@ internal fun <T> debugLog(label: String, result: YamiboResult<T>) {
         }
         is YamiboResult.WafChallenge -> {
             println("🛡️ [WafChallenge]")
-            println("   Provider : ${result.provider}")
             println("   Status   : ${result.statusCode}")
             println("   URL      : ${result.url}")
         }

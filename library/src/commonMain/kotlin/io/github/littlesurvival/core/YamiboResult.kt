@@ -15,7 +15,6 @@ sealed class YamiboResult<out T> {
 
     /** The request was intercepted by an edge WAF and requires browser verification. */
     data class WafChallenge(
-        val provider: WafProvider,
         val statusCode: Int,
         val url: String,
         val recoveryDisposition: WafRecoveryDisposition = WafRecoveryDisposition.UNRESOLVED,
@@ -52,8 +51,4 @@ fun <T, R> YamiboResult<T>.mapSuccess(transform: (T) -> R): YamiboResult<R> = wh
     is YamiboResult.NotLoggedIn -> this
     is YamiboResult.NoPermission -> this
     is YamiboResult.Maintenance -> this
-}
-
-enum class WafProvider {
-    BAIDU_NOX,
 }

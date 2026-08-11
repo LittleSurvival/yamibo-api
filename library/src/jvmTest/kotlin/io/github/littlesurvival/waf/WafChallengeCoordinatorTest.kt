@@ -1,6 +1,5 @@
 package io.github.littlesurvival.waf
 
-import io.github.littlesurvival.core.WafProvider
 import kotlinx.coroutines.async
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin

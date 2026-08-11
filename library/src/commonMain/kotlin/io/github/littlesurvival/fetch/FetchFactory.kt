@@ -76,8 +76,9 @@ class FetchFactory internal constructor(
         cookieStore.setAuthenticationCookies(cookie)
     }
 
-    override fun clearCookies() {
-        cookieStore.clearAll()
+    override fun clearCookies(clearNox: Boolean) {
+        cookieStore.clearAuthenticationCookies()
+        if (clearNox) cookieStore.clearNoxCookie()
     }
 
     internal fun close() {

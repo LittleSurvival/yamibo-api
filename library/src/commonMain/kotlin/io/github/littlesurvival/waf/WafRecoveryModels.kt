@@ -1,6 +1,8 @@
 package io.github.littlesurvival.waf
 
-import io.github.littlesurvival.core.WafProvider
+internal enum class WafProvider {
+    BAIDU_NOX,
+}
 
 /** Configuration for the optional browser-based WAF recovery owned by a Yamibo client. */
 data class WafRecoveryConfig(

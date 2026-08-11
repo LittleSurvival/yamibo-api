@@ -47,8 +47,8 @@ internal class ClientCookieStore {
         state.update { current -> CookieState(header = withoutNox(current.header)) }
     }
 
-    fun clearAll() {
-        state.value = CookieState()
+    fun clearAuthenticationCookies() {
+        setAuthenticationCookies("")
     }
 
     fun currentHeader(): String? = state.value.header.ifEmpty { null }

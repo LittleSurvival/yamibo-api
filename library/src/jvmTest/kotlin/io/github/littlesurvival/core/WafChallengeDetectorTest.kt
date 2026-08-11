@@ -2,6 +2,7 @@ package io.github.littlesurvival.core
 
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.fetch.network.WafChallengeDetector
+import io.github.littlesurvival.waf.WafProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -83,7 +84,6 @@ class WafChallengeDetectorTest {
         )
 
         val challenge = assertIs<YamiboResult.WafChallenge>(result)
-        assertEquals(WafProvider.BAIDU_NOX, challenge.provider)
         assertEquals(405, challenge.statusCode)
         assertEquals(url, challenge.url)
     }
@@ -104,7 +104,6 @@ class WafChallengeDetectorTest {
     @Test
     fun mapSuccessPreservesChallengeMetadata() {
         val challenge = YamiboResult.WafChallenge(
-            provider = WafProvider.BAIDU_NOX,
             statusCode = 405,
             url = "https://bbs.yamibo.com/",
         )

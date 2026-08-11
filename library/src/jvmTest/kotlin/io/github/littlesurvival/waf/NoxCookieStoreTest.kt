@@ -36,6 +36,30 @@ class ClientCookieStoreTest {
     }
 
     @Test
+    fun clearingAuthenticationCookiesPreservesManagedNox() {
+        val store = ClientCookieStore()
+        store.setAuthenticationCookies("auth=secret; sid=session")
+        store.setNoxCookie("clearance", issuedAtEpochMillis = 1_000L)
+
+        store.clearAuthenticationCookies()
+
+        assertEquals("nox_jst_v1=clearance", store.currentHeader())
+    }
+
+    @Test
+    fun yamiboClientClearsNoxOnlyWhenExplicitlyRequested() {
+        val client = io.github.littlesurvival.YamiboClient()
+        client.setCookie("auth=secret; nox_jst_v1=clearance", importNox = true)
+
+        client.clearCookies()
+        assertEquals("nox_jst_v1=clearance", client.cookieStore.currentHeader())
+
+        client.clearCookies(clearNox = true)
+        assertNull(client.cookieStore.currentHeader())
+        client.close()
+    }
+
+    @Test
     fun trustedWebViewImportReplacesManagedNox() {
         val store = ClientCookieStore()
         store.setAuthenticationCookies("auth=first; sid=one")

@@ -87,7 +87,7 @@ import io.github.littlesurvival.parse.util.ParseUtils
 
 class YamiboClient(
     val timeoutMillis: Long = 30_000L,
-    val wafRecoveryConfig: WafRecoveryConfig = WafRecoveryConfig(),
+    private val wafRecoveryConfig: WafRecoveryConfig = WafRecoveryConfig(),
 ) {
     internal val cookieStore = ClientCookieStore()
     internal val wafCoordinator = WafChallengeCoordinator(wafRecoveryConfig, cookieStore)
@@ -132,10 +132,18 @@ class YamiboClient(
         }
     }
 
-    /** Clears caller authentication cookies and API-managed WAF clearance state on logout. */
-    fun clearCookies() {
-        cookieStore.clearAll()
-        clearPlatformNoxCookie()
+    /**
+     * Clears caller-managed authentication cookies.
+     *
+     * The API-managed `nox_jst_v1` clearance cookie is preserved by default because it is not
+     * authentication state. Set [clearNox] only for a full network-cookie reset.
+     */
+    fun clearCookies(clearNox: Boolean = false) {
+        cookieStore.clearAuthenticationCookies()
+        if (clearNox) {
+            cookieStore.clearNoxCookie()
+            clearPlatformNoxCookie()
+        }
     }
 
     /** Cancels active WAF recovery and releases client-owned runtime work. */
@@ -688,9 +696,8 @@ class YamiboClient(
             is FetchResult.Failure.HttpError -> {
                 // Preserve the original URL and status so the app can verify the same route and
                 // make a request-aware replay decision after its WebView has produced a new cookie.
-                WafChallengeDetector.detect(failure)?.let { provider ->
+                if (WafChallengeDetector.detect(failure) != null) {
                     return YamiboResult.WafChallenge(
-                        provider = provider,
                         statusCode = failure.statusCode,
                         url = url,
                         recoveryDisposition = failure.wafRecoveryDisposition

@@ -1,6 +1,5 @@
 package io.github.littlesurvival.waf
 
-import io.github.littlesurvival.core.WafProvider
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

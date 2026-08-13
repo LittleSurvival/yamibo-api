@@ -10,6 +10,8 @@ data class WafRecoveryConfig(
     val safeProbeUrl: String = "https://bbs.yamibo.com/",
     val challengeTimeoutMillis: Long = 45_000L,
     val noxSoftLifetimeMillis: Long = 30L * 60L * 1_000L,
+    /** Maximum duration of each continuous wait for a foreground UI host. */
+    val hostWaitTimeoutMillis: Long = 30_000L,
 ) {
     init {
         require(safeProbeUrl.startsWith("https://bbs.yamibo.com/")) {
@@ -17,6 +19,7 @@ data class WafRecoveryConfig(
         }
         require(challengeTimeoutMillis in 100L..120_000L)
         require(noxSoftLifetimeMillis in 60_000L..3_600_000L)
+        require(hostWaitTimeoutMillis in 100L..600_000L)
     }
 }
 
@@ -45,7 +48,10 @@ internal class WafBrowserRequest(
 internal sealed interface WafHostState {
     data object Idle : WafHostState
 
+    data object WaitingForHost : WafHostState
+
     data class Verifying(
+        val host: WafHostRegistration,
         val request: WafBrowserRequest,
         val checkingCookie: Boolean = false,
     ) : WafHostState

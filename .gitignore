@@ -18,3 +18,4 @@ commonTest/
 *.txt
 *.log
 /library/src/jvmTest/kotlin/io/github/littlesurvival/jvm
+/library/src/jvmTest/kotlin/io/github/littlesurvival/jvm

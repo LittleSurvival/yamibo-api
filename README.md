@@ -1,7 +1,7 @@
 # yamibo-api
 
 [![Kotlin](https://img.shields.io/badge/Kotlin-Multiplatform-blue.svg)](https://kotlinlang.org/docs/multiplatform.html)
-[![Version](https://img.shields.io/badge/version-1.1.25-green.svg)]()
+[![Version](https://img.shields.io/badge/version-1.1.28-green.svg)]()
 
 [English](#english-version) | [中文](#traditional-chinese-version)
 ---
@@ -158,16 +158,18 @@ Use one shared `YamiboClient` for API calls and mount one host behind the app co
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.waf.YamiboWafChallengeHost
 
+object YamiboNetwork {
+    // The client owns recovery flights, so it must outlive activity/view-controller recreation.
+    val client: YamiboClient by lazy { YamiboClient(timeoutMillis = 60_000L) }
+}
+
 @Composable
 fun YamiboApp(isForeground: Boolean) {
-    val client = remember { YamiboClient(timeoutMillis = 60_000L) }
-    DisposableEffect(client) { onDispose { client.close() } }
+    val client = YamiboNetwork.client
 
     Box(Modifier.fillMaxSize()) {
         // Keep the normal-size recovery WebView behind the visible application.
@@ -180,6 +182,8 @@ fun YamiboApp(isForeground: Boolean) {
 ```
 
 Successful recovery only makes the current load take longer: the host polls the platform cookie store without waiting for the destination page to finish, verifies `nox_jst_v1`, and replays an eligible request at most once. The client keeps one composed Cookie header and replaces only its `nox_jst_v1` entry; WAF-host guest cookies are never imported. Routine `setCookie()` calls preserve the current NOX entry. When an app-owned trusted login or sign-in WebView produces a complete cookie snapshot, call `client.setCookie(cookie, importNox = true)` so a valid newer NOX entry can replace it explicitly. If silent recovery fails, the API returns `YamiboResult.WafChallenge`; keep the existing failure UI and let the user refresh to fetch again. Headless/background clients never create a WebView. Call `client.clearCookies()` during logout to clear authentication state while preserving NOX. Use `client.clearCookies(clearNox = true)` only for a full network-cookie reset. `WafRecoveryConfig(enabled = false)` disables automatic recovery.
+
+If no foreground host is available, the flight waits up to `hostWaitTimeoutMillis` (30 seconds by default). Losing a host during a challenge destroys that browser attempt without ending the flight; the active challenge budget pauses and a returning host starts a fresh attempt. Each continuous host outage has its own bounded wait.
 
 ---
 
@@ -337,16 +341,18 @@ API 呼叫與 Host 必須共用同一個 `YamiboClient`，並把 Host 排在 App
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import io.github.littlesurvival.YamiboClient
 import io.github.littlesurvival.waf.YamiboWafChallengeHost
 
+object YamiboNetwork {
+    // Client 擁有 recovery flight，因此生命週期必須長於 Activity／ViewController 重建。
+    val client: YamiboClient by lazy { YamiboClient(timeoutMillis = 60_000L) }
+}
+
 @Composable
 fun YamiboApp(isForeground: Boolean) {
-    val client = remember { YamiboClient(timeoutMillis = 60_000L) }
-    DisposableEffect(client) { onDispose { client.close() } }
+    val client = YamiboNetwork.client
 
     Box(Modifier.fillMaxSize()) {
         // 正常尺寸的 recovery WebView 位於可見 App 內容後方。
@@ -359,3 +365,5 @@ fun YamiboApp(isForeground: Boolean) {
 ```
 
 恢復成功時，使用者只會感覺本次載入比較久：Host 不等待目的頁面載入完成，會持續讀取平台 Cookie store，驗證 `nox_jst_v1` 後最多重送一次符合政策的請求。Client 內只維護一份合成 Cookie header，恢復時只替換其中的 `nox_jst_v1`，不會匯入 WAF Host 產生的 guest cookies。一般 `setCookie()` 會保留 Client 現有 NOX；若 App 自己的可信登入／簽到 WebView 剛產生完整 cookie snapshot，則呼叫 `client.setCookie(cookie, importNox = true)`，讓其中有效的新 NOX 明確覆蓋。若 silent recovery 失敗，API 回傳 `YamiboResult.WafChallenge`；前端維持原本的失敗畫面，讓使用者 refresh 後重新 fetch 即可。背景或無 UI client 不會建立 WebView。登出時呼叫 `client.clearCookies()`，只清除登入狀態並保留 NOX；只有完整重設網路 Cookie 時才使用 `client.clearCookies(clearNox = true)`。`WafRecoveryConfig(enabled = false)` 可停用自動恢復。
+
+若沒有前景 Host，flight 最多等待 `hostWaitTimeoutMillis`（預設 30 秒）。Challenge 途中失去 Host 時會銷毀該次瀏覽器 attempt，但保留 flight 並暫停有效 challenge 預算；Host 回來後建立新的 attempt。每一段連續 Host 中斷都有獨立且有上限的等待時間。

@@ -6,6 +6,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
@@ -26,20 +27,28 @@ fun YamiboWafChallengeHost(
     val supported = platformNoxWebViewSupported
     val currentForeground by rememberUpdatedState(isForeground)
     val state by client.wafCoordinator.hostState.collectAsState()
+    val registration = remember(client) { client.wafCoordinator.registerHost() }
 
     SideEffect {
         client.wafCoordinator.setHostAvailability(
+            registration = registration,
             mounted = supported,
             isForeground = supported && currentForeground,
         )
     }
-    DisposableEffect(client, supported) {
+    DisposableEffect(client, registration) {
         onDispose {
-            client.wafCoordinator.setHostAvailability(mounted = false, isForeground = false)
+            client.wafCoordinator.unregisterHost(registration)
         }
     }
 
     val verifying = state as? WafHostState.Verifying ?: return
+    if (
+        !supported ||
+        !currentForeground ||
+        verifying.host !== registration ||
+        verifying.checkingCookie
+    ) return
     val request = verifying.request
 
     key(request.id) {

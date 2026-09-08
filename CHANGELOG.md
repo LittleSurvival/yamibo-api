@@ -1,3 +1,13 @@
+# v1.1.28
+
+Keep WAF recovery flights alive across UI-host lifecycle changes:
+
+- Start one shared recovery flight as soon as a challenge is detected, even when no foreground host is mounted.
+- Wait up to `hostWaitTimeoutMillis` (30 seconds by default) for each continuous host outage before returning `FOREGROUND_REQUIRED`.
+- Destroy the browser attempt when its host backgrounds or detaches, pause the challenge budget, and create a fresh attempt when a host returns.
+- Isolate host registrations and browser-attempt callbacks so stale activity/view-controller events cannot evict or fail a replacement host.
+- Cancel flights waiting for a host when the owning client closes.
+
 # v1.1.27
 
 Clarify cookie management and WAF API boundaries :
@@ -781,4 +791,3 @@ data class SearchPage(
 # v1.0.3
 
 Remove the hashTag"#" from SearchResult Param Tag(e.g. "#動漫區" → "動漫區")
-

@@ -152,7 +152,8 @@ class BlogMutationFactoryTest {
         val store = ClientCookieStore().also { it.setAuthenticationCookies("auth=synthetic") }
         val config = WafRecoveryConfig(challengeTimeoutMillis = 2_000L)
         val coordinator = WafChallengeCoordinator(config, store).also {
-            it.setHostAvailability(mounted = true, isForeground = true)
+            val host = it.registerHost()
+            it.setHostAvailability(host, mounted = true, isForeground = true)
         }
         val client = HttpClient(MockEngine(handler))
         val fetcher = FetchFactory(

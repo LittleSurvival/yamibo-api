@@ -35,7 +35,7 @@ class FetchTest {
 
     @Test
     fun testProfile(): Unit = runBlocking {
-        val profileResult = client.fetchProfileInfo()
+        val profileResult = client.fetchProfileInfo(userId = UserId(585888))
         debugLog("fetchProfileInfo", profileResult)
     }
 

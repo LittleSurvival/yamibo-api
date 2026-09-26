@@ -14,8 +14,18 @@ class DurationTest {
 class ListTest {
     @Test
     fun test() {
-        val texts = mutableListOf<String>()
-        print(texts[0])
+        val list = arrayListOf("a", "b", "c", "d", "e", "f")
+        var retryCount = 3
+        while (retryCount-- > 0) {
+            val random = list.random()
+            println("current random alphabet $random")
+            println("current list : $list")
+            if (random == "d") {
+                return
+            } else {
+                list.remove(random)
+            }
+        }
     }
 }
 

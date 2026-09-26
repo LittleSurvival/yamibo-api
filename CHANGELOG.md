@@ -1,3 +1,9 @@
+# v1.1.28
+
+- Add an app-owned browser overload for `YamiboWafChallengeHost`, allowing JVM applications to supply their own verification UI without exposing the internal coordinator or introducing a browser dependency into the API.
+- Expose a redacted `WafBrowserSession` with explicit cookie submission, failure and cancellation callbacks. Custom hosts must use isolated ephemeral browser cookies and trusted-origin navigation.
+- Preserve the existing Android/iOS host API and the no-browser JVM fallback.
+
 # v1.1.27
 
 Clarify cookie management and WAF API boundaries :
